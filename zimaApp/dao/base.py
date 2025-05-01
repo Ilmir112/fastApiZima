@@ -1,4 +1,4 @@
-from zimaApp.database import async_session_maker
+from .database import async_session_maker
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy import insert

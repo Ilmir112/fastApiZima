@@ -1,11 +1,11 @@
 from fastapi import APIRouter, HTTPException, Response, status, Depends
-from zimaApp.users.auth import get_password_hash, create_access_token, authenticate_user
+from .users.auth import get_password_hash, create_access_token, authenticate_user
 
-from zimaApp.users.dao import UsersDAO
-from zimaApp.users.dependencies import get_current_user, get_current_admin_user
-from zimaApp.users.models import Users
-from zimaApp.users.schemas import SUsersAuth, SUsersRegister
-from zimaApp.exceptions import UserAlreadyExist, IncorectLoginOrPassword
+from .users.dao import UsersDAO
+from .users.dependencies import get_current_user, get_current_admin_user
+from .users.models import Users
+from .users.schemas import SUsersAuth, SUsersRegister
+from .exceptions import UserAlreadyExist, IncorectLoginOrPassword
 
 router = APIRouter(
     prefix="/auth",

@@ -1,6 +1,6 @@
 from sqlalchemy import Column, Integer, String, Date
 
-from zimaApp.database import Base
+from .database import Base
 
 
 class WellClassifier(Base):
