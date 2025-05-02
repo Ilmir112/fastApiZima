@@ -3,11 +3,11 @@ from datetime import datetime
 from fastapi import Request, Depends
 from jose import jwt, JWTError
 
-from .config import settings
-from .exceptions import TokenExpiredException, TokenAbcentException, IncorrectTokenFormatException, \
+from zimaApp.config import settings
+from zimaApp.exceptions import TokenExpiredException, TokenAbcentException, IncorrectTokenFormatException, \
     UserIsNotPresentException
-from .users.dao import UsersDAO
-from .users.models import Users
+from zimaApp.users.dao import UsersDAO
+from zimaApp.users.models import Users
 
 
 def get_token(request: Request):

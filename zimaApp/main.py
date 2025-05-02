@@ -4,10 +4,11 @@ from typing import Optional
 from datetime import date
 from pydantic import BaseModel, json
 
-from well_classifier.router import router as classifier_router
+from zimaApp.well_classifier.router import router as classifier_router
 app = FastAPI()
 
 app.include_router(classifier_router)
+
 
 class WellsSearchArgs:
     def __init__(

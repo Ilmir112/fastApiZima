@@ -3,8 +3,8 @@ from jose import jwt
 
 from passlib.context import CryptContext
 
-from .users.dao import UsersDAO
-from .config import settings
+from zimaApp.users.dao import UsersDAO
+from zimaApp.config import settings
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
