@@ -1,5 +1,5 @@
 from sqlalchemy import Column, Integer, String, JSON, DateTime, VARCHAR
-from .database import Base
+from zimaApp.database import Base
 
 
 class Users(Base):

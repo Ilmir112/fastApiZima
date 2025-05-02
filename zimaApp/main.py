@@ -5,9 +5,14 @@ from datetime import date
 from pydantic import BaseModel, json
 
 from zimaApp.well_classifier.router import router as classifier_router
+from zimaApp.users.router import router as user_router
+from zimaApp.well_silencing.router import router as silencing_router
+
 app = FastAPI()
 
 app.include_router(classifier_router)
+app.include_router(silencing_router)
+app.include_router(user_router)
 
 
 class WellsSearchArgs:
