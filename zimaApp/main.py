@@ -14,17 +14,12 @@ app = FastAPI()
 app.include_router(classifier_router)
 app.include_router(silencing_router)
 app.include_router(wells_repair_router)
-# app.include_router(user_router)
-
-
-
-
+app.include_router(user_router)
 
 
 class SWellClassifier(BaseModel):
     well_number: str
     well_area: str
-
 
 
 # @app.get("/get_well_classifier/{name_id}")

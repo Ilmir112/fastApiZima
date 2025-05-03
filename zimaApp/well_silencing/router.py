@@ -1,5 +1,4 @@
-from fastapi import APIRouter, Depends
-
+from fastapi import APIRouter, Depends, Query
 
 from zimaApp.well_silencing.dao import WellSilencingDAO
 from zimaApp.well_silencing.schemas import SWellsSilencing
@@ -46,12 +45,18 @@ async def delete_well_silencing_for_region(wells_data: SWellsSilencing):
             )
 
 
+
 @router.get("/find_well_silencing/")
-async def find_wells_in_silencing_for_region(wells_data: SWellsSilencing):
-    result = await WellSilencingDAO.find_one_or_none(well_number=wells_data.well_number,
-                                                     deposit_area=wells_data.deposit_area)
-    if result:
-        return result
+async def find_wells_in_silencing_for_region(
+    well_number: str = Query(None),
+    deposit_area: str = Query(None)
+):
+    result = await WellSilencingDAO.find_one_or_none(
+        well_number=well_number,
+        deposit_area=deposit_area
+    )
+    return result
+
 
 
 
