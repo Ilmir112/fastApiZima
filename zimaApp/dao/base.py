@@ -1,7 +1,7 @@
 from zimaApp.database import async_session_maker
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from sqlalchemy import insert
+from sqlalchemy import insert, delete, and_
 
 
 class BaseDAO:
@@ -27,6 +27,15 @@ class BaseDAO:
             query = select(cls.model).filter_by(**filter_by)  # Используем модель для выборки
             result = await session.execute(query)
             return result.scalar_one_or_none()
+
+    @classmethod
+    async def delete_item(cls, **filter_by):
+        async with async_session_maker() as session:
+            query = select(cls.model).filter_by(**filter_by)  # Используем модель для выборки
+            result = await session.execute(query)
+            instance = result.scalar_one_or_none()
+            return await session.execute(delete(cls.model).where(cls.model.region == instance.region))
+
 
     @classmethod
     async def add_data(cls, **data):

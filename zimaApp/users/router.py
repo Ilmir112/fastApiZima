@@ -51,7 +51,7 @@ async def logout_user(response: Response):
 
 @router.get('/me')
 async def read_users_me(current_user: Users = Depends(get_current_user)):
-    print(f"аоопр {current_user.login_user}")
+
     return current_user
 
 

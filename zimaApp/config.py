@@ -23,6 +23,7 @@ class Settings(BaseSettings):
 
     class Config:
         env_file = 'zimaApp/.env'
+        # env_file = '.env'
 
 
 

@@ -14,6 +14,7 @@ from zimaApp.config import settings
 from zimaApp.well_classifier.models import WellClassifier
 from zimaApp.well_silencing.models import WellSilencing
 from zimaApp.users.models import Users
+from zimaApp.wells_repair_data.models import WellsRepair
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

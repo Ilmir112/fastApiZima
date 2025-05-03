@@ -7,44 +7,32 @@ from pydantic import BaseModel, json
 from zimaApp.well_classifier.router import router as classifier_router
 from zimaApp.users.router import router as user_router
 from zimaApp.well_silencing.router import router as silencing_router
+from zimaApp.wells_repair_data.router import router as wells_repair_router
 
 app = FastAPI()
 
 app.include_router(classifier_router)
 app.include_router(silencing_router)
-app.include_router(user_router)
+app.include_router(wells_repair_router)
+# app.include_router(user_router)
 
 
-class WellsSearchArgs:
-    def __init__(
-            self,
-            well_number: str,
-            well_area: str,
-            date_today: date
-    ):
-        self.well_number = well_number
-        self.well_area = well_area
-        self.date_today = date_today
+
+
 
 
 class SWellClassifier(BaseModel):
     well_number: str
     well_area: str
-    date_today: date
 
 
-@app.get("/get_well_classifier/{name_id}")
-async def get_well_classifier(
-        search_args: WellsSearchArgs = Depends()
-):
 
-    wells = [
-        {
-        "well_number": "873",
-        "well_area": "Игровская",
-        "date_today" : "2025-04-29"
-        }]
-    return search_args
+# @app.get("/get_well_classifier/{name_id}")
+# async def get_well_classifier(
+#         search_args: WellsSearchArgs = Depends()
+# ):
+#
+#     return search_args
 
 
 # class SRepairData(BaseModel):
