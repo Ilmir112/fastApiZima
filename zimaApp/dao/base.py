@@ -36,10 +36,33 @@ class BaseDAO:
             instance = result.scalar_one_or_none()
             return await session.execute(delete(cls.model).where(cls.model.region == instance.region))
 
+    @classmethod
+    async def delete_item_all_by_filter(cls, **filter_by):
+        async with async_session_maker() as session:
+            query = select(cls.model).filter_by(**filter_by)
+            result = await session.execute(query)
+            instances = result.scalars().all()  # Получить все совпадающие записи
+
+            if not instances:
+                return None  # Или что-то другое, если записей не найдено
+
+            # Удаляем все найденные записи
+            for instance in instances:
+                await session.execute(delete(cls.model).where(cls.model.id == instance.id))
+            await session.commit()
+            return {"deleted": len(instances)}
+
 
     @classmethod
     async def add_data(cls, **data):
         async with async_session_maker() as session:  # Создаем экземпляр сессии
             query = insert(cls.model).values(**data)  # Используем модель для выборки
             await session.execute(query)
+            await session.commit()
+
+    @classmethod
+    async def add_data_all(cls, data_list):
+        async with async_session_maker() as session:  # Создаем экземпляр сессии
+            query = insert(cls.model)# Используем модель для выборки
+            await session.execute(query, data_list)
             await session.commit()
