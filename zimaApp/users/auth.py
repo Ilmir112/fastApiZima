@@ -1,10 +1,10 @@
 from datetime import datetime, timedelta
-from jose import jwt
 
+from jose import jwt
 from passlib.context import CryptContext
 
-from zimaApp.users.dao import UsersDAO
 from zimaApp.config import settings
+from zimaApp.users.dao import UsersDAO
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -29,7 +29,9 @@ def create_access_token(data: dict) -> str:
 
 async def authenticate_user(login_user: str, password: str):
     user = await UsersDAO.find_one_or_none(login_user=login_user)
-    if not user and not verify_password(password, user.password):
-        return None
-    print(f'текущий {user}')
+
+    if user:
+        if not verify_password(password, user.password):
+            return None
+
     return user

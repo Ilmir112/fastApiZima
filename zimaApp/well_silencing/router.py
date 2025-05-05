@@ -1,9 +1,11 @@
 from fastapi import APIRouter, Depends, Query, Response
-
+from fastapi_cache.decorator import cache
 
 from zimaApp.well_silencing.dao import WellSilencingDAO
-from zimaApp.well_silencing.schemas import SWellsSilencing, SWellsSilencingCreate, SWellsSilencingRegion, \
-    SWellsSilencingBatch
+from zimaApp.well_silencing.schemas import (SWellsSilencing,
+                                            SWellsSilencingBatch,
+                                            SWellsSilencingCreate,
+                                            SWellsSilencingRegion)
 
 
 class WellsSearchArgs:
@@ -24,7 +26,8 @@ router = APIRouter(
 )
 
 
-@router.get("/find_well_silencing_all/")
+@router.post("/find_well_silencing_all/")
+# @cache(expire=20)
 async def find_well_silencing_all(wells_data: SWellsSilencingRegion):
     result = await WellSilencingDAO.find_all(region=wells_data.region)
     return result

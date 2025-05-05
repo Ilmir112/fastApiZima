@@ -1,4 +1,5 @@
-from sqlalchemy import Column, Integer, String, JSON, DateTime, VARCHAR
+from sqlalchemy import JSON, VARCHAR, Column, DateTime, Integer, String
+
 from zimaApp.database import Base
 
 

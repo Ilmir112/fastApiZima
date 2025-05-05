@@ -1,11 +1,12 @@
 from datetime import datetime
 
-from fastapi import Request, Depends
-from jose import jwt, JWTError
+from fastapi import Depends, Request
+from jose import JWTError, jwt
 
 from zimaApp.config import settings
-from zimaApp.exceptions import TokenExpiredException, TokenAbcentException, IncorrectTokenFormatException, \
-    UserIsNotPresentException
+from zimaApp.exceptions import (IncorrectTokenFormatException,
+                                TokenAbcentException, TokenExpiredException,
+                                UserIsNotPresentException)
 from zimaApp.users.dao import UsersDAO
 from zimaApp.users.models import Users
 
@@ -31,7 +32,6 @@ async def get_current_user(token: str = Depends(get_token)):
     user = await UsersDAO.find_by_id(int(user_id))
     if not user:
         raise UserIsNotPresentException
-    print(f' пользователь {user}')
     return user
 
 

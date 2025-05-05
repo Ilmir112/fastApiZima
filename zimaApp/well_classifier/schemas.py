@@ -1,4 +1,5 @@
 from datetime import date
+
 from pydantic import BaseModel, conlist
 
 
@@ -24,6 +25,7 @@ class SWellClassifier(BaseModel):
 
     class Config:
         from_attributes = True
+
 
 class SWellsClassifierCreate(BaseModel):
     cdng: str

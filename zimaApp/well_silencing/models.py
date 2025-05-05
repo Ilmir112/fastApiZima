@@ -1,9 +1,10 @@
-from sqlalchemy import Column, Integer, String, Date
+from sqlalchemy import Column, Date, Integer, String
+
 from zimaApp.database import Base
 
 
 class WellSilencing(Base):
-    __tablename__ = 'wells_silencing'
+    __tablename__ = "wells_silencing"
 
     id = Column(Integer, primary_key=True)
     well_number = Column(String, nullable=False)

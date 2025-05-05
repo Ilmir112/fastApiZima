@@ -1,19 +1,17 @@
 import sys
-from os.path import abspath, dirname
 from logging.config import fileConfig
-
-from sqlalchemy import engine_from_config
-from sqlalchemy import pool
+from os.path import abspath, dirname
 
 from alembic import context
+from sqlalchemy import engine_from_config, pool
 
 sys.path.insert(0, dirname(dirname(dirname(abspath(__file__)))))
 
-from zimaApp.database import Base
 from zimaApp.config import settings
+from zimaApp.database import Base
+from zimaApp.users.models import Users
 from zimaApp.well_classifier.models import WellClassifier
 from zimaApp.well_silencing.models import WellSilencing
-from zimaApp.users.models import Users
 from zimaApp.wells_repair_data.models import WellsRepair
 
 # this is the Alembic Config object, which provides

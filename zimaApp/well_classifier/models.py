@@ -1,10 +1,10 @@
-from sqlalchemy import Column, Integer, String, Date
+from sqlalchemy import Column, Date, Integer, String
 
 from zimaApp.database import Base
 
 
 class WellClassifier(Base):
-    __tablename__ = 'well_classifier'
+    __tablename__ = "well_classifier"
 
     id = Column(Integer, primary_key=True)
     cdng = Column(String, nullable=False)

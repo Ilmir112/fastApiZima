@@ -1,0 +1,10 @@
+[tool.black]
+line-length = 88
+target-version =['py39']
+
+[tool.autoflake]
+chekk_diff = true
+import = ["sqlalchemy", "zimaApp"]
+
+[tool.pyright]
+include = ["zimaApp"]

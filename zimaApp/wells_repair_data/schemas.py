@@ -1,6 +1,7 @@
-from datetime import date
-from pydantic import BaseModel
 import json
+from datetime import date
+
+from pydantic import BaseModel
 
 
 class SWellsRepair(BaseModel):
@@ -27,4 +28,3 @@ class SWellsRepair(BaseModel):
     class Config:
         from_attributes = True
         arbitrary_types_allowed = True
-
