@@ -1,0 +1,26 @@
+[
+        {
+      "login_user": "Ilmir112",
+      "name_user": "string",
+      "surname_user": "string",
+      "second_name": "string",
+      "position_id": "string",
+      "costumer": "string",
+      "contractor": "string",
+      "ctcrs": "string",
+      "password": "$2b$12$qIElWJGnCEk4zCDu2GCkQe0p7MLpKW9OsfUPIOzTAlDuHYplI/63a",
+      "access_level": "string"
+    },
+    {
+      "login_user": "string2",
+      "name_user": "string2",
+      "surname_user": "string2",
+      "second_name": "string2",
+      "position_id": "string2",
+      "costumer": "string2",
+      "contractor": "string2",
+      "ctcrs": "string2",
+      "password": "$2b$12$qIElWJGnCEk4zCDu2GCkQe0p7MLpKW9OsfUPIOzTAlDuHYplI/63a",
+      "access_level": "string2"
+    }
+]

@@ -1,9 +1,12 @@
 from fastapi import APIRouter, Depends
 
 from zimaApp.well_classifier.dao import WellClassifierDAO
-from zimaApp.well_classifier.schemas import (SWellsClassifierBatch,
-                                             SWellsClassifierRegion)
+from zimaApp.well_classifier.schemas import (
+    SWellsClassifierBatch,
+    SWellsClassifierRegion,
+)
 from zimaApp.well_silencing.router import WellsSearchArgs
+from fastapi_versioning import version
 
 router = APIRouter(
     prefix="/wells_classifier",
@@ -11,37 +14,20 @@ router = APIRouter(
 )
 
 
-@router.get("/find_well_classifier_all/")
+@router.post("/find_well_classifier_all/")
+@version(1)
 async def find_well_classifier_all(wells_data: SWellsClassifierRegion):
     result = await WellClassifierDAO.find_all(region=wells_data.region)
     return result
 
 
 @router.post("/add_data_well_classifier")
+@version(1)
 async def add_data_well_classifier(wells_data: SWellsClassifierBatch):
     results = []
     for item in wells_data.data:
-
         try:
-            result = await WellClassifierDAO.add_data(
-                well_number=item.well_number,
-                deposit_area=item.deposit_area,
-                oilfield=item.oilfield,
-                cdng=item.cdng,
-                category_pressure=item.category_pressure,
-                pressure_ppl=item.pressure_ppl,
-                pressure_gst=item.pressure_gst,
-                date_measurement=item.date_measurement,
-                category_h2s=item.category_h2s,
-                h2s_pr=item.h2s_pr,
-                h2s_mg_l=item.h2s_mg_l,
-                h2s_mg_m=item.h2s_mg_m,
-                category_gf=item.category_gf,
-                gas_factor=item.gas_factor,
-                today=item.today,
-                region=item.region,
-                costumer=item.costumer,
-            )
+            result = await WellClassifierDAO.add_data(**item.dict())
             results.append({"status": "success", "data": result})
         except Exception as e:
             results.append({"status": "error", "error": str(e), "item": item})
@@ -49,6 +35,7 @@ async def add_data_well_classifier(wells_data: SWellsClassifierBatch):
 
 
 @router.post("/delete_well_classifier")
+@version(1)
 async def delete_well_silencing_for_region(wells_data: SWellsClassifierRegion):
     data = await WellClassifierDAO.find_all(region=wells_data.region)
     if data:
@@ -58,6 +45,7 @@ async def delete_well_silencing_for_region(wells_data: SWellsClassifierRegion):
 
 
 @router.get("/find_well_classifier/")
+@version(1)
 async def find_wells_in_silencing_for_region(wells_data: WellsSearchArgs = Depends()):
     result = await WellClassifierDAO.find_one_or_none(
         well_number=wells_data.well_number, deposit_area=wells_data.well_area

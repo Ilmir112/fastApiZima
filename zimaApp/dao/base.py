@@ -17,7 +17,7 @@ class BaseDAO:
             if limit is not None:
                 query = query.limit(limit)  # Добавляем лимит, если он задан
             result = await session.execute(query)
-            return result.all()
+            return result.scalars().all()
 
     @classmethod
     async def find_by_id(cls, model_id: int):

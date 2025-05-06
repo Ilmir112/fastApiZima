@@ -1,0 +1,23 @@
+[
+  {
+    "id": 0,
+    "well_number": "string",
+    "area_well": "string",
+    "well_oilfield": "string",
+    "cdng": "string",
+    "type_kr": "string",
+    "work_plan": "string",
+    "contractor": "string",
+    "geolog": "string",
+    "date_create": "2025-05-06",
+    "data_well": "string",
+    "costumer": "string",
+    "excel_json": "string",
+    "data_change_paragraph": "string",
+    "category_dict": "string",
+    "appointment": "string",
+    "inventory_number": "string",
+    "wellhead_fittings": "string",
+    "angle_data": "string"
+  }
+]

@@ -4,7 +4,7 @@ from zimaApp.database import Base
 
 
 class WellsRepair(Base):
-    __tablename__ = 'wells_repairs'
+    __tablename__ = "wells_repairs"
 
     id = Column(Integer, primary_key=True)
     well_number = Column(String, nullable=False)
@@ -25,7 +25,3 @@ class WellsRepair(Base):
     inventory_number = Column(String)
     wellhead_fittings = Column(String)
     angle_data = Column(JSON)
-
-
-
-

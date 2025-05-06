@@ -4,6 +4,3 @@ from zimaApp.well_classifier.models import WellClassifier
 
 class WellClassifierDAO(BaseDAO):
     model = WellClassifier
-
-
-

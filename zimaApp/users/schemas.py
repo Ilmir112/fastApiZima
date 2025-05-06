@@ -17,4 +17,3 @@ class SUsersRegister(BaseModel):
 class SUsersAuth(BaseModel):
     login_user: str
     password: str
-

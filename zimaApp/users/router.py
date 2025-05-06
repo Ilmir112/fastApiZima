@@ -2,22 +2,19 @@ from fastapi import APIRouter, Depends, HTTPException, Response, status
 from fastapi_cache.decorator import cache
 
 from zimaApp.exceptions import IncorectLoginOrPassword, UserAlreadyExist
-from zimaApp.users.auth import (authenticate_user, create_access_token,
-                                get_password_hash)
+from zimaApp.users.auth import authenticate_user, create_access_token, get_password_hash
+
+from fastapi_versioning import version
 from zimaApp.users.dao import UsersDAO
 from zimaApp.users.dependencies import get_current_admin_user, get_current_user
 from zimaApp.users.models import Users
 from zimaApp.users.schemas import SUsersAuth, SUsersRegister
 
-router = APIRouter(
-    prefix="/auth",
-    tags=["Auth & пользователи"]
-)
-
+router = APIRouter(prefix="/auth", tags=["Auth & пользователи"])
 
 
 @router.post("/register")
-
+@version(1)
 async def register_user(user_data: SUsersRegister):
     existing_user = await UsersDAO.find_one_or_none(login_user=user_data.login_user)
     if existing_user:
@@ -33,31 +30,34 @@ async def register_user(user_data: SUsersRegister):
         contractor=user_data.contractor,
         ctcrs=user_data.ctcrs,
         password=hashed_password,
-        access_level=user_data.access_level
+        access_level=user_data.access_level,
     )
 
 
 @router.post("/login")
+@version(1)
 async def login_user(response: Response, user_data: SUsersAuth):
     user = await authenticate_user(user_data.login_user, user_data.password)
     if not user:
         raise IncorectLoginOrPassword
     access_token = create_access_token({"sub": str(user.id)})
-    response.set_cookie('summary_information_access_token', access_token, httponly=True)
+    response.set_cookie("summary_information_access_token", access_token, httponly=True)
     return {"access_token": access_token}
 
 
 @router.post("/logout")
+@version(1)
 async def logout_user(response: Response):
-    response.delete_cookie('summary_information_access_token')
+    response.delete_cookie("summary_information_access_token")
 
 
-@router.get('/me')
+@router.get("/me")
+@version(1)
 async def read_users_me(current_user: Users = Depends(get_current_user)):
-
     return current_user
 
 
-@router.get('/all')
+@router.get("/all")
+@version(1)
 async def read_users_all(current_user: Users = Depends(get_current_admin_user)):
     return UsersDAO.find_all()

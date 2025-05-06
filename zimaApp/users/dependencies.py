@@ -4,9 +4,12 @@ from fastapi import Depends, Request
 from jose import JWTError, jwt
 
 from zimaApp.config import settings
-from zimaApp.exceptions import (IncorrectTokenFormatException,
-                                TokenAbcentException, TokenExpiredException,
-                                UserIsNotPresentException)
+from zimaApp.exceptions import (
+    IncorrectTokenFormatException,
+    TokenAbcentException,
+    TokenExpiredException,
+    UserIsNotPresentException,
+)
 from zimaApp.users.dao import UsersDAO
 from zimaApp.users.models import Users
 
@@ -36,7 +39,7 @@ async def get_current_user(token: str = Depends(get_token)):
 
 
 async def get_current_admin_user(current_user: Users = Depends(get_current_user)):
-    if current_user.access_level not in ['creator', 'admin']:
+    if current_user.access_level not in ["creator", "admin"]:
 
         raise UserIsNotPresentException
     return current_user

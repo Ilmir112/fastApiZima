@@ -4,7 +4,7 @@ from zimaApp.database import Base
 
 
 class Users(Base):
-    __tablename__ = 'users'
+    __tablename__ = "users"
 
     id = Column(Integer, primary_key=True, nullable=False)
     login_user = Column(String, nullable=False)
@@ -17,5 +17,3 @@ class Users(Base):
     ctcrs = Column(String, nullable=False)
     password = Column(String, nullable=False)
     access_level = Column(String, nullable=False)
-
-

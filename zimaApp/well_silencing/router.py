@@ -1,21 +1,22 @@
 from fastapi import APIRouter, Depends, Query, Response
 from fastapi_cache.decorator import cache
+from starlette.responses import JSONResponse
 
 from zimaApp.well_silencing.dao import WellSilencingDAO
-from zimaApp.well_silencing.schemas import (SWellsSilencing,
-                                            SWellsSilencingBatch,
-                                            SWellsSilencingCreate,
-                                            SWellsSilencingRegion)
+from zimaApp.well_silencing.schemas import (
+    SWellsSilencing,
+    SWellsSilencingBatch,
+    SWellsSilencingCreate,
+    SWellsSilencingRegion,
+)
+from fastapi_versioning import VersionedFastAPI, version
 
 
 class WellsSearchArgs:
-    def __init__(
-            self,
-            well_number: str,
-            well_area: str
-    ):
+    def __init__(self, well_number: str, well_area: str):
         self.well_number = well_number
         self.well_area = well_area
+
 
 # Обновляем модель для приема списка
 
@@ -27,13 +28,24 @@ router = APIRouter(
 
 
 @router.post("/find_well_silencing_all/")
+@version(1)
 # @cache(expire=20)
 async def find_well_silencing_all(wells_data: SWellsSilencingRegion):
-    result = await WellSilencingDAO.find_all(region=wells_data.region)
-    return result
+    results = await WellSilencingDAO.find_all(region=wells_data.region)
+    if results:
+        data = []
+        for r in results:
+            data.append({
+                "well_number": r.well_number,
+                "deposit_area": r.deposit_area,
+                "region": r.region,
+                "today": r.today,
+            })
+        return results
 
 
 @router.post("/add_data_well_silencing")
+@version(1)
 async def add_data_well_silencing(wells_data: SWellsSilencingBatch):
     results = []
     for item in wells_data.data:
@@ -44,7 +56,7 @@ async def add_data_well_silencing(wells_data: SWellsSilencingBatch):
                 deposit_area=item.deposit_area,
                 today=item.today,
                 region=item.region,
-                costumer=item.costumer
+                costumer=item.costumer,
             )
             results.append({"status": "success", "data": result})
         except Exception as e:
@@ -53,25 +65,19 @@ async def add_data_well_silencing(wells_data: SWellsSilencingBatch):
 
 
 @router.post("/delete_well_silencing")
+@version(1)
 async def delete_well_silencing_for_region(wells_data: SWellsSilencingRegion):
     data = await WellSilencingDAO.find_all(region=wells_data.region)
     if data:
         return await WellSilencingDAO.delete_item_all_by_filter(
             region=wells_data.region
-            )
-
+        )
 
 
 @router.get("/find_well_silencing/")
-async def find_wells_in_silencing_for_region(wells_data: WellsSearchArgs = Depends()
-):
+@version(1)
+async def find_wells_in_silencing_for_region(wells_data: WellsSearchArgs = Depends()):
     result = await WellSilencingDAO.find_one_or_none(
-        well_number=wells_data.well_number,
-        deposit_area=wells_data.well_area
+        well_number=wells_data.well_number, deposit_area=wells_data.well_area
     )
     return result
-
-
-
-
-

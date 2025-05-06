@@ -1,0 +1,9 @@
+[
+    {
+      "well_number": "string",
+      "deposit_area": "string",
+      "today": "2025-05-06",
+      "region": "string",
+      "costumer": "string"
+    }
+  ]
