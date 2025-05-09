@@ -36,5 +36,6 @@ class WellsData(Base):
     date_commissioning = Column(Date)
     date_drilling_run = Column(Date)
     date_drilling_finish = Column(Date)
+    leakiness = Column(JSON),
     geolog = Column(String)
     date_create = Column(Date)

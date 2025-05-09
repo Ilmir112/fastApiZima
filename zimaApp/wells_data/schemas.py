@@ -32,39 +32,40 @@ class ColumnProduction(ColumnInfo):
 
 class SWellsData(BaseModel):
     id: int
-    well_number: constr(min_length=1, max_length=10)
-    area_well: constr(min_length=1, max_length=50)
-    well_oilfield: constr(min_length=1, max_length=50)
-    costumer: str
+    well_number: str
+    area_well: str
+    well_oilfield: str
     cdng: str
-    inventory_number: str
-    wellhead_fittings: str
-    appointment: str
-    angle_data: Dict[str, Any]
-    column_direction: Union[False, ColumnDirection]
-    column_conductor: Union[False, ColumnConductor]
-    column_production: Union[False, ColumnProduction]
-    column_additional: Union[False, ColumnAdditional]
-    bottom_hole_drill: Optional[confloat(ge=10, le=7000)]
-    bottom_hole_artificial: Optional[confloat(ge=10, le=7000)]
-    max_angle: Optional[confloat(ge=0, le=102)]
-    distance_from_rotor_table: Optional[confloat(ge=0, le=12)]
-    max_angle_depth: float
-    max_expected_pressure: Optional[confloat(ge=10, le=151)]
-    max_admissible_pressure: Optional[confloat(ge=10, le=151)]
-    rotor_altitude: float
-    perforation: Dict[str, Any]
-    equipment: Dict[str, Any]
-    nkt_data: Dict[str, Any]
-    sucker_pod: Dict[str, Any]
-    diameter_doloto_ek: float
-    last_pressure_date: date
-    date_commissioning: date
-    date_drilling_run: date
-    date_drilling_finish: date
+    costumer: Optional[str]
+    inventory_number: Optional[str]
+    wellhead_fittings: Optional[str]
+    appointment: Optional[str]
+    angle_data: Optional[Dict]
+    column_direction: Optional[Dict]
+    column_conductor: Optional[Dict]
+    column_production: Optional[Dict]
+    column_additional: Optional[Dict]
+    bottom_hole_drill: Optional[Union[float, int]] = None
+    bottom_hole_artificial: Optional[Union[float, int]] = None
+    max_angle: Optional[Union[float, int]] = None
+    distance_from_rotor_table: Optional[Union[float, int]] = None
+    max_angle_depth: Optional[Union[float, int]] = None
+    max_expected_pressure: Optional[Union[float, int]] = None
+    max_admissible_pressure: Optional[Union[float, int]] = None
+    rotor_altitude: Optional[Union[float, int]] = None
+    perforation: Optional[Dict]
+    equipment: Optional[Dict]
+    nkt_data: Optional[Dict]
+    sucker_pod: Optional[Dict]
+    diameter_doloto_ek: Optional[Union[float, int]] = None
+    last_pressure_date: Optional[date]
+    date_commissioning: Optional[date]
+    date_drilling_run: Optional[date]
+    date_drilling_finish: Optional[date]
+    leakiness: Optional[Dict]
+    geolog: Optional[str]
+    date_create: Optional[date]
 
-    geolog: str
-    date_create: date
 
     class Config:
         from_attributes = True
@@ -74,7 +75,7 @@ class SWellsData(BaseModel):
     @property
     def column_direction(self) -> Optional[ColumnDirection]:
         if self._column_direction:
-            return ColumnDirection.parse_obj(self._column_direction)
+            return ColumnDirection.model_validate(self._column_direction)
         return None
 
     @column_direction.setter
@@ -87,7 +88,7 @@ class SWellsData(BaseModel):
     @property
     def column_conductor(self) -> Optional[ColumnConductor]:
         if self._column_conductor:
-            return ColumnConductor.parse_obj(self._column_conductor)
+            return ColumnConductor.model_validate(self._column_conductor)
         return None
 
     @column_conductor.setter
@@ -100,7 +101,7 @@ class SWellsData(BaseModel):
     @property
     def column_production(self) -> Optional[ColumnProduction]:
         if self._column_production:
-            return ColumnProduction.parse_obj(self._column_production)
+            return ColumnProduction.model_validate(self._column_production)
         return None
 
     @column_production.setter

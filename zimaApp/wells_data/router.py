@@ -1,4 +1,5 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
+from pydantic import ValidationError
 
 from zimaApp.well_silencing.router import WellsSearchArgs
 from zimaApp.wells_data.dao import WellsDatasDAO
@@ -24,7 +25,7 @@ async def find_wells_in_silencing_for_region(wells_data: WellsSearchArgs = Depen
 @router.post("/add_wells_data")
 @version(1)
 async def add_wells_data(well_data: SWellsData):
-    print
+
     wells = WellsDatasDAO.add_data(
         well_number=well_data.well_number,
         area_well=well_data.area_well,
@@ -35,11 +36,10 @@ async def add_wells_data(well_data: SWellsData):
         wellhead_fittings=well_data.wellhead_fittings,
         appointment=well_data.appointment,
         angle_data=well_data.angle_data,
-        column_direction=well_data.column_direction.dict(),
-        column_conductor=well_data.column_conductor.dict(),
-
-        column_production=well_data.column_production.dict(),
-        column_additional=well_data.column_additional.dict(),
+        column_direction=well_data.column_direction,
+        column_conductor=well_data.column_conductor,
+        column_production=well_data.column_production,
+        column_additional=well_data.column_additional,
         bottom_hole_drill=well_data.bottom_hole_drill,
         bottom_hole_artificial=well_data.bottom_hole_artificial,
         max_angle=well_data.max_angle,
@@ -57,6 +57,7 @@ async def add_wells_data(well_data: SWellsData):
         date_commissioning=well_data.date_commissioning,
         date_drilling_run=well_data.date_drilling_run,
         date_drilling_finish=well_data.date_drilling_finish,
+        leakiness=well_data.leakiness,
         geolog=well_data.geolog,
         date_create=well_data.date_create
     )

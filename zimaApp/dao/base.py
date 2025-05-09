@@ -75,6 +75,8 @@ class BaseDAO:
             await session.commit()
 
 
+
+
     @classmethod
     async def add_data_all(cls, data_list):
         async with async_session_maker() as session:  # Создаем экземпляр сессии
