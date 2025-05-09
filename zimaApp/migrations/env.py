@@ -10,9 +10,11 @@ sys.path.insert(0, dirname(dirname(dirname(abspath(__file__)))))
 from zimaApp.config import settings
 from zimaApp.database import Base
 from zimaApp.users.models import Users
+from zimaApp.wells_repair_data.models import WellsRepair
+from zimaApp.wells_data.models import WellsData
 from zimaApp.well_classifier.models import WellClassifier
 from zimaApp.well_silencing.models import WellSilencing
-from zimaApp.wells_repair_data.models import WellsRepair
+
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

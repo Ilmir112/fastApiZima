@@ -17,7 +17,7 @@ from httpx import AsyncClient
             "ЦТРКС",
             "256",
             "GOD",
-            409,
+            200,
         ),
         (
             "Ilmir112",

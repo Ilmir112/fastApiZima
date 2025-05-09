@@ -28,13 +28,16 @@ from zimaApp.users.router import router as user_router
 from zimaApp.well_classifier.router import router as classifier_router
 from zimaApp.well_silencing.router import router as silencing_router
 from zimaApp.wells_repair_data.router import router as wells_repair_router
+from zimaApp.wells_data.router import router as wells_data_router
 
 app = FastAPI(title="Zima", version="0.1.0", root_path="/zimaApp")
 
 app.include_router(user_router)
+app.include_router(wells_data_router)
 app.include_router(wells_repair_router)
 app.include_router(classifier_router)
 app.include_router(silencing_router)
+
 
 # Подключение CORS, чтобы запросы к API могли приходить из браузера
 origins = [

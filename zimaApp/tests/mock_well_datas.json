@@ -1,0 +1,270 @@
+[
+  {
+    "id": 0,
+    "well_number": "1225",
+    "area_well": "Туймазинская",
+    "well_oilfield": "Туймазинское",
+    "costumer": "БНЛ",
+    "cdng": "ТЦНГ 01",
+    "inventory_number": "12356",
+    "wellhead_fittings": "АУШГН-146",
+    "appointment": "нефтяная",
+    "angle_data": {
+      "additionalProp1": {}
+    },
+    "column_direction": {
+      "diameter": 299,
+      "wall_thickness": 7,
+      "head": 0,
+      "shoe": 300,
+      "level_cement": 0
+    },
+    "column_conductor": {
+      "diameter": 210,
+      "wall_thickness": 10,
+      "head": 0,
+      "shoe": 500,
+      "level_cement": 0
+    },
+    "column_production": {
+      "diameter": 146,
+      "wall_thickness": 7.7,
+      "head": 0,
+      "shoe": 1500,
+      "level_cement": 300
+    },
+    "column_additional": {
+      "diameter": 114,
+      "wall_thickness": 7,
+      "head": 1000,
+      "shoe": 1600,
+      "level_cement": 1000
+    },
+    "bottom_hole_drill": 1500,
+    "bottom_hole_artificial": 1500,
+    "max_angle": 25,
+    "distance_from_rotor_table": 3.6,
+    "max_angle_depth": 1000,
+    "max_expected_pressure": 100,
+    "max_admissible_pressure": 100,
+    "rotor_altitude": 3.6,
+    "perforation": {
+      "спец.\nотверстия": {
+        "вертикаль": [
+          1140.79
+        ],
+        "отрайбировано": false,
+        "Прошаблонировано": false,
+        "интервал": [
+          [
+            1257.0,
+            1258.0
+          ]
+        ],
+        "вскрытие": [
+          "1989-08-15T00:00:00"
+        ],
+        "отключение": true,
+        "давление": [
+          0,
+          0,
+          0
+        ],
+        "замер": [
+          0
+        ],
+        "рабочая жидкость": [
+          0.01,
+          1.01,
+          1.01
+        ],
+        "БСУ": 89,
+        "кровля": 1257.0,
+        "подошва": 1258.0
+      },
+      "C1rd-bb": {
+        "вертикаль": [
+          1125.3,
+          1125.3,
+          1128.84,
+          1128.84
+        ],
+        "отрайбировано": false,
+        "Прошаблонировано": false,
+        "интервал": [
+          [
+            1241.2,
+            1243.6
+          ],
+          [
+            1244.8,
+            1246.8
+          ]
+        ],
+        "вскрытие": [
+          "1983-02-10T00:00:00",
+          "1989-08-31T00:00:00",
+          "1983-02-10T00:00:00",
+          "1989-08-31T00:00:00"
+        ],
+        "отключение": false,
+        "давление": [
+          120.9,
+          0,
+          0
+        ],
+        "замер": [
+          "2025-04-25T00:00:00",
+          0,
+          0,
+          0
+        ],
+        "рабочая жидкость": [
+          1.21,
+          0.01,
+          0.01,
+          0.01,
+          1.2,
+          1.2
+        ],
+        "БСУ": 106,
+        "кровля": 1241.2,
+        "подошва": 1246.8
+      }
+    },
+    "equipment": {
+      "оборудование": {
+        "before": "0",
+        "after": "0"
+      }
+    },
+    "nkt_data": {
+      "НКТ": {
+        "before": "0",
+        "after": "0"
+      }
+    },
+    "sucker_pod": {
+      "штанги": {
+        "before": "0",
+        "after": "0"
+      }
+    },
+    "diameter_doloto_ek": 145,
+    "last_pressure_date": "2025-05-07",
+    "date_commissioning": "2025-05-07",
+    "date_drilling_run": "2025-05-07",
+    "date_drilling_finish": "2025-05-07",
+    "geolog": "Ilmir112",
+    "date_create": "2025-05-07"
+  },
+  {
+    "well_number": "1490",
+    "area_well": "Кувашская",
+    "well_oilfield": "Манчаровское",
+    "costumer": "ООО Башнефть-Добыча",
+    "cdng": "ЧЦДНГ 01",
+    "inventory_number": "103643",
+    "wellhead_fittings": "AH1-65х210",
+    "appointment": "Нагнетательные",
+    "angle_data": [],
+    "column_direction": {
+      "diameter": 0,
+      "wall_thickness": 0,
+      "head": 0,
+      "shoe": 0,
+      "level_cement": 0
+    },
+    "column_conductor": {
+      "diameter": 245,
+      "wall_thickness": 9,
+      "head": 0,
+      "shoe": 175,
+      "level_cement": 10
+    },
+    "column_production": {
+      "diameter": 146,
+      "wall_thickness": 8,
+      "head": 0.0,
+      "shoe": 1474.0,
+      "level_cement": 0
+    },
+    "column_additional": {
+      "diameter": 0,
+      "wall_thickness": 0,
+      "head": 0.0,
+      "shoe": 0,
+      "level_cement": 0
+    },
+    "bottom_hole_drill": 1474,
+    "bottom_hole_artificial": 1462.7,
+    "max_angle": 32,
+    "distance_from_rotor_table": "15",
+    "max_angle_depth": 590,
+    "max_expected_pressure": 52.3,
+    "max_admissible_pressure": 80,
+    "rotor_altitude": 0,
+    "perforation": {},
+    "equipment": {
+      "ЭЦН": {
+        "тип": {
+          "before": 0,
+          "after": 0
+        },
+        "глубина ": {
+          "before": 0,
+          "after": 0
+        }
+      },
+      "ШГН": {
+        "тип": {
+          "before": 0,
+          "after": 0
+        },
+        "глубина ": {
+          "before": 0,
+          "after": 0
+        }
+      },
+      "пакер": {
+        "тип": {
+          "before": "ПРО-ЯДЖ-0-122-50-350-Т100-КЗ-08",
+          "after": "ПРО-ЯДЖ-0-122-50-350-Т100-КЗ-08"
+        },
+        "глубина ": {
+          "before": 1368.6,
+          "after": 1368.6
+        }
+      },
+      "пакер2": {
+        "тип": {
+          "before": 0,
+          "after": 0
+        },
+        "глубина ": {
+          "before": 0,
+          "after": 0
+        }
+      }
+    },
+    "nkt_data": {
+      "До": {
+        "73": 1368.6
+      },
+      "После": {
+        "73": 1368.6
+      }
+    },
+    "sucker_pod": {
+      "До": {},
+      "После": {}
+    },
+    "diameter_doloto_ek": 0,
+    "last_pressure_date": "16.01.1990",
+    "date_commissioning": "17.06.1985",
+    "date_drilling_run": "1985-05-12",
+    "date_drilling_finish": "1985-05-26",
+    "geolog": "Зуфаров И.М.",
+    "date_create": "2025-05-08"
+  }
+]

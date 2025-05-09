@@ -12,8 +12,26 @@ from zimaApp.config import settings
 from zimaApp.database import Base, async_session_maker, engine
 from zimaApp.well_classifier.models import WellClassifier
 from zimaApp.wells_repair_data.models import WellsRepair
+from zimaApp.wells_data.models import WellsData
 from zimaApp.main import app as fastapi_app
 from zimaApp.users.models import Users
+
+
+def open_mock_json(model: str):
+    with open(f"zimaApp/tests/mock_{model}.json", encoding="utf-8") as file:
+        return json.load(file)
+
+def validate_data_in_timestamp(value_list):
+    value_list_new = []
+    value_dict_new = {}
+    for value_dict in value_list:
+        for key, value in value_dict.items():
+            try:
+                value_dict_new[key] = datetime.strptime(value, "%Y-%m-%d")
+            except:
+                value_dict_new[key] = value
+        value_list_new.append(value_dict_new)
+    return value_list_new
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -27,26 +45,12 @@ async def prepare_database():
         # Добавление всех заданных нами таблиц из БД
         await conn.run_sync(Base.metadata.create_all)
 
-    def open_mock_json(model: str):
-        with open(f"zimaApp/tests/mock_{model}.json", encoding="utf-8") as file:
-            return json.load(file)
 
-    silencing = open_mock_json("silencing")
-    classifier = open_mock_json("classifier")
-    users = open_mock_json("users")
-    repair = open_mock_json("repair")
-
-    for data in classifier:
-        # SQLAlchemy не принимает дату в текстовом формате, поэтому форматируем к datetime
-        data["today"] = datetime.strptime(data["today"], "%Y-%m-%d")
-
-    for data in silencing:
-        # SQLAlchemy не принимает дату в текстовом формате, поэтому форматируем к datetime
-        data["today"] = datetime.strptime(data["today"], "%Y-%m-%d")
-
-    for data in repair:
-        # SQLAlchemy не принимает дату в текстовом формате, поэтому форматируем к datetime
-        data["date_create"] = datetime.strptime(data["date_create"], "%Y-%m-%d")
+    silencing = validate_data_in_timestamp(open_mock_json("silencing"))
+    classifier = validate_data_in_timestamp(open_mock_json("classifier"))
+    users = validate_data_in_timestamp(open_mock_json("users"))
+    repair = validate_data_in_timestamp(open_mock_json("repair"))
+    wells_datas = validate_data_in_timestamp(open_mock_json("well_datas"))
 
     async with async_session_maker() as session:
         for Model, values in [
@@ -54,6 +58,7 @@ async def prepare_database():
             (WellClassifier, classifier),
             (Users, users),
             (WellsRepair, repair),
+            (WellsData, wells_datas),
         ]:
             query = insert(Model).values(values)
             await session.execute(query)

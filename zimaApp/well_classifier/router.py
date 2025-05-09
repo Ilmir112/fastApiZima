@@ -17,8 +17,16 @@ router = APIRouter(
 @router.post("/find_well_classifier_all/")
 @version(1)
 async def find_well_classifier_all(wells_data: SWellsClassifierRegion):
-    result = await WellClassifierDAO.find_all(region=wells_data.region)
-    return result
+    try:
+        results = await WellClassifierDAO.find_all(region=wells_data.region, limit=10)
+        if results:
+            data = []
+            for items in results:
+                data.append(**items)
+        results.append({"status": "success", "data": results})
+    except Exception as e:
+        data.append({"status": "error", "error": str(e), "item": items})
+    return results
 
 
 @router.post("/add_data_well_classifier")
