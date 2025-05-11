@@ -18,19 +18,21 @@ class UserAdmin(ModelView, model=Users):
 
 class SilencingAdmin(ModelView, model=WellSilencing):
     column_list = [c.name for c in WellSilencing.__table__.c]
+    # Добавляем фильтры по нужным колонкам
+    column_searchable_list = ["well_number", "deposit_area"]
+
+
     name = 'Перечень без глушения'
     name_plural = 'Перечень без глушения'
 
-    # Добавляем фильтры по нужным колонкам
-    column_filters = [
-        'well_number',
-        'deposit_area'
-    ]
+
 
 class WellsDataAdmin(ModelView, model=WellsData):
     column_list = [c.name for c in WellsData.__table__.c]
     name = 'Данные по скважине'
     name_plural = 'скважины'
+    column_searchable_list = ["well_number", "deposit_area"]
+
 
     # Добавляем фильтры по нужным колонкам
     column_filters = [
@@ -43,6 +45,7 @@ class ClassifierAdmin(ModelView, model=WellClassifier):
     column_list = [c.name for c in WellClassifier.__table__.c]
     name = 'Классификатор скважин'
     name_plural = 'Классификатор скважин'
+    column_searchable_list = ["well_number", "deposit_area"]
 
     # Добавляем фильтры по нужным колонкам
     column_filters = [

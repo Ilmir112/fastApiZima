@@ -1,11 +1,12 @@
 import logging
+import time
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from datetime import date
 from typing import Optional
 
 import uvicorn
-from fastapi import Depends, FastAPI, Query,  Request
+from fastapi import Depends, FastAPI, Query, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi_cache import FastAPICache
 from fastapi_cache.backends.redis import RedisBackend
@@ -32,8 +33,10 @@ from zimaApp.well_classifier.router import router as classifier_router
 from zimaApp.well_silencing.router import router as silencing_router
 from zimaApp.wells_repair_data.router import router as wells_repair_router
 from zimaApp.wells_data.router import router as wells_data_router
+from zimaApp.logger import logger
 
 app = FastAPI(title="Zima", version="0.1.0", root_path="/zimaApp")
+
 
 # Обработка ошибок валидации
 @app.exception_handler(RequestValidationError)
@@ -48,19 +51,20 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
         },
     )
 
+
 app.include_router(user_router)
 app.include_router(wells_data_router)
 app.include_router(wells_repair_router)
 app.include_router(classifier_router)
 app.include_router(silencing_router)
 
-# Настройка логгера
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)  # Или DEBUG
-handler = logging.StreamHandler()
-formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-handler.setFormatter(formatter)
-logger.addHandler(handler)
+# # Настройка логгера
+# logger = logging.getLogger(__name__)
+# logger.setLevel(logging.INFO)  # Или DEBUG
+# handler = logging.StreamHandler()
+# formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+# handler.setFormatter(formatter)
+# logger.addHandler(handler)
 
 
 # Подключение CORS, чтобы запросы к API могли приходить из браузера
@@ -82,6 +86,7 @@ app.add_middleware(
         "Authorization",
     ],
 )
+
 
 #
 # # Подключение версионирования
@@ -105,6 +110,20 @@ admin.add_view(WellsDataAdmin)
 admin.add_view(SilencingAdmin)
 admin.add_view(ClassifierAdmin)
 admin.add_view(RepairDataAdmin)
+
+
+@app.middleware("http")
+async def add_process_time_header(request: Request, call_next):
+    start_time = time.perf_counter()
+    response = await call_next(request)
+    process_time = time.perf_counter() - start_time
+    # response.headers["X-Process-Time"] = str(process_time)
+    logger.info("request handling time",
+                extra={
+                    "process_time": round(process_time, 4)
+                })
+    return response
+
 
 #
 # @cache()

@@ -1,6 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import ValidationError
+from sqlalchemy.testing.suite.test_reflection import users
 
+from zimaApp.users.dependencies import get_current_user
+from zimaApp.users.models import Users
 from zimaApp.well_silencing.router import WellsSearchArgs
 from zimaApp.wells_data.dao import WellsDatasDAO
 from zimaApp.wells_data.models import WellsData
@@ -15,18 +18,17 @@ router = APIRouter(
 
 @router.get("/find_wells_data")
 @version(1)
-async def find_wells_in_silencing_for_region(wells_data: WellsSearchArgs = Depends()):
+async def find_wells_data(wells_data: WellsSearchArgs = Depends()):
     result = await WellsDatasDAO.find_one_or_none(
-        well_number=wells_data.well_number, deposit_area=wells_data.well_area
+        well_number=wells_data.well_number, area_well=wells_data.well_area
     )
     return result
 
 
 @router.post("/add_wells_data")
 @version(1)
-async def add_wells_data(well_data: SWellsData):
-
-    wells = WellsDatasDAO.add_data(
+async def add_wells_data(well_data: SWellsData, user: Users = Depends(get_current_user)):
+    result = await WellsDatasDAO.add_data(
         well_number=well_data.well_number,
         area_well=well_data.area_well,
         well_oilfield=well_data.well_oilfield,
@@ -58,7 +60,8 @@ async def add_wells_data(well_data: SWellsData):
         date_drilling_run=well_data.date_drilling_run,
         date_drilling_finish=well_data.date_drilling_finish,
         leakiness=well_data.leakiness,
-        geolog=well_data.geolog,
+        geolog=user.id,
         date_create=well_data.date_create
     )
-    await wells
+    return {"status": "success", "id": result}
+

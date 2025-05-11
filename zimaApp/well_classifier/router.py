@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends
 
+from zimaApp.logger import logger
 from zimaApp.well_classifier.dao import WellClassifierDAO
 from zimaApp.well_classifier.schemas import (
     SWellsClassifierBatch,
@@ -33,18 +34,26 @@ async def find_well_classifier_all(wells_data: SWellsClassifierRegion):
 @version(1)
 async def add_data_well_classifier(wells_data: SWellsClassifierBatch):
     results = []
+    region = wells_data.data[0].region
+
+    await delete_well_classifier_for_region(wells_data.data[0])
+
     for item in wells_data.data:
         try:
             result = await WellClassifierDAO.add_data(**item.dict())
             results.append({"status": "success", "data": result})
         except Exception as e:
             results.append({"status": "error", "error": str(e), "item": item})
+    logger.info("request handling time",
+                extra={
+                    "result append wells": len(results),
+                })
     return results
 
 
 @router.post("/delete_well_classifier")
 @version(1)
-async def delete_well_silencing_for_region(wells_data: SWellsClassifierRegion):
+async def delete_well_classifier_for_region(wells_data: SWellsClassifierRegion):
     data = await WellClassifierDAO.find_all(region=wells_data.region)
     if data:
         return await WellClassifierDAO.delete_item_all_by_filter(

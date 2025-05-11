@@ -69,7 +69,8 @@ class BaseDAO:
 
     @classmethod
     async def add_data(cls, **data):
-        async with async_session_maker() as session:  # Создаем экземпляр сессии
+        async with async_session_maker() as session:
+            # Создаем экземпляр сессии
             query = insert(cls.model).values(**data)  # Используем модель для выборки
             await session.execute(query)
             await session.commit()
