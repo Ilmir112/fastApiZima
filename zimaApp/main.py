@@ -32,6 +32,7 @@ from zimaApp.users.router import router as user_router
 from zimaApp.well_classifier.router import router as classifier_router
 from zimaApp.well_silencing.router import router as silencing_router
 from zimaApp.wells_repair_data.router import router as wells_repair_router
+from zimaApp.gnkt_data.router import router as gnkt_router
 from zimaApp.wells_data.router import router as wells_data_router
 from zimaApp.logger import logger
 
@@ -57,6 +58,7 @@ app.include_router(wells_data_router)
 app.include_router(wells_repair_router)
 app.include_router(classifier_router)
 app.include_router(silencing_router)
+app.include_router(gnkt_router)
 
 # # Настройка логгера
 # logger = logging.getLogger(__name__)

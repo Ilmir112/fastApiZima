@@ -1,4 +1,4 @@
-from sqlalchemy import JSON, Column, Date, Integer, String, ForeignKey
+from sqlalchemy import JSON, Column, Date, Integer, String, ForeignKey, Float
 from sqlalchemy.orm import relationship
 from typing import Optional
 
@@ -15,5 +15,7 @@ class WellsRepair(Base):
     work_plan: str = Column(String, nullable=False)
     excel_json: dict = Column(JSON, nullable=False)
     data_change_paragraph: dict = Column(JSON, nullable=False)
+    norms_time: float = Column(Float, nullable=False)
+    chemistry_need: dict = Column(JSON, nullable=False)
     geolog_id = Column(Integer, ForeignKey('users.id'))
     date_create: Date = Column(Date, nullable=False)

@@ -42,7 +42,9 @@ async def login_user(response: Response, user_data: SUsersAuth):
         raise IncorectLoginOrPassword
     access_token = create_access_token({"sub": str(user.id)})
     response.set_cookie("summary_information_access_token", access_token, httponly=True)
-    return {"access_token": access_token}
+
+    return {"access_token": access_token, "login_user": user.login_user,
+            "position_id": user.position_id, "ctcrs": user.ctcrs, "contractor": user.contractor}
 
 
 @router.post("/logout")
@@ -59,5 +61,5 @@ async def read_users_me(current_user: Users = Depends(get_current_user)):
 
 @router.get("/all")
 @version(1)
-async def read_users_all(current_user: Users = Depends(get_current_admin_user)):
-    return UsersDAO.find_all()
+async def read_users_all():
+    return await UsersDAO.find_all()

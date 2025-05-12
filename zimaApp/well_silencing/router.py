@@ -44,6 +44,7 @@ async def find_well_silencing_all(wells_data: SWellsSilencingRegion):
             })
         return results
 
+
 @router.post("/delete_well_silencing")
 @version(1)
 async def delete_well_silencing_for_region(wells_data: SWellsSilencingRegion):
@@ -61,6 +62,7 @@ async def find_wells_in_silencing_for_region(wells_data: WellsSearchArgs = Depen
         well_number=wells_data.well_number, deposit_area=wells_data.well_area
     )
     return result
+
 
 @router.post("/add_data_well_silencing")
 @version(1)

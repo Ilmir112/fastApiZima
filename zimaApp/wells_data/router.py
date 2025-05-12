@@ -24,6 +24,14 @@ async def find_wells_data(wells_data: WellsSearchArgs = Depends()):
     )
     return result
 
+@router.get("/find_id_by_wells_data")
+@version(1)
+async def find_id_wells_data(wells_data: WellsSearchArgs = Depends()):
+    result = await WellsDatasDAO.find_one_or_none(
+        well_number=wells_data.well_number, area_well=wells_data.well_area
+    )
+    return result
+
 
 @router.post("/add_wells_data")
 @version(1)

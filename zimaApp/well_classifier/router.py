@@ -19,7 +19,7 @@ router = APIRouter(
 @version(1)
 async def find_well_classifier_all(wells_data: SWellsClassifierRegion):
     try:
-        results = await WellClassifierDAO.find_all(region=wells_data.region, limit=10)
+        results = await WellClassifierDAO.find_all(region=wells_data.region)
         if results:
             data = []
             for items in results:

@@ -12,12 +12,15 @@ class SWellsRepair(BaseModel):
     work_plan: str
     excel_json: dict
     data_change_paragraph: dict
+    norms_time: float
+    chemistry_need: dict
     geolog_id: str
     date_create: date
 
     class Config:
         from_attributes = True
         arbitrary_types_allowed = True
+
 
 class SNewWellDatas(BaseModel):
     wells_id: int
