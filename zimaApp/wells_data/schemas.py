@@ -62,9 +62,10 @@ class SWellsData(BaseModel):
     date_commissioning: Optional[date]
     date_drilling_run: Optional[date]
     date_drilling_finish: Optional[date]
-    leakiness: Optional[Dict]
     geolog: Optional[str]
     date_create: Optional[date]
+    leakiness: Optional[Dict]
+
 
 
     class Config:

@@ -1,6 +1,7 @@
 from datetime import datetime
+from typing import Optional
 
-from fastapi import Depends, Request
+from fastapi import Depends, Request, Header, HTTPException
 from jose import JWTError, jwt
 
 from zimaApp.config import settings
@@ -14,11 +15,20 @@ from zimaApp.users.dao import UsersDAO
 from zimaApp.users.models import Users
 
 
-def get_token(request: Request):
+async def get_token(request: Request, authorization: Optional[str] = Header(None)):
+    # Попытка получить токен из заголовка Authorization
+    if authorization and authorization.startswith("Bearer "):
+        return authorization[len("Bearer "):]
+
+    # Если токена в заголовке нет, попробуем из cookies
     token = request.cookies.get("summary_information_access_token")
+    if token:
+        return token
+
     if not token:
         raise TokenAbcentException
-    return token
+
+
 
 
 async def get_current_user(token: str = Depends(get_token)):
@@ -40,6 +50,5 @@ async def get_current_user(token: str = Depends(get_token)):
 
 async def get_current_admin_user(current_user: Users = Depends(get_current_user)):
     if current_user.access_level not in ["creator", "admin"]:
-
         raise UserIsNotPresentException
     return current_user

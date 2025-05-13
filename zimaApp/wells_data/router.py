@@ -24,6 +24,7 @@ async def find_wells_data(wells_data: WellsSearchArgs = Depends()):
     )
     return result
 
+
 @router.get("/find_id_by_wells_data")
 @version(1)
 async def find_id_wells_data(wells_data: WellsSearchArgs = Depends()):
@@ -68,7 +69,7 @@ async def add_wells_data(well_data: SWellsData, user: Users = Depends(get_curren
         date_drilling_run=well_data.date_drilling_run,
         date_drilling_finish=well_data.date_drilling_finish,
         leakiness=well_data.leakiness,
-        geolog=user.id,
+        geolog=user.login_user,
         date_create=well_data.date_create
     )
     return {"status": "success", "id": result}
