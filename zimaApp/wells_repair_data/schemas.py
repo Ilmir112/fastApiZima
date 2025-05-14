@@ -6,7 +6,6 @@ from pydantic import BaseModel
 
 class SWellsRepair(BaseModel):
     id: int
-    wells_id: int
     category_dict: dict
     type_kr: str
     work_plan: str

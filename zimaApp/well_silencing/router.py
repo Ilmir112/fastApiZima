@@ -14,7 +14,7 @@ from fastapi_versioning import VersionedFastAPI, version
 
 
 class WellsSearchArgs:
-    def __init__(self, well_number: str, well_area: str):
+    def __init__(self, well_number: str, well_area: str | None):
         self.well_number = well_number
         self.well_area = well_area
 
