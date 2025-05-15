@@ -38,11 +38,12 @@ async def find_id_wells_data(wells_data: WellsSearchArgs = Depends()):
 @version(1)
 async def delete_well_by_type_kr_and_date_create(wells_data: WellsSearchArgs = Depends()):
     data = await WellsDatasDAO.find_all(
-        well_number=wells_data.well_number, area_well=wells_data.well_area
+        well_number=wells_data.well_number,
+        area_well=wells_data.area_well
     )
     if data:
         return await WellsDatasDAO.delete_item_all_by_filter(
-            well_number=wells_data.well_number, area_well=wells_data.well_area
+            well_number=wells_data.well_number, area_well=wells_data.area_well
         )
 
 @router.post("/add_wells_data")

@@ -41,7 +41,7 @@ async def add_data_well_classifier(wells_data: SWellsClassifierBatch):
 
         for item in wells_data.data:
             try:
-                result = await WellClassifierDAO.add_data(**item.dict())
+                await WellClassifierDAO.add_data(**item.dict())
 
             except SQLAlchemyError as db_err:
                 results.append({"status": "error", "error": str(db_err), "item": item})
@@ -62,7 +62,7 @@ async def add_data_well_classifier(wells_data: SWellsClassifierBatch):
         logger.info(f'Добавлено {len(results)} скважин', exc_info=True)
 
     except SQLAlchemyError as db_err:
-        msg = 'Database Exception'
+        msg = f'Database Exception {db_err}'
         logger.error(msg, extra={"well_number": wells_data.well_number, "deposit_area": wells_data.deposit_area}, exc_info=True)
     except Exception as e:
         msg = f'Unexpected error: {str(e)}'

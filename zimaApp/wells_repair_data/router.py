@@ -1,6 +1,9 @@
 from fastapi import APIRouter, Depends, BackgroundTasks
 from datetime import date
 
+from sqlalchemy.exc import SQLAlchemyError
+
+from zimaApp import logger
 from zimaApp.users.dependencies import get_current_user
 from zimaApp.users.models import Users
 from zimaApp.well_silencing.router import WellsSearchArgs
@@ -71,11 +74,13 @@ async def find_well_id(
             type_kr=wells_repair.type_kr,
             date_create=wells_repair.date_create,
             work_plan=wells_repair.work_plan,
-            geolog_id=user_contrator.id
+            geolog_id=user_contrator.id,
             contractor=user_contrator.contrator
         )
         if result is None:
-            logger.info("Скважина найдена", extra={"well_number": wells_data.well_number, "deposit_area"},
+            logger.info("Скважина найдена", extra={
+                "well_number": wells_data.well_number,
+                "deposit_area": wells_data.well_area},
                 exc_info=True)
             return {"status": "not_found", "message": "Скважина не найдена"}
         return {"status": "success", "data": result}
