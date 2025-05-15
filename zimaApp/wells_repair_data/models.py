@@ -21,9 +21,8 @@ class WellsRepair(Base):
     date_create: Date = Column(Date, nullable=False)
     perforation_project: dict = Column(JSON)
     type_absorbent: str = Column(String)
-    static_level: float = Column(Float, nullable=False)
-    dinamic_level: float = Column(Float, nullable=False)
+    static_level: float = Column(Float, nullable=True)
+    dinamic_level: float = Column(Float, nullable=True)
     expected_data: dict = Column(JSON, nullable=False)
     curator: str = Column(String, nullable=False)
     region: str = Column(String, nullable=False)
-

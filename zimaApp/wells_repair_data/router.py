@@ -50,8 +50,8 @@ async def find_well_id(well_number: str):
                                        f'{wells_info.type_kr}'
                                        f' {wells_info.work_plan} от '
                                        f'{wells_info.date_create}')
-        if result_list:
-            return {"ремонты": result_list}
+            if result_list:
+                return {"ремонты": result_list}
 
     except Exception as e:
         asdwd = e
@@ -60,15 +60,35 @@ async def find_well_id(well_number: str):
 
 @router.get("/find_well_id")
 @version(1)
-async def find_well_id(wells_data: WellsSearchArgs = Depends(find_id_wells_data),
-                       wells_repair: WellsSearchRepair = Depends(find_wells_in_repairs)):
-    result = await WellsRepairsDAO.find_all(
-        wells_id=wells_data.id,
-        type_kr=wells_repair.type_kr,
-        date_create=wells_repair.date_create,
-        work_plan=wells_repair.work_plan
-    )
-    return result
+async def find_well_id(
+    wells_data: WellsSearchArgs = Depends(find_id_wells_data),
+    wells_repair: WellsSearchRepair = Depends(find_wells_in_repairs),
+    user_contrator: Users = Depends(get_current_user)
+):
+    try:
+        result = await WellsRepairsDAO.find_one_or_none(
+            wells_id=wells_data.id,
+            type_kr=wells_repair.type_kr,
+            date_create=wells_repair.date_create,
+            work_plan=wells_repair.work_plan,
+            geolog_id=user_contrator.id
+            contractor=user_contrator.contrator
+        )
+        if result is None:
+            logger.info("Скважина найдена", extra={"well_number": wells_data.well_number, "deposit_area"},
+                exc_info=True)
+            return {"status": "not_found", "message": "Скважина не найдена"}
+        return {"status": "success", "data": result}
+
+    except SQLAlchemyError as db_err:
+        logger.error(f'Database error occurred: {str(db_err)}', exc_info=True)
+        return {"status": "error", "message": "Ошибка базы данных"}
+
+    except Exception as e:
+        logger.error(f'Unexpected error occurred: {str(e)}', exc_info=True)
+        return {"status": "error", "message": "Произошла неожиданная ошибка"}
+
+
 
 @router.post("/delete_well")
 @version(1)
@@ -98,7 +118,6 @@ async def add_wells_data(
     if wells_data:
         await delete_well_by_type_kr_and_date_create(wells_repair,
                                                wells_data.id)
-
         result = await WellsRepairsDAO.add_data(
             wells_id=wells_data.id,
             category_dict=wells_repair.category_dict,
@@ -109,6 +128,13 @@ async def add_wells_data(
             norms_time=wells_repair.norms_time,
             chemistry_need=wells_repair.chemistry_need,
             geolog_id=user.id,
-            date_create=wells_repair.date_create
+            date_create=wells_repair.date_create,
+            perforation_project=wells_repair.perforation_project,
+            type_absorbent=wells_repair.type_absorbent,
+            static_level=wells_repair.static_level,
+            dinamic_level=wells_repair.dinamic_level,
+            expected_data=wells_repair.expected_data,
+            curator=wells_repair.curator,
+            region=wells_repair.region
         )
         return {"status": "success", "id": result}

@@ -48,6 +48,8 @@ async def delete_well_by_type_kr_and_date_create(wells_data: WellsSearchArgs = D
 @router.post("/add_wells_data")
 @version(1)
 async def add_wells_data(well_data: SWellsData, user: Users = Depends(get_current_user)):
+
+    await delete_well_by_type_kr_and_date_create(well_data)
     result = await WellsDatasDAO.add_data(
         well_number=well_data.well_number,
         area_well=well_data.area_well,

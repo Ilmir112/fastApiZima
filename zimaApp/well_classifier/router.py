@@ -8,6 +8,7 @@ from zimaApp.well_classifier.schemas import (
 )
 from zimaApp.well_silencing.router import WellsSearchArgs
 from fastapi_versioning import version
+from sqlalchemy.exc import SQLAlchemyError
 
 router = APIRouter(
     prefix="/wells_classifier",
@@ -34,21 +35,41 @@ async def find_well_classifier_all(wells_data: SWellsClassifierRegion):
 @version(1)
 async def add_data_well_classifier(wells_data: SWellsClassifierBatch):
     results = []
-    region = wells_data.data[0].region
 
-    await delete_well_classifier_for_region(wells_data.data[0])
+    try:
+        await delete_well_classifier_for_region(wells_data.data[0])
 
-    for item in wells_data.data:
-        try:
-            result = await WellClassifierDAO.add_data(**item.dict())
-            results.append({"status": "success", "data": result})
-        except Exception as e:
-            results.append({"status": "error", "error": str(e), "item": item})
-    logger.info("request handling time",
-                extra={
-                    "result append wells": len(results),
-                })
+        for item in wells_data.data:
+            try:
+                result = await WellClassifierDAO.add_data(**item.dict())
+
+            except SQLAlchemyError as db_err:
+                results.append({"status": "error", "error": str(db_err), "item": item})
+                logger.error(f'Database error while processing item {item}: {str(db_err)}', exc_info=True)
+            except ValueError as val_err:
+                results.append({"status": "error", "error": f'Value error: {str(val_err)}', "item": item})
+                logger.error(f'Value error in item {item}: {str(val_err)}', exc_info=True)
+            except TypeError as type_err:
+                results.append({"status": "error", "error": f'Type error: {str(type_err)}', "item": item})
+                logger.error(f'Type error in item {item}: {str(type_err)}', exc_info=True)
+            except KeyError as key_err:
+                results.append({"status": "error", "error": f'Key error: {str(key_err)}', "item": item})
+                logger.error(f'Key error in item {item}: {str(key_err)}', exc_info=True)
+            except Exception as e:
+                results.append({"status": "error", "error": str(e), "item": item})
+                logger.error(f'Unexpected error in item {item}: {str(e)}', exc_info=True)
+
+        logger.info(f'Добавлено {len(results)} скважин', exc_info=True)
+
+    except SQLAlchemyError as db_err:
+        msg = 'Database Exception'
+        logger.error(msg, extra={"well_number": wells_data.well_number, "deposit_area": wells_data.deposit_area}, exc_info=True)
+    except Exception as e:
+        msg = f'Unexpected error: {str(e)}'
+        logger.error(msg, extra={"well_number": wells_data.well_number, "deposit_area": wells_data.deposit_area}, exc_info=True)
+
     return results
+
 
 
 @router.post("/delete_well_classifier")
@@ -56,6 +77,7 @@ async def add_data_well_classifier(wells_data: SWellsClassifierBatch):
 async def delete_well_classifier_for_region(wells_data: SWellsClassifierRegion):
     data = await WellClassifierDAO.find_all(region=wells_data.region)
     if data:
+
         return await WellClassifierDAO.delete_item_all_by_filter(
             region=wells_data.region
         )
