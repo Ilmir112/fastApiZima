@@ -1,6 +1,8 @@
 import json
 
 from sqlalchemy import JSON, Column, Date, Integer, String, Float, Boolean
+from sqlalchemy.orm import relationship
+
 from zimaApp.database import Base
 
 
@@ -9,7 +11,7 @@ class WellsData(Base):
 
     id: int = Column(Integer, primary_key=True)
     well_number: str = Column(String, nullable=False)
-    area_well: str = Column(String, nullable=False)
+    well_area: str = Column(String, nullable=False)
     well_oilfield: str = Column(String, nullable=False)
     cdng: str = Column(String, nullable=False)
     costumer: str = Column(String)
@@ -41,3 +43,6 @@ class WellsData(Base):
     leakiness: dict = Column(JSON)
     geolog: str = Column(String)
     date_create: Date = Column(Date)
+    repairs = relationship("WellsRepair", back_populates="well_data", cascade="all, delete")
+
+

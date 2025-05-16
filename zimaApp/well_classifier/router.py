@@ -63,10 +63,10 @@ async def add_data_well_classifier(wells_data: SWellsClassifierBatch):
 
     except SQLAlchemyError as db_err:
         msg = f'Database Exception {db_err}'
-        logger.error(msg, extra={"well_number": wells_data.well_number, "deposit_area": wells_data.deposit_area}, exc_info=True)
+        logger.error(msg, extra={"well_number": wells_data.well_number, "well_area": wells_data.well_area}, exc_info=True)
     except Exception as e:
         msg = f'Unexpected error: {str(e)}'
-        logger.error(msg, extra={"well_number": wells_data.well_number, "deposit_area": wells_data.deposit_area}, exc_info=True)
+        logger.error(msg, extra={"well_number": wells_data.well_number, "well_area": wells_data.well_area}, exc_info=True)
 
     return results
 
@@ -87,6 +87,6 @@ async def delete_well_classifier_for_region(wells_data: SWellsClassifierRegion):
 @version(1)
 async def find_wells_in_silencing_for_region(wells_data: WellsSearchArgs = Depends()):
     result = await WellClassifierDAO.find_one_or_none(
-        well_number=wells_data.well_number, deposit_area=wells_data.well_area
+        well_number=wells_data.well_number, well_area=wells_data.well_area
     )
     return result

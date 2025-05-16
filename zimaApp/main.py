@@ -1,12 +1,9 @@
-import logging
 import time
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
-from datetime import date
-from typing import Optional
 
 import uvicorn
-from fastapi import Depends, FastAPI, Query, Request
+from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi_cache import FastAPICache
 from fastapi_cache.backends.redis import RedisBackend
@@ -14,7 +11,7 @@ from fastapi_versioning import VersionedFastAPI
 from fastapi_cache.decorator import cache
 from pydantic import BaseModel, json
 from redis import asyncio as aioredis
-from sqladmin import Admin, ModelView
+from sqladmin import Admin
 from starlette.middleware.cors import CORSMiddleware
 from starlette.responses import JSONResponse
 
@@ -28,6 +25,8 @@ from zimaApp.admin.views import (
 from zimaApp.config import settings
 from zimaApp.database import engine
 from zimaApp.users.models import Users
+from hawk_python_sdk.modules.fastapi import HawkFastapi
+from hawk_python_sdk.modules.fastapi import HawkFastapi
 from zimaApp.users.router import router as user_router
 from zimaApp.well_classifier.router import router as classifier_router
 from zimaApp.well_silencing.router import router as silencing_router
@@ -38,17 +37,23 @@ from zimaApp.logger import logger
 
 app = FastAPI(title="Zima", version="0.1.0", root_path="/zimaApp")
 
+if settings.MODE != "TEST":
+    hawk = HawkFastapi({
+        'app_instance': app,
+        'token': settings.HAWK_DSN
+    })
+
 
 # Обработка ошибок валидации
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
-    # Здесь можно логировать ошибку или модифицировать ответ
+    logger.error(f"validation_exception: {exc.errors()}, body: {exc.body}")
     return JSONResponse(
         status_code=422,
         content={
             "detail": exc.errors(),
             "body": exc.body,
-            "message": "Ошибка валидации данных"
+            "message": "validation xception"
         },
     )
 
@@ -59,15 +64,6 @@ app.include_router(wells_repair_router)
 app.include_router(classifier_router)
 app.include_router(silencing_router)
 app.include_router(gnkt_router)
-
-# # Настройка логгера
-# logger = logging.getLogger(__name__)
-# logger.setLevel(logging.INFO)  # Или DEBUG
-# handler = logging.StreamHandler()
-# formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-# handler.setFormatter(formatter)
-# logger.addHandler(handler)
-
 
 # Подключение CORS, чтобы запросы к API могли приходить из браузера
 origins = [
@@ -89,20 +85,26 @@ app.add_middleware(
     ],
 )
 
+# Подключение версионирования
+app = VersionedFastAPI(app,
+                       version_format='{major}',
+                       prefix_format='/api/v{major}',
+                       )
 
-#
-# # Подключение версионирования
-# app = VersionedFastAPI(app,
-#                        version_format='{major}',
-#                        prefix_format='/api/v{major}',
-#                        )
-
-
-@asynccontextmanager
-async def lifespan(_: FastAPI) -> AsyncIterator[None]:
-    redis = aioredis.from_url(f"redis://{settings.REDIS_HOST}:{settings.REDIS_PORT}")
+if settings.MODE == "TEST":
+    # При тестировании через pytest, необходимо подключать Redis, чтобы кэширование работало.
+    # Иначе декоратор @cache из библиотеки fastapi-cache ломает выполнение кэшируемых эндпоинтов.
+    # Из этого следует вывод, что сторонние решения порой ломают наш код, и это бывает проблематично поправить.
+    redis = aioredis.from_url(f"redis://{settings.REDIS_HOST}:{settings.REDIS_PORT}", encoding="utf8",
+                              decode_responses=True)
     FastAPICache.init(RedisBackend(redis), prefix="cache")
-    yield
+
+
+@app.on_event("startup")
+def startup():
+    redis = aioredis.from_url(f"redis://{settings.REDIS_HOST}:{settings.REDIS_PORT}", encoding="utf8",
+                              decode_responses=True)
+    FastAPICache.init(RedisBackend(redis), prefix="cache")
 
 
 admin = Admin(app, engine, authentication_backend=authentication_backend)
@@ -140,7 +142,7 @@ async def add_process_time_header(request: Request, call_next):
 
 # class SRepairData(BaseModel):
 #     well_number: str
-#     area_well: str
+#     well_area: str
 #     well_oilfield: str
 #     appointment:str
 #     inv_number:str

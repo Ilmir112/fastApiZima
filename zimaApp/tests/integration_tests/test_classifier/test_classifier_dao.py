@@ -5,14 +5,14 @@ from datetime import datetime
 
 
 @pytest.mark.parametrize(
-    "well_number,deposit_area",
+    "well_number,well_area",
     [("125", "Туймазинская"), ("125", "Туймазинска"), ("1252", "Туймазинская")],
 )
-async def test_add_data_well_classifier(well_number, deposit_area):
+async def test_add_data_well_classifier(well_number, well_area):
     wells = WellClassifierDAO.add_data(
         cdng="ТЦДНГ 02",
         well_number="125",
-        deposit_area="Туймазинская",
+        well_area="Туймазинская",
         oilfield="Туймазинское",
         category_pressure="1",
         pressure_ppl="25",

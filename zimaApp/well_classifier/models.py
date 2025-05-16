@@ -9,7 +9,7 @@ class WellClassifier(Base):
     id: int = Column(Integer, primary_key=True)
     cdng: str = Column(String, nullable=False)
     well_number: str = Column(String, nullable=False)
-    deposit_area: str = Column(String, nullable=False)
+    well_area: str = Column(String, nullable=False)
     oilfield: str = Column(String)
     category_pressure: str = Column(String)
     pressure_ppl: str = Column(String)

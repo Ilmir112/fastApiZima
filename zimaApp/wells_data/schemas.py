@@ -33,7 +33,7 @@ class ColumnProduction(ColumnInfo):
 class SWellsData(BaseModel):
     id: int
     well_number: str
-    area_well: str
+    well_area: str
     well_oilfield: str
     cdng: str
     costumer: Optional[str]

@@ -6,7 +6,7 @@ from pydantic import BaseModel, conlist
 class SWellsSilencing(BaseModel):
     id: int
     well_number: str
-    deposit_area: str
+    well_area: str
     today: date
     region: str
     costumer: str
@@ -17,7 +17,7 @@ class SWellsSilencing(BaseModel):
 
 class SWellsSilencingCreate(BaseModel):
     well_number: str
-    deposit_area: str
+    well_area: str
     today: date
     region: str
     costumer: str

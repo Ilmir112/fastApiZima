@@ -7,7 +7,7 @@ class SWellClassifier(BaseModel):
     id: int
     cdng: str
     well_number: str
-    deposit_area: str
+    well_area: str
     oilfield: str
     category_pressure: str
     pressure_ppl: str
@@ -30,7 +30,7 @@ class SWellClassifier(BaseModel):
 class SWellsClassifierCreate(BaseModel):
     cdng: str
     well_number: str
-    deposit_area: str
+    well_area: str
     oilfield: str
     category_pressure: str
     pressure_ppl: str

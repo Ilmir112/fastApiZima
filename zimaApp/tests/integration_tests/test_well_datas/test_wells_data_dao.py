@@ -8,7 +8,7 @@ from zimaApp.wells_data.schemas import SWellsData
 
 
 @pytest.mark.parametrize(
-    "well_number,area_well,well_oilfield,cdng,costumer,inventory_number,wellhead_fittings,appointment,angle_data,"
+    "well_number,well_area,well_oilfield,cdng,costumer,inventory_number,wellhead_fittings,appointment,angle_data,"
     "column_direction,column_conductor,column_production,column_additional,bottom_hole_drill,bottom_hole_artificial,"
     "max_angle,distance_from_rotor_table,max_angle_depth,max_expected_pressure,max_admissible_pressure,"
     "rotor_altitude,perforation,equipment,nkt_data,sucker_pod,diameter_doloto_ek,last_pressure_date,"
@@ -114,7 +114,7 @@ from zimaApp.wells_data.schemas import SWellsData
 )
 async def test_add_wells_data(
         well_number,
-        area_well,
+        well_area,
         well_oilfield,
         cdng,
         costumer,
@@ -151,7 +151,7 @@ async def test_add_wells_data(
     response = await ac.post(
         "/wells_data_router/add_wells_data",
         json={"well_number": well_number,
-              "area_well": area_well,
+              "well_area": well_area,
               "well_oilfield": well_oilfield,
               "cdng": cdng,
               "costumer": costumer,
@@ -188,7 +188,7 @@ async def test_add_wells_data(
 # async def test_add_wells_data(well_data: SWellsData):
 #     wells = await WellsDatasDAO.add_data(
 #         well_number=well_data.well_number,
-#         area_well=well_data.area_well,
+#         well_area=well_data.well_area,
 #         well_oilfield=well_data.well_oilfield,
 #         cdng=well_data.cdng,
 #         costumer=well_data.costumer,

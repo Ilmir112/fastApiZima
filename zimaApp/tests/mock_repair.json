@@ -2,7 +2,7 @@
   {
     "id": 0,
     "well_number": "string",
-    "area_well": "string",
+    "well_area": "string",
     "well_oilfield": "string",
     "cdng": "string",
     "type_kr": "string",
