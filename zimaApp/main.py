@@ -22,6 +22,7 @@ from zimaApp.admin.views import (
     SilencingAdmin,
     UserAdmin, WellsDataAdmin,
 )
+from prometheus_fastapi_instrumentator import Instrumentator
 from zimaApp.config import settings
 from zimaApp.database import engine
 from zimaApp.users.models import Users
@@ -37,11 +38,12 @@ from zimaApp.logger import logger
 
 app = FastAPI(title="Zima", version="0.1.0", root_path="/zimaApp")
 
-if settings.MODE != "TEST":
-    hawk = HawkFastapi({
-        'app_instance': app,
-        'token': settings.HAWK_DSN
-    })
+
+# if settings.MODE != "TEST":
+#     hawk = HawkFastapi({
+#         'app_instance': app,
+#         'token': settings.HAWK_DSN
+#     })
 
 
 # Обработка ошибок валидации
@@ -91,6 +93,18 @@ app = VersionedFastAPI(app,
                        prefix_format='/api/v{major}',
                        )
 
+instrumentator = Instrumentator(
+    should_group_status_codes=False,
+    excluded_handlers=[".*admin.*", "/metrics"],
+)
+instrumentator.instrument(app).expose(app)
+
+
+@app.on_event("startup")
+async def _startup():
+    instrumentator.expose(app)
+
+
 if settings.MODE == "TEST":
     # При тестировании через pytest, необходимо подключать Redis, чтобы кэширование работало.
     # Иначе декоратор @cache из библиотеки fastapi-cache ломает выполнение кэшируемых эндпоинтов.
@@ -100,12 +114,20 @@ if settings.MODE == "TEST":
     FastAPICache.init(RedisBackend(redis), prefix="cache")
 
 
-@app.on_event("startup")
-def startup():
-    redis = aioredis.from_url(f"redis://{settings.REDIS_HOST}:{settings.REDIS_PORT}", encoding="utf8",
-                              decode_responses=True)
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Инициализация Redis при запуске
+    redis = aioredis.from_url(
+        f"redis://{settings.REDIS_HOST}:{settings.REDIS_PORT}",
+        encoding="utf8",
+        decode_responses=True
+    )
+    # Инициализация кеша
     FastAPICache.init(RedisBackend(redis), prefix="cache")
+    yield
 
+
+app.router.lifespan_context = lifespan
 
 admin = Admin(app, engine, authentication_backend=authentication_backend)
 

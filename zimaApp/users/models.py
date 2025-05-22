@@ -1,4 +1,5 @@
 from sqlalchemy import JSON, VARCHAR, Column, DateTime, Integer, String
+from sqlalchemy.orm import relationship
 
 from zimaApp.database import Base
 
@@ -17,3 +18,5 @@ class Users(Base):
     ctcrs = Column(String, nullable=False)
     password = Column(String, nullable=False)
     access_level = Column(String, nullable=False)
+
+    # wells_repairs = relationship("WellsRepair", back_populates="users")

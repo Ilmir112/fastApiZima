@@ -4,7 +4,7 @@ from pydantic import ValidationError
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.testing.suite.test_reflection import users
 
-from zimaApp import logger
+from zimaApp.logger import logger
 from zimaApp.users.dependencies import get_current_user
 from zimaApp.users.models import Users
 from zimaApp.well_silencing.router import WellsSearchArgs

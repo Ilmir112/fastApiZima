@@ -3,7 +3,8 @@ from datetime import date
 
 from sqlalchemy.exc import SQLAlchemyError
 
-from zimaApp import logger
+from zimaApp.logger import logger
+from zimaApp.users.dao import UsersDAO
 
 from zimaApp.users.dependencies import get_current_user
 from zimaApp.users.models import Users
@@ -22,18 +23,21 @@ router = APIRouter(
 
 
 class WellsSearchRepair:
-    def __init__(self, type_kr: str | None, work_plan: str | None, date_create: date | None):
+    def __init__(self, type_kr: str | None, work_plan: str | None, date_create: date | None, wells_id: int):
         self.type_kr = type_kr
         self.date_create = date_create
         self.work_plan = work_plan
+        self.wells_id = wells_id
 
 
 @router.get("/find_well_repairs_by_filter/")
 @version(1)
 async def find_wells_in_repairs(wells_data: WellsSearchRepair = Depends()):
+    asdww = "dea"
     result = await WellsRepairsDAO.find_one_or_none(
-        type_kr=wells_data.type_kr, date_create=wells_data.date_create, work_plan=wells_data.work_plan
+        type_kr=wells_data.type_kr, date_create=wells_data.date_create, work_plan=wells_data.work_plan, wells_id=wells_data.wells_id
     )
+
     return result
 
 
@@ -53,7 +57,7 @@ async def find_well_id(well_number: str):
                                        f'{wells.well_area} '
                                        f'{wells_info.type_kr}'
                                        f' {wells_info.work_plan} от '
-                                       f'{wells_info.date_create}')
+                                       f'{wells_info.date_create} {wells.id}')
             if result_list:
                 return {"ремонты": result_list}
 
@@ -67,24 +71,23 @@ async def find_well_id(well_number: str):
 async def find_well_id(
     wells_data: WellsSearchArgs = Depends(find_wells_data),
     wells_repair: WellsSearchRepair = Depends(find_wells_in_repairs),
-    user_contrator: Users = Depends(get_current_user)
+    user: Users = Depends(get_current_user)
 ):
     try:
         result = await WellsRepairsDAO.find_one_or_none(
-            wells_id=wells_data.id,
-            type_kr=wells_repair.type_kr,
-            date_create=wells_repair.date_create,
-            work_plan=wells_repair.work_plan,
-            geolog_id=user_contrator.id,
-            contractor=user_contrator.contrator
-        )
-        if result is None:
+                wells_id=wells_data.id,
+                type_kr=wells_repair.type_kr,
+                date_create=wells_repair.date_create,
+                work_plan=wells_repair.work_plan
+                # contractor=user.contractor
+            )
+        if not result is None:
             logger.info("Скважина найдена", extra={
                 "well_number": wells_data.well_number,
                 "well_area": wells_data.well_area},
                 exc_info=True)
-            return {"status": "not_found", "message": "Скважина не найдена"}
-        return {"status": "success", "data": result}
+
+        return result
 
     except SQLAlchemyError as db_err:
         logger.error(f'Database error occurred: {str(db_err)}', exc_info=True)
