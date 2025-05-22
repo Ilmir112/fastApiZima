@@ -6,6 +6,8 @@ services:
   db:
     image: postgres:15
     container_name: zima_db
+    environment:
+      POSTGRES_PASSWORD: 195375AsD+
     volumes:
       - postgresdata:/var/lib/postgresql/data
     env_file: # Файл с переменными окружения (Вместо environment)
@@ -28,8 +30,8 @@ services:
       - db
       - redis
     # Если не работает эта команда, используйте закомментированную
-    command: ["/zimaApp/docker/zimaApp.sh"]
-    # command: sh -c "alembic upgrade head && gunicorn app.main:app --workers 4 --worker-class uvicorn.workers.UvicornWorker --bind=0.0.0.0:8000"
+    # command: ["/zimaApp/docker/zimaApp.sh"]
+#    command: sh -c "alembic upgrade head && gunicorn zimaApp.main:app --workers 4 --worker-class uvicorn.workers.UvicornWorker --bind=0.0.0.0:8000"
     ports:
       - 7777:8000
 
@@ -39,8 +41,8 @@ services:
       context: . # celery это библиотека, у неё нет образа, берём из основного билда
     container_name: zima_celery
     # Если не работает эта команда, используйте закомментированную
-    command: ["/zimaApp/docker/celery.sh", "celery"] # Второй аргумен для if/elif в скрипте
-    # command: sh -c "celery --app=app.tasks.celery:celery worker -l INFO"
+#    command: ["/zimaApp/docker/celery.sh", "celery"] # Второй аргумен для if/elif в скрипте
+    command: sh -c "celery --app=zimaApp.tasks.celery:celery worker -l INFO"
     env_file:
       - .env-non-dev
     depends_on:
@@ -52,8 +54,8 @@ services:
       context: . # flower это библиотека, у неё нет образа, берём из основного билда
     container_name: zima_flower
     # Если не работает эта команда, используйте закомментированную
-    command: ["/booking/docker/celery.sh", "flower"]
-    # command: sh -c "celery --app=app.tasks.celery:celery flower"
+#    command: ["/docker/celery.sh", "flower"]
+    command: sh -c "celery --app=zimaApp.tasks.celery:celery flower"
     env_file:
       - .env-non-dev
     depends_on:

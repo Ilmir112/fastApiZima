@@ -5,7 +5,6 @@ from datetime import datetime
 import pytest
 from httpx import AsyncClient, ASGITransport
 from sqlalchemy import insert
-from fastapi.testclient import TestClient
 
 from zimaApp.well_silencing.models import WellSilencing
 from zimaApp.config import settings
@@ -26,9 +25,9 @@ def validate_data_in_timestamp(value_list):
     value_dict_new = {}
     for value_dict in value_list:
         for key, value in value_dict.items():
-            try:
+            if isinstance(value, datetime):
                 value_dict_new[key] = datetime.strptime(value, "%Y-%m-%d")
-            except:
+            else:
                 value_dict_new[key] = value
         value_list_new.append(value_dict_new)
     return value_list_new
@@ -36,7 +35,6 @@ def validate_data_in_timestamp(value_list):
 
 @pytest.fixture(scope="session", autouse=True)
 async def prepare_database():
-    # Обязательно убеждаемся, что работаем с тестовой БД
     assert settings.MODE == "TEST"
 
     async with engine.begin() as conn:

@@ -1,4 +1,4 @@
-from sqlalchemy import and_, delete, insert, update
+from sqlalchemy import and_, delete, insert
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
@@ -72,18 +72,6 @@ class BaseDAO:
         async with async_session_maker() as session:
             # Создаем экземпляр сессии
             query = insert(cls.model).values(**data)  # Используем модель для выборки
-            await session.execute(query)
-            await session.commit()
-
-    @classmethod
-    async def update_data(cls, well_number_id, **data):
-        async with async_session_maker() as session:
-            # Создаем экземпляр сессии
-            query = (
-                update(cls.model)
-                .where(cls.model.id == well_number_id)  # Условие для поиска записи
-                .values(**data)
-            )
             await session.execute(query)
             await session.commit()
 

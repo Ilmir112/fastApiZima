@@ -22,7 +22,6 @@ from zimaApp.admin.views import (
     SilencingAdmin,
     UserAdmin, WellsDataAdmin,
 )
-from prometheus_fastapi_instrumentator import Instrumentator
 from zimaApp.config import settings
 from zimaApp.database import engine
 from zimaApp.users.models import Users
@@ -38,12 +37,11 @@ from zimaApp.logger import logger
 
 app = FastAPI(title="Zima", version="0.1.0", root_path="/zimaApp")
 
-
-# if settings.MODE != "TEST":
-#     hawk = HawkFastapi({
-#         'app_instance': app,
-#         'token': settings.HAWK_DSN
-#     })
+if settings.MODE != "TEST":
+    hawk = HawkFastapi({
+        'app_instance': app,
+        'token': settings.HAWK_DSN
+    })
 
 
 # Обработка ошибок валидации
@@ -93,18 +91,6 @@ app = VersionedFastAPI(app,
                        prefix_format='/api/v{major}',
                        )
 
-instrumentator = Instrumentator(
-    should_group_status_codes=False,
-    excluded_handlers=[".*admin.*", "/metrics"],
-)
-instrumentator.instrument(app).expose(app)
-
-
-@app.on_event("startup")
-async def _startup():
-    instrumentator.expose(app)
-
-
 if settings.MODE == "TEST":
     # При тестировании через pytest, необходимо подключать Redis, чтобы кэширование работало.
     # Иначе декоратор @cache из библиотеки fastapi-cache ломает выполнение кэшируемых эндпоинтов.
@@ -114,20 +100,12 @@ if settings.MODE == "TEST":
     FastAPICache.init(RedisBackend(redis), prefix="cache")
 
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    # Инициализация Redis при запуске
-    redis = aioredis.from_url(
-        f"redis://{settings.REDIS_HOST}:{settings.REDIS_PORT}",
-        encoding="utf8",
-        decode_responses=True
-    )
-    # Инициализация кеша
+@app.on_event("startup")
+def startup():
+    redis = aioredis.from_url(f"redis://{settings.REDIS_HOST}:{settings.REDIS_PORT}", encoding="utf8",
+                              decode_responses=True)
     FastAPICache.init(RedisBackend(redis), prefix="cache")
-    yield
 
-
-app.router.lifespan_context = lifespan
 
 admin = Admin(app, engine, authentication_backend=authentication_backend)
 
@@ -151,41 +129,7 @@ async def add_process_time_header(request: Request, call_next):
     return response
 
 
-#
-# @cache()
-# async def get_cache():
-#     return 1
-#
-#
-# @cache(expire=60)
-# async def index():
-#     return dict(hello="world")
 
-
-# class SRepairData(BaseModel):
-#     well_number: str
-#     well_area: str
-#     well_oilfield: str
-#     appointment:str
-#     inv_number:str
-#     wellhead_fittings:str
-#     data_well: json
-#     excel_json: json
-#     contractor: str
-#     costumer: str
-#     work_plan: str
-#     geolog: str
-#     type_kr: str
-#     data_change_paragraph: json
-#     cdng: str
-#     category_dict: json
-#     angle_data: json
-#     today: date
-
-
-# @app.post("/repair_data")
-# async def add_repair_data(repair_datas: SRepairData):
-#     return pass
 
 if __name__ == "__main__":
     uvicorn.run("main:app", host="127.0.0.1", port=8000, reload=True)

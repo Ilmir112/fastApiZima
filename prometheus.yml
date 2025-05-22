@@ -17,4 +17,4 @@ scrape_configs:
     scrape_interval: 5s
 
     static_configs:
-      - targets: ['booking:8000']
+      - targets: ['zima:8000']
