@@ -35,7 +35,8 @@ class WellsSearchRepair:
 async def find_wells_in_repairs(wells_data: WellsSearchRepair = Depends()):
     asdww = "dea"
     result = await WellsRepairsDAO.find_one_or_none(
-        type_kr=wells_data.type_kr, date_create=wells_data.date_create, work_plan=wells_data.work_plan, wells_id=wells_data.wells_id
+        type_kr=wells_data.type_kr, date_create=wells_data.date_create, work_plan=wells_data.work_plan,
+        wells_id=wells_data.wells_id
     )
 
     return result
@@ -69,23 +70,23 @@ async def find_well_id(well_number: str):
 @router.get("/find_well_id")
 @version(1)
 async def find_well_id(
-    wells_data: WellsSearchArgs = Depends(find_wells_data),
-    wells_repair: WellsSearchRepair = Depends(find_wells_in_repairs),
-    user: Users = Depends(get_current_user)
+        wells_data: WellsSearchArgs = Depends(find_wells_data),
+        wells_repair: WellsSearchRepair = Depends(find_wells_in_repairs),
+        user: Users = Depends(get_current_user)
 ):
     try:
         result = await WellsRepairsDAO.find_one_or_none(
-                wells_id=wells_data.id,
-                type_kr=wells_repair.type_kr,
-                date_create=wells_repair.date_create,
-                work_plan=wells_repair.work_plan
-                # contractor=user.contractor
-            )
+            wells_id=wells_data.id,
+            type_kr=wells_repair.type_kr,
+            date_create=wells_repair.date_create,
+            work_plan=wells_repair.work_plan
+            # contractor=user.contractor
+        )
         if not result is None:
             logger.info("Скважина найдена", extra={
                 "well_number": wells_data.well_number,
                 "well_area": wells_data.well_area},
-                exc_info=True)
+                        exc_info=True)
 
         return result
 
@@ -96,25 +97,6 @@ async def find_well_id(
     except Exception as e:
         logger.error(f'Unexpected error occurred: {str(e)}', exc_info=True)
         return {"status": "error", "message": "Произошла неожиданная ошибка"}
-
-
-
-@router.post("/delete_well")
-@version(1)
-async def delete_well_by_type_kr_and_date_create(wells_repair: SWellsRepair, wells_id: int):
-    data = await WellsRepairsDAO.find_all(
-        type_kr=wells_repair.type_kr,
-        date_create=wells_repair.date_create,
-        work_plan=wells_repair.work_plan,
-        wells_id=wells_id
-    )
-    if data:
-        return await WellsRepairsDAO.delete_item_all_by_filter(
-            type_kr=wells_repair.type_kr,
-            date_create=wells_repair.date_create,
-            work_plan=wells_repair.work_plan,
-            wells_id=wells_id
-        )
 
 
 @router.post("/add_wells_data")
@@ -128,7 +110,7 @@ async def add_wells_data(
 
         if wells_data:
             await delete_well_by_type_kr_and_date_create(wells_repair,
-                                                   wells_data.id)
+                                                         wells_data.id)
             result = await WellsRepairsDAO.add_data(
                 wells_id=wells_data.id,
                 category_dict=wells_repair.category_dict,
@@ -160,6 +142,23 @@ async def add_wells_data(
 
     except Exception as e:
         msg = f'Unexpected error: {str(e)}'
-        logger.error(msg, extra={"well_number": wells_data.well_number, "well_area": wells_data.well_area}, exc_info=True)
+        logger.error(msg, extra={"well_number": wells_data.well_number, "well_area": wells_data.well_area},
+                     exc_info=True)
 
 
+@router.delete("/delete_well")
+@version(1)
+async def delete_well_by_type_kr_and_date_create(wells_repair: WellsSearchRepair = Depends()):
+    data = await WellsRepairsDAO.find_one_or_none(
+        type_kr=wells_repair.type_kr,
+        date_create=wells_repair.date_create,
+        work_plan=wells_repair.work_plan,
+        wells_id=wells_repair.wells_id
+    )
+    if data:
+        return await WellsRepairsDAO.delete_item_all_by_filter(
+            type_kr=wells_repair.type_kr,
+            date_create=wells_repair.date_create,
+            work_plan=wells_repair.work_plan,
+            wells_id=wells_repair.wells_id
+        )

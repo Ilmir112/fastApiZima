@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Response, status
 from fastapi_cache.decorator import cache
 
-from zimaApp.exceptions import IncorectLoginOrPassword, UserAlreadyExist
+from zimaApp.exceptions import IncorectLoginOrPassword, UserAlreadyExistsException
 from zimaApp.users.auth import authenticate_user, create_access_token, get_password_hash
 
 from fastapi_versioning import version
@@ -18,7 +18,7 @@ router = APIRouter(prefix="/auth", tags=["Auth & пользователи"])
 async def register_user(user_data: SUsersRegister):
     existing_user = await UsersDAO.find_one_or_none(login_user=user_data.login_user)
     if existing_user:
-        raise UserAlreadyExist
+        raise UserAlreadyExistsException
     hashed_password = get_password_hash(user_data.password)
     await UsersDAO.add_data(
         login_user=user_data.login_user,

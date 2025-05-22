@@ -7,9 +7,9 @@ from jose import JWTError, jwt
 from zimaApp.config import settings
 from zimaApp.exceptions import (
     IncorrectTokenFormatException,
-    TokenAbcentException,
+    TokenAbsentException,
     TokenExpiredException,
-    UserIsNotPresentException,
+    UserAlreadyExistsException,
 )
 from zimaApp.users.dao import UsersDAO
 from zimaApp.users.models import Users
@@ -26,7 +26,7 @@ async def get_token(request: Request, authorization: Optional[str] = Header(None
         return token
 
     if not token:
-        raise TokenAbcentException
+        raise TokenAbsentException
 
 
 async def get_current_user(token: str = Depends(get_token)):
@@ -39,14 +39,14 @@ async def get_current_user(token: str = Depends(get_token)):
         raise TokenExpiredException
     user_id: str = payload.get("sub")
     if not user_id:
-        raise UserIsNotPresentException
+        raise UserAlreadyExistsException
     user = await UsersDAO.find_by_id(int(user_id))
     if not user:
-        raise UserIsNotPresentException
+        raise UserAlreadyExistsException
     return user
 
 
 async def get_current_admin_user(current_user: Users = Depends(get_current_user)):
     if current_user.access_level not in ["creator", "admin"]:
-        raise UserIsNotPresentException
+        raise UserAlreadyExistsException
     return current_user

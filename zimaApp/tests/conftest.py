@@ -96,7 +96,7 @@ async def authenticated_ac():
                 "password": "test",
             },
         )
-        assert ac.cookies["booking_access_token"]
+        assert ac.cookies["zima_access_token"]
         yield ac
 
 

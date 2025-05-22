@@ -19,9 +19,12 @@ router = APIRouter(
 @router.get("/find_gnkt_data")
 @version(1)
 async def find_gnkt_data(gnkt_number):
-    result = await GnktDatasDAO.find_all(
-        gnkt_number=gnkt_number
-    )
+    try:
+        result = await GnktDatasDAO.find_all(
+            gnkt_number=gnkt_number
+        )
+    except Exception as e:
+        raise HTTPException()
     return result
 
 

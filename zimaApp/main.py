@@ -1,5 +1,4 @@
 import time
-from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
 import uvicorn
@@ -8,8 +7,6 @@ from fastapi.exceptions import RequestValidationError
 from fastapi_cache import FastAPICache
 from fastapi_cache.backends.redis import RedisBackend
 from fastapi_versioning import VersionedFastAPI
-from fastapi_cache.decorator import cache
-from pydantic import BaseModel, json
 from redis import asyncio as aioredis
 from sqladmin import Admin
 from starlette.middleware.cors import CORSMiddleware
@@ -24,8 +21,6 @@ from zimaApp.admin.views import (
 )
 from zimaApp.config import settings
 from zimaApp.database import engine
-from zimaApp.users.models import Users
-from hawk_python_sdk.modules.fastapi import HawkFastapi
 from hawk_python_sdk.modules.fastapi import HawkFastapi
 from zimaApp.users.router import router as user_router
 from zimaApp.well_classifier.router import router as classifier_router
@@ -35,7 +30,15 @@ from zimaApp.gnkt_data.router import router as gnkt_router
 from zimaApp.wells_data.router import router as wells_data_router
 from zimaApp.logger import logger
 
-app = FastAPI(title="Zima", version="0.1.0", root_path="/zimaApp")
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    redis = aioredis.from_url(f"redis://{settings.REDIS_HOST}:{settings.REDIS_PORT}", encoding="utf8",
+                              decode_responses=True)
+    FastAPICache.init(RedisBackend(redis), prefix="cache")
+
+
+app = FastAPI(lifespan=lifespan, title="Zima", version="0.1.0", root_path="/zimaApp")
 
 if settings.MODE != "TEST":
     hawk = HawkFastapi({
@@ -100,11 +103,7 @@ if settings.MODE == "TEST":
     FastAPICache.init(RedisBackend(redis), prefix="cache")
 
 
-@app.on_event("startup")
-def startup():
-    redis = aioredis.from_url(f"redis://{settings.REDIS_HOST}:{settings.REDIS_PORT}", encoding="utf8",
-                              decode_responses=True)
-    FastAPICache.init(RedisBackend(redis), prefix="cache")
+
 
 
 admin = Admin(app, engine, authentication_backend=authentication_backend)
@@ -127,8 +126,6 @@ async def add_process_time_header(request: Request, call_next):
                     "process_time": round(process_time, 4)
                 })
     return response
-
-
 
 
 if __name__ == "__main__":
