@@ -2,7 +2,6 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import ValidationError
 from sqlalchemy.testing.suite.test_reflection import users
 
-from zimaApp.users.dependencies import get_current_user
 from zimaApp.users.models import Users
 from zimaApp.well_silencing.router import WellsSearchArgs
 from zimaApp.gnkt_data.dao import GnktDatasDAO
