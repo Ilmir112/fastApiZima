@@ -1,10 +1,9 @@
-from fastapi import APIRouter, Depends, BackgroundTasks
+from fastapi import APIRouter, Depends
 from datetime import date
 
 from sqlalchemy.exc import SQLAlchemyError
 
 from zimaApp.logger import logger
-from zimaApp.users.dao import UsersDAO
 
 from zimaApp.users.dependencies import get_current_user
 from zimaApp.users.models import Users
@@ -13,7 +12,7 @@ from zimaApp.wells_data.dao import WellsDatasDAO
 from zimaApp.wells_data.router import find_wells_data
 from zimaApp.wells_data.schemas import SWellsData
 from zimaApp.wells_repair_data.dao import WellsRepairsDAO
-from zimaApp.wells_repair_data.schemas import SWellsRepair, SNewWellDatas
+from zimaApp.wells_repair_data.schemas import SWellsRepair
 from fastapi_versioning import version
 
 router = APIRouter(
@@ -33,7 +32,6 @@ class WellsSearchRepair:
 @router.get("/find_well_repairs_by_filter/")
 @version(1)
 async def find_wells_in_repairs(wells_data: WellsSearchRepair = Depends()):
-    asdww = "dea"
     result = await WellsRepairsDAO.find_one_or_none(
         type_kr=wells_data.type_kr, date_create=wells_data.date_create, work_plan=wells_data.work_plan,
         wells_id=wells_data.wells_id
@@ -44,9 +42,9 @@ async def find_wells_in_repairs(wells_data: WellsSearchRepair = Depends()):
 
 @router.get("/find_well_filter_by_number")
 @version(1)
-async def find_well_id(well_number: str):
+async def find_well_id(well_number: str, user: Users = Depends(get_current_user)):
     try:
-        data = await WellsDatasDAO.find_all(well_number=well_number)
+        data = await WellsDatasDAO.find_all(well_number=well_number, contractor=user.contractor)
         if data:
             result_list = []
             for wells in data:
@@ -63,8 +61,8 @@ async def find_well_id(well_number: str):
                 return {"ремонты": result_list}
 
     except Exception as e:
-        asdwd = e
-        print(e)
+        logger.error("error message", extra=e, exc_info=True)
+
 
 
 @router.get("/find_well_id")
@@ -79,8 +77,8 @@ async def find_well_id(
             wells_id=wells_data.id,
             type_kr=wells_repair.type_kr,
             date_create=wells_repair.date_create,
-            work_plan=wells_repair.work_plan
-            # contractor=user.contractor
+            work_plan=wells_repair.work_plan,
+            contractor=user.contractor
         )
         if not result is None:
             logger.info("Скважина найдена", extra={
@@ -107,10 +105,8 @@ async def add_wells_data(
         wells_data: SWellsData = Depends(find_wells_data)
 ):
     try:
-
         if wells_data:
-            await delete_well_by_type_kr_and_date_create(wells_repair,
-                                                         wells_data.id)
+            await delete_well_by_type_kr_and_date_create(wells_data.id, user.contractor, wells_repair)
             result = await WellsRepairsDAO.add_data(
                 wells_id=wells_data.id,
                 category_dict=wells_repair.category_dict,
@@ -128,7 +124,8 @@ async def add_wells_data(
                 dinamic_level=wells_repair.dinamic_level,
                 expected_data=wells_repair.expected_data,
                 curator=wells_repair.curator,
-                region=wells_repair.region
+                region=wells_repair.region,
+                contractor=user.contractor
             )
 
             return {"status": "success", "id": result}
@@ -138,8 +135,6 @@ async def add_wells_data(
         logger.error(msg, extra={"well_number": wells_data.well_number,
                                  "well_area": wells_data.well_area}, exc_info=True)
 
-
-
     except Exception as e:
         msg = f'Unexpected error: {str(e)}'
         logger.error(msg, extra={"well_number": wells_data.well_number, "well_area": wells_data.well_area},
@@ -148,17 +143,21 @@ async def add_wells_data(
 
 @router.delete("/delete_well")
 @version(1)
-async def delete_well_by_type_kr_and_date_create(wells_repair: WellsSearchRepair = Depends()):
+async def delete_well_by_type_kr_and_date_create(wells_id: int, contractor: str,
+                                                 wells_repair: WellsSearchRepair = Depends(),
+                                                 user: Users = Depends(get_current_user)):
     data = await WellsRepairsDAO.find_one_or_none(
         type_kr=wells_repair.type_kr,
         date_create=wells_repair.date_create,
         work_plan=wells_repair.work_plan,
-        wells_id=wells_repair.wells_id
+        wells_id=wells_id,
+        contractor=contractor
     )
     if data:
         return await WellsRepairsDAO.delete_item_all_by_filter(
             type_kr=wells_repair.type_kr,
             date_create=wells_repair.date_create,
             work_plan=wells_repair.work_plan,
-            wells_id=wells_repair.wells_id
+            wells_id=wells_id,
+            contractor=contractor
         )

@@ -20,7 +20,7 @@ services:
     container_name: zima_redis
 
   zima:
-    image: zima_app
+    image: zima_image
     build:
       context: .
     container_name: zima_app

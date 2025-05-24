@@ -43,6 +43,8 @@ class WellsData(Base):
     leakiness: dict = Column(JSON)
     geolog: str = Column(String)
     date_create: Date = Column(Date)
+    contractor: str = Column(String)
+
     repairs = relationship("WellsRepair", back_populates="well_data", cascade="all, delete")
 
 

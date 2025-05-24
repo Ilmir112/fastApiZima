@@ -65,6 +65,7 @@ class SWellsData(BaseModel):
     geolog: Optional[str]
     date_create: Optional[date]
     leakiness: Optional[Dict]
+    contractor: Optional[str]
 
 
 

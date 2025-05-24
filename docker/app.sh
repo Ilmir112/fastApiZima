@@ -2,4 +2,4 @@
 
 alembic upgrade head
 
-gunicorn ZimaApp.main:App --workers 4 --worker-class uvicorn.workers.UvicornWorker --bind=192.167.1.202:8000
+gunicorn zimaApp.main:App --workers 4 --worker-class uvicorn.workers.UvicornWorker --bind=0.0.0.0:8000

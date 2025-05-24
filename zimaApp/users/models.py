@@ -19,4 +19,4 @@ class Users(Base):
     password = Column(String, nullable=False)
     access_level = Column(String, nullable=False)
 
-    # wells_repairs = relationship("WellsRepair", back_populates="users")
+    wells_repairs = relationship("WellsRepair", back_populates="users")

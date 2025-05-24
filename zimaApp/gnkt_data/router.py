@@ -35,13 +35,14 @@ async def add_wells_data(gnkt_data: SGnktData):
         well_number=gnkt_data.well_number,
         well_area=gnkt_data.well_area,
         contractor=gnkt_data.contractor,
-        diameter_gnkt=gnkt_data.length_gnkt,
-        wear_gnkt=gnkt_data.diameter_gnkt,
-        mileage_gnkt=gnkt_data.wear_gnkt,
-        tubing_fatigue=gnkt_data.mileage_gnkt,
-        previous_well=gnkt_data.tubing_fatigue,
-        date_repair=gnkt_data.previous_well,
-        pvo_number=gnkt_data.date_repair
+        length_gnkt=gnkt_data.length_gnkt,
+        diameter_gnkt=gnkt_data.diameter_gnkt,
+        wear_gnkt=gnkt_data.wear_gnkt,
+        mileage_gnkt=gnkt_data.mileage_gnkt,
+        tubing_fatigue=gnkt_data.tubing_fatigue,
+        previous_well=gnkt_data.previous_well,
+        date_repair=gnkt_data.date_repair,
+        pvo_number=gnkt_data.pvo_number
     )
     return {"status": "success", "id": result}
 

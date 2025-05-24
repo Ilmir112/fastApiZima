@@ -14,7 +14,7 @@ class SWellsRepair(BaseModel):
     data_change_paragraph: dict
     norms_time: float
     chemistry_need: dict
-    geolog_id: str
+    geolog_id: int
     date_create: date
     perforation_project: dict
     type_absorbent: str # Literal["EVASORB марки 121", "ХИМТЕХНО 101 Марка А", "СНПХ-1200", "ПСВ-3401", "Гастрит-К131М"]
@@ -23,6 +23,7 @@ class SWellsRepair(BaseModel):
     expected_data: dict
     curator: str
     region: str
+    contractor: str
 
     class Config:
         from_attributes = True

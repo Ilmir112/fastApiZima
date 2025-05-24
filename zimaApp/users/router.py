@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, Response, status
 from fastapi_cache.decorator import cache
 
 from zimaApp.exceptions import IncorectLoginOrPassword, UserAlreadyExistsException
+from zimaApp.logger import logger
 from zimaApp.users.auth import authenticate_user, create_access_token, get_password_hash
 
 from fastapi_versioning import version
@@ -16,22 +17,26 @@ router = APIRouter(prefix="/auth", tags=["Auth & пользователи"])
 @router.post("/register")
 @version(1)
 async def register_user(user_data: SUsersRegister):
-    existing_user = await UsersDAO.find_one_or_none(login_user=user_data.login_user)
-    if existing_user:
-        raise UserAlreadyExistsException
-    hashed_password = get_password_hash(user_data.password)
-    await UsersDAO.add_data(
-        login_user=user_data.login_user,
-        name_user=user_data.name_user,
-        surname_user=user_data.surname_user,
-        second_name=user_data.second_name,
-        position_id=user_data.position_id,
-        costumer=user_data.costumer,
-        contractor=user_data.contractor,
-        ctcrs=user_data.ctcrs,
-        password=hashed_password,
-        access_level=user_data.access_level,
-    )
+    try:
+        existing_user = await UsersDAO.find_one_or_none(login_user=user_data.login_user)
+        if existing_user:
+            raise UserAlreadyExistsException
+        hashed_password = get_password_hash(user_data.password)
+        await UsersDAO.add_data(
+            login_user=user_data.login_user,
+            name_user=user_data.name_user,
+            surname_user=user_data.surname_user,
+            second_name=user_data.second_name,
+            position_id=user_data.position_id,
+            costumer=user_data.costumer,
+            contractor=user_data.contractor,
+            ctcrs=user_data.ctcrs,
+            password=hashed_password,
+            access_level=user_data.access_level,
+        )
+        logger.info("Users adding", extra={"well_number": user_data.login_user}, exc_info=True)
+    except Exception as e:
+        logger.error('Critical error', extra=e, exc_info=True)
 
 
 @router.post("/login")
@@ -42,8 +47,8 @@ async def login_user(response: Response, user_data: SUsersAuth):
         raise IncorectLoginOrPassword
     access_token = create_access_token({"sub": str(user.id)})
     response.set_cookie("summary_information_access_token", access_token, httponly=True)
-
-    return {"access_token": access_token, "login_user": user.login_user,
+    logger.info("Users insert", extra={"well_number": user_data.login_user}, exc_info=True)
+    return {"login_user": user.login_user,
             "position_id": user.position_id, "ctcrs": user.ctcrs, "contractor": user.contractor}
 
 

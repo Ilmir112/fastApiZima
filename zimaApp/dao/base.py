@@ -1,7 +1,9 @@
-from sqlalchemy import and_, delete, insert
+from sqlalchemy import and_, delete, insert, update
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
+from zimaApp.logger import logger
 from zimaApp.database import async_session_maker
 
 
@@ -31,23 +33,9 @@ class BaseDAO:
     @classmethod
     async def find_one_or_none(cls, **filter_by):
         async with async_session_maker() as session:
-            query = select(cls.model).filter_by(
-                **filter_by
-            )  # Используем модель для выборки
+            query = select(cls.model.__table__.columns).filter_by(**filter_by)
             result = await session.execute(query)
-            return result.scalar_one_or_none()
-
-    @classmethod
-    async def delete_item(cls, **filter_by):
-        async with async_session_maker() as session:
-            query = select(cls.model).filter_by(
-                **filter_by
-            )  # Используем модель для выборки
-            result = await session.execute(query)
-            instance = result.scalar_one_or_none()
-            return await session.execute(
-                delete(cls.model).where(cls.model.region == instance.region)
-            )
+            return result.mappings().one_or_none()
 
     @classmethod
     async def delete_item_all_by_filter(cls, **filter_by):
@@ -69,15 +57,34 @@ class BaseDAO:
 
     @classmethod
     async def add_data(cls, **data):
-        async with async_session_maker() as session:
-            # Создаем экземпляр сессии
-            query = insert(cls.model).values(**data)  # Используем модель для выборки
-            await session.execute(query)
-            await session.commit()
+        try:
+            query = (
+                insert(cls.model).values(**data).returning(*cls.model.__table__.columns)
+            )
+            async with async_session_maker() as session:
+                result = await session.execute(query)
+                await session.commit()
+                return result.mappings().first()
+
+        except (SQLAlchemyError, Exception) as e:
+            if isinstance(e, SQLAlchemyError):
+                msg = "Database Exc: Cannot insert data into table"
+            elif isinstance(e, Exception):
+                msg = "Unknown Exc: Cannot insert data into table"
+
+            logger.error(msg, extra={"table": cls.model.__tablename__}, exc_info=True)
+            return None
 
     @classmethod
-    async def add_data_all(cls, data_list):
-        async with async_session_maker() as session:  # Создаем экземпляр сессии
-            query = insert(cls.model)  # Используем модель для выборки
-            await session.execute(query, data_list)
+    async def update_data(cls, datas, **data):
+        async with async_session_maker() as session:
+            query = (
+                update(cls.model)
+                .where(cls.model.id == datas)
+                .values(**data)
+                .returning(*cls.model.__table__.columns)
+            )
+            result = await session.execute(query)
             await session.commit()
+            return result.mappings().first()
+

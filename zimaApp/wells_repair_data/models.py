@@ -26,4 +26,7 @@ class WellsRepair(Base):
     expected_data: dict = Column(JSON, nullable=False)
     curator: str = Column(String, nullable=False)
     region: str = Column(String, nullable=False)
+    contractor: str = Column(String, nullable=False)
+
     well_data = relationship("WellsData", back_populates="repairs")
+    users = relationship("Users", back_populates="wells_repairs")

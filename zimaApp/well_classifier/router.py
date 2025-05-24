@@ -29,7 +29,7 @@ async def find_well_classifier_all(wells_data: SWellsClassifierRegion):
         results.append({"status": "success", "data": results})
     except Exception as e:
         data.append({"status": "error", "error": str(e), "item": items})
-    return data
+    return results
 
 
 @router.post("/add_data_well_classifier")

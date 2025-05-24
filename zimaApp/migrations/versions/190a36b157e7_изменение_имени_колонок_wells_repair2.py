@@ -1,8 +1,8 @@
-"""изменение имени колонок wells_repair
+"""изменение имени колонок wells_repair2
 
-Revision ID: 6ad4f5257361
+Revision ID: 190a36b157e7
 Revises: 5988e13a60a8
-Create Date: 2025-05-19 09:56:06.285328
+Create Date: 2025-05-19 10:14:54.609344
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision: str = '6ad4f5257361'
+revision: str = '190a36b157e7'
 down_revision: Union[str, None] = '5988e13a60a8'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -27,7 +27,6 @@ def upgrade() -> None:
     op.alter_column('wells_data', 'well_area',
                existing_type=sa.VARCHAR(),
                nullable=False)
-    op.add_column('wells_repairs', sa.Column('contractor', sa.String(), nullable=True))
     op.alter_column('wells_repairs', 'expected_data',
                existing_type=postgresql.JSON(astext_type=sa.Text()),
                nullable=False)
@@ -37,7 +36,6 @@ def upgrade() -> None:
     op.alter_column('wells_repairs', 'region',
                existing_type=sa.VARCHAR(),
                nullable=False)
-    # op.create_foreign_key(None, 'wells_repairs', 'users', ['contractor'], ['contractor'])
     op.alter_column('wells_silencing', 'well_area',
                existing_type=sa.VARCHAR(),
                nullable=False)
@@ -50,7 +48,6 @@ def downgrade() -> None:
     op.alter_column('wells_silencing', 'well_area',
                existing_type=sa.VARCHAR(),
                nullable=True)
-    op.drop_constraint(None, 'wells_repairs', type_='foreignkey')
     op.alter_column('wells_repairs', 'region',
                existing_type=sa.VARCHAR(),
                nullable=True)
@@ -60,7 +57,6 @@ def downgrade() -> None:
     op.alter_column('wells_repairs', 'expected_data',
                existing_type=postgresql.JSON(astext_type=sa.Text()),
                nullable=True)
-    op.drop_column('wells_repairs', 'contractor')
     op.alter_column('wells_data', 'well_area',
                existing_type=sa.VARCHAR(),
                nullable=True)

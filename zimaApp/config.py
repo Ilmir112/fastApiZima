@@ -46,8 +46,8 @@ class Settings(BaseSettings):
     ALGORITHM: str
 
     class Config:
-        env_file = ".env"
-        # env_file = '../.env'
+        # env_file = ".env"
+        env_file = '../.env'
 
 
 try:
@@ -58,5 +58,4 @@ except ValidationError as e:
     print(f"Ошибка валидации: {e}")
     print(e)
 
-# Дальнейшая логика вашего приложения...
-# Добавим поле DATABASE_URL
+
