@@ -49,7 +49,10 @@ async def login_user(response: Response, user_data: SUsersAuth):
     response.set_cookie("summary_information_access_token", access_token, httponly=True)
     logger.info("Users insert", extra={"well_number": user_data.login_user}, exc_info=True)
     return {"login_user": user.login_user,
-            "position_id": user.position_id, "ctcrs": user.ctcrs, "contractor": user.contractor}
+            "position_id": user.position_id,
+            "ctcrs": user.ctcrs,
+            "contractor": user.contractor,
+            "access_token": access_token}
 
 
 @router.post("/logout")

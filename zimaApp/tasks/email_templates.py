@@ -5,7 +5,7 @@ from pydantic import EmailStr
 from zimaApp.config import settings
 
 
-def create_booking_confirmation_template(well_repair: dict, email_to: EmailStr):
+def create_zima_confirmation_template(well_repair: dict, email_to: EmailStr):
     email = EmailMessage()
     email["Subject"] = "План сделан"
     email["From"] = settings.SMTP_USER
