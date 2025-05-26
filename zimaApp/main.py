@@ -72,10 +72,12 @@ app.include_router(gnkt_router)
 origins = [
     # 3000 - порт, на котором работает фронтенд на React.js
     "http://localhost:3000",
+    "http://77.94.97.170"
 ]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Разрешить все источники
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["GET", "POST", "OPTIONS", "DELETE", "PATCH", "PUT"],
     allow_headers=[
