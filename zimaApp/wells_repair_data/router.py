@@ -64,7 +64,6 @@ async def find_well_id(well_number: str, user: Users = Depends(get_current_user)
         logger.error("error message", extra=e, exc_info=True)
 
 
-
 @router.get("/find_well_id")
 @version(1)
 async def find_well_id(
