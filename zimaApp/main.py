@@ -73,10 +73,9 @@ origins = [
     # 3000 - порт, на котором работает фронтенд на React.js
     "http://localhost:3000",
 ]
-
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=["*"],  # Разрешить все источники
     allow_credentials=True,
     allow_methods=["GET", "POST", "OPTIONS", "DELETE", "PATCH", "PUT"],
     allow_headers=[
@@ -101,10 +100,6 @@ if settings.MODE == "TEST":
     redis = aioredis.from_url(f"redis://{settings.REDIS_HOST}:{settings.REDIS_PORT}", encoding="utf8",
                               decode_responses=True)
     FastAPICache.init(RedisBackend(redis), prefix="cache")
-
-
-
-
 
 admin = Admin(app, engine, authentication_backend=authentication_backend)
 
