@@ -68,12 +68,13 @@ app.include_router(classifier_router)
 app.include_router(silencing_router)
 app.include_router(gnkt_router)
 
-# Подключение CORS, чтобы запросы к API могли приходить из браузера
-origins = [
-    # 3000 - порт, на котором работает фронтенд на React.js
-    "http://localhost:3000",
-    "http://77.94.97.170"
-]
+# # Подключение CORS, чтобы запросы к API могли приходить из браузера
+# origins = [
+#     # 3000 - порт, на котором работает фронтенд на React.js
+#     "http://localhost:3000"
+# ]
+origins = ["*"]
+
 
 app.add_middleware(
     CORSMiddleware,
