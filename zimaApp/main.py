@@ -70,8 +70,9 @@ app.include_router(gnkt_router)
 
 # Подключение CORS, чтобы запросы к API могли приходить из браузера
 origins = [
-    # 3000 - порт, на котором работает фронтенд на React.js
-    "http://localhost:3000",
+    "https://fastapizima.onrender.com",
+    "http://localhost:3000",  # для React или другого фронтенда на dev-сервере
+    "http://127.0.0.1:8000", # для локальной разработки
 ]
 
 app.add_middleware(
