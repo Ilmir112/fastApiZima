@@ -7,6 +7,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi_cache import FastAPICache
 from fastapi_cache.backends.redis import RedisBackend
 from fastapi_versioning import VersionedFastAPI
+from prometheus_fastapi_instrumentator import Instrumentator
 from redis import asyncio as aioredis
 from sqladmin import Admin
 from starlette.middleware.cors import CORSMiddleware
@@ -28,6 +29,7 @@ from zimaApp.well_silencing.router import router as silencing_router
 from zimaApp.wells_repair_data.router import router as wells_repair_router
 from zimaApp.gnkt_data.router import router as gnkt_router
 from zimaApp.wells_data.router import router as wells_data_router
+from zimaApp.prometheus.router import router as prometheus_router
 from zimaApp.logger import logger
 
 
@@ -45,6 +47,13 @@ if settings.MODE != "TEST":
         'app_instance': app,
         'token': settings.HAWK_DSN
     })
+
+# Подключение эндпоинта для отображения метрик для их дальнейшего сбора Прометеусом
+instrumentator = Instrumentator(
+    should_group_status_codes=False,
+    excluded_handlers=[".*admin.*", "/metrics"],
+)
+instrumentator.instrument(app).expose(app)
 
 
 # Обработка ошибок валидации
@@ -67,11 +76,13 @@ app.include_router(wells_repair_router)
 app.include_router(classifier_router)
 app.include_router(silencing_router)
 app.include_router(gnkt_router)
+app.include_router(prometheus_router)
 
 # Подключение CORS, чтобы запросы к API могли приходить из браузера
 origins = [
-    # 3000 - порт, на котором работает фронтенд на React.js
+    "https://fastapizima.onrender.com",
     "http://localhost:3000",
+    "http://127.0.0.1:8000",  # для локальной разработки
 ]
 
 app.add_middleware(
@@ -102,10 +113,6 @@ if settings.MODE == "TEST":
                               decode_responses=True)
     FastAPICache.init(RedisBackend(redis), prefix="cache")
 
-
-
-
-
 admin = Admin(app, engine, authentication_backend=authentication_backend)
 
 admin.add_view(UserAdmin)
@@ -121,10 +128,10 @@ async def add_process_time_header(request: Request, call_next):
     response = await call_next(request)
     process_time = time.perf_counter() - start_time
     # response.headers["X-Process-Time"] = str(process_time)
-    logger.info("request handling time",
-                extra={
-                    "process_time": round(process_time, 4)
-                })
+    # logger.info("request handling time",
+    #             extra={
+    #                 "process_time": round(process_time, 4)
+    #             })
     return response
 
 
