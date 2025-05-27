@@ -1,7 +1,6 @@
 # docker compose build - используем эту команду, если меняли что-то в Dockerfile
 # docker compose up - если изменили только docker-compose
 
-version: "3.11"
 services:
 #  db:
 #    image: postgres:15
@@ -20,7 +19,7 @@ services:
     container_name: zima_redis
 
   zima:
-    image: zima_image2
+    image: zima_image
     build:
       context: .
     container_name: zima_app
