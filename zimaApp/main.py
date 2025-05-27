@@ -47,7 +47,6 @@ if settings.MODE != "TEST":
     })
 
 
-
 # Обработка ошибок валидации
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
@@ -69,13 +68,11 @@ app.include_router(classifier_router)
 app.include_router(silencing_router)
 app.include_router(gnkt_router)
 
-# # Подключение CORS, чтобы запросы к API могли приходить из браузера
-# origins = [
-#     # 3000 - порт, на котором работает фронтенд на React.js
-#     "http://localhost:3000"
-# ]
-origins = ["*"]
-
+# Подключение CORS, чтобы запросы к API могли приходить из браузера
+origins = [
+    # 3000 - порт, на котором работает фронтенд на React.js
+    "http://localhost:3000",
+]
 
 app.add_middleware(
     CORSMiddleware,
@@ -104,6 +101,10 @@ if settings.MODE == "TEST":
     redis = aioredis.from_url(f"redis://{settings.REDIS_HOST}:{settings.REDIS_PORT}", encoding="utf8",
                               decode_responses=True)
     FastAPICache.init(RedisBackend(redis), prefix="cache")
+
+
+
+
 
 admin = Admin(app, engine, authentication_backend=authentication_backend)
 
