@@ -1,25 +1,26 @@
 # docker compose build - используем эту команду, если меняли что-то в Dockerfile
 # docker compose up - если изменили только docker-compose
 
+version: "3.11"
 services:
-#  db:
-#    image: postgres:15
-#    container_name: zima_db
-#    environment:
-#      POSTGRES_PASSWORD: 195375AsD+
-#    volumes:
-#      - postgresdata:/var/lib/postgresql/data
-#    env_file: # Файл с переменными окружения (Вместо environment)
-#      - .env-non-dev
-#    ports:
-#      - 5432:5432 # Порт нужен, только если нам нужен доступ к контейнеру напрямую
+  db:
+    image: postgres:15
+    container_name: zima_db
+    environment:
+      POSTGRES_PASSWORD: 195375AsD+
+    volumes:
+      - postgresdata:/var/lib/postgresql/data
+    env_file: # Файл с переменными окружения (Вместо environment)
+      - .env-non-dev
+    ports:
+      - 5433:5432 # Порт нужен, только если нам нужен доступ к контейнеру напрямую
 
   redis:
     image: redis:7
     container_name: zima_redis
 
   zima:
-    image: zima_image
+    image: zima_image2
     restart: always
     build:
       context: .
@@ -27,6 +28,7 @@ services:
     env_file:
       - .env-non-dev
     depends_on: # Запускаем только после запуска БД и Redis (depends on = зависит от)
+      - db
       - redis
     # Если не работает эта команда, используйте закомментированную
     # command: ["/zimaApp/docker/zimaApp.sh"]
