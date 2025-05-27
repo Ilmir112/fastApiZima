@@ -7,6 +7,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi_cache import FastAPICache
 from fastapi_cache.backends.redis import RedisBackend
 from fastapi_versioning import VersionedFastAPI
+from prometheus_fastapi_instrumentator import Instrumentator
 from redis import asyncio as aioredis
 from sqladmin import Admin
 from starlette.middleware.cors import CORSMiddleware
@@ -46,6 +47,13 @@ if settings.MODE != "TEST":
         'token': settings.HAWK_DSN
     })
 
+# Подключение эндпоинта для отображения метрик для их дальнейшего сбора Прометеусом
+instrumentator = Instrumentator(
+    should_group_status_codes=False,
+    excluded_handlers=[".*admin.*", "/metrics"],
+)
+instrumentator.instrument(app).expose(app)
+
 
 # Обработка ошибок валидации
 @app.exception_handler(RequestValidationError)
@@ -70,8 +78,9 @@ app.include_router(gnkt_router)
 
 # Подключение CORS, чтобы запросы к API могли приходить из браузера
 origins = [
-    # 3000 - порт, на котором работает фронтенд на React.js
+    "https://fastapizima.onrender.com",
     "http://localhost:3000",
+    "http://127.0.0.1:8000",  # для локальной разработки
 ]
 
 app.add_middleware(
@@ -101,10 +110,6 @@ if settings.MODE == "TEST":
     redis = aioredis.from_url(f"redis://{settings.REDIS_HOST}:{settings.REDIS_PORT}", encoding="utf8",
                               decode_responses=True)
     FastAPICache.init(RedisBackend(redis), prefix="cache")
-
-
-
-
 
 admin = Admin(app, engine, authentication_backend=authentication_backend)
 
