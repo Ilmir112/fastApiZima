@@ -29,6 +29,7 @@ from zimaApp.well_silencing.router import router as silencing_router
 from zimaApp.wells_repair_data.router import router as wells_repair_router
 from zimaApp.gnkt_data.router import router as gnkt_router
 from zimaApp.wells_data.router import router as wells_data_router
+from zimaApp.prometheus import router as prometheus_router
 from zimaApp.logger import logger
 
 
@@ -75,6 +76,7 @@ app.include_router(wells_repair_router)
 app.include_router(classifier_router)
 app.include_router(silencing_router)
 app.include_router(gnkt_router)
+app.include_router(prometheus_router)
 
 # Подключение CORS, чтобы запросы к API могли приходить из браузера
 origins = [
@@ -126,10 +128,10 @@ async def add_process_time_header(request: Request, call_next):
     response = await call_next(request)
     process_time = time.perf_counter() - start_time
     # response.headers["X-Process-Time"] = str(process_time)
-    logger.info("request handling time",
-                extra={
-                    "process_time": round(process_time, 4)
-                })
+    # logger.info("request handling time",
+    #             extra={
+    #                 "process_time": round(process_time, 4)
+    #             })
     return response
 
 
