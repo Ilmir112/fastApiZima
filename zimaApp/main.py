@@ -29,7 +29,7 @@ from zimaApp.well_silencing.router import router as silencing_router
 from zimaApp.wells_repair_data.router import router as wells_repair_router
 from zimaApp.gnkt_data.router import router as gnkt_router
 from zimaApp.wells_data.router import router as wells_data_router
-from zimaApp.prometheus import router as prometheus_router
+from zimaApp.prometheus.router import router as prometheus_router
 from zimaApp.logger import logger
 
 
