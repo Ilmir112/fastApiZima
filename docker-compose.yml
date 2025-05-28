@@ -1,19 +1,19 @@
 # docker compose build - используем эту команду, если меняли что-то в Dockerfile
 # docker compose up - если изменили только docker-compose
 
-version: "3.11"
+
 services:
-#  db:
-#    image: postgres:15
-#    container_name: zima_db
-#    environment:
-#      POSTGRES_PASSWORD: 195375AsD+
-#    volumes:
-#      - postgresdata:/var/lib/postgresql/data
-#    env_file: # Файл с переменными окружения (Вместо environment)
-#      - .env-non-dev
-#    ports:
-#      - 5432:5432 # Порт нужен, только если нам нужен доступ к контейнеру напрямую
+  db:
+    image: postgres:15
+    container_name: zima_data
+    environment:
+      POSTGRES_PASSWORD: 195375AsD+
+    volumes:
+      - postgresdata:/var/lib/postgresql/data
+    env_file: # Файл с переменными окружения (Вместо environment)
+      - .env-non-dev
+    ports:
+      - 5433:5432 # Порт нужен, только если нам нужен доступ к контейнеру напрямую
 
   redis:
     image: redis:7
@@ -21,6 +21,7 @@ services:
 
   zima:
     image: zima_image2
+    restart: always
     build:
       context: .
     container_name: zima_app
@@ -31,7 +32,7 @@ services:
       - redis
     # Если не работает эта команда, используйте закомментированную
     # command: ["/zimaApp/docker/zimaApp.sh"]
-#    command: sh -c "alembic upgrade head && gunicorn zimaApp.main:app --workers 4 --worker-class uvicorn.workers.UvicornWorker --bind=0.0.0.0:8000"
+    command: sh -c "alembic upgrade head && gunicorn zimaApp.main:app --workers 4 --worker-class uvicorn.workers.UvicornWorker --bind=0.0.0.0:8000"
     ports:
       - 7777:8000
 
