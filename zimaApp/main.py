@@ -1,5 +1,6 @@
 import time
 from contextlib import asynccontextmanager
+from collections.abc import AsyncIterator
 
 import uvicorn
 from fastapi import FastAPI, Request
@@ -34,24 +35,27 @@ from zimaApp.logger import logger
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
-
+async def lifespan(_: FastAPI) -> AsyncIterator[None]:
     redis = aioredis.from_url(f"redis://{settings.REDIS_HOST}:{settings.REDIS_PORT}", encoding="utf8",
                               decode_responses=True)
-
-
     FastAPICache.init(RedisBackend(redis), prefix="cache")
     yield
-print(f"redis://{settings.REDIS_HOST}:{settings.REDIS_PORT}")
-# @asynccontextmanager
-# async def lifespan(app: FastAPI):
-#     redis = aioredis.from_url(f"redis://{settings.REDIS_HOST}:{settings.REDIS_PORT}", encoding="utf8",
-#                               decode_responses=True)
-#     FastAPICache.init(RedisBackend(redis), prefix="cache")
-#     yield
+
+
 
 
 app = FastAPI(lifespan=lifespan, title="Zima", version="0.1.0", root_path="/zimaApp")
+
+
+@app.get("/redis_ping")
+async def redis_ping():
+    try:
+        if redis.ping():
+            return {"status": "Redis подключен"}
+        else:
+            return {"status": "Нет ответа от Redis"}
+    except Exception as e:
+        return {"error": str(e)}
 
 if settings.MODE != "TEST":
     hawk = HawkFastapi({

@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Response, status
 from fastapi_cache.decorator import cache
 
+from zimaApp.config import settings
 from zimaApp.exceptions import IncorectLoginOrPassword, UserAlreadyExistsException
 from zimaApp.logger import logger
 from zimaApp.users.auth import authenticate_user, create_access_token, get_password_hash
@@ -64,6 +65,7 @@ async def logout_user(response: Response):
 @router.get("/me")
 @version(1)
 async def read_users_me(current_user: Users = Depends(get_current_user)):
+    print(f"redis://{settings.REDIS_HOST}:{settings.REDIS_PORT}")
     return current_user
 
 

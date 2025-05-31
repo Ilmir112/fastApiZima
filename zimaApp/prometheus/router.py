@@ -17,6 +17,7 @@ def get_error():
         raise KeyError
 
 
+
 @router.get("/time_consumer")
 def time_consumer():
     time.sleep(random() * 5)

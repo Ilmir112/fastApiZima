@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, Query, Response
 
 from starlette.responses import JSONResponse
 
+from zimaApp.config import settings
 from zimaApp.logger import logger
 from zimaApp.well_silencing.dao import WellSilencingDAO
 from zimaApp.well_silencing.schemas import (
@@ -47,7 +48,7 @@ async def find_well_silencing_all(wells_data: SWellsSilencingRegion):
 
 
 @router.post("/find_well_silencing_all_one/")
-# @cache(expire=1500
+@cache(expire=1500)
 @version(1)
 async def find_well_silencing_all_one(wells_data: SWellsSilencingRegion):
     results = await WellSilencingDAO.find_first(region=wells_data.region)
@@ -68,6 +69,7 @@ async def delete_well_silencing_for_region(wells_data: SWellsSilencingRegion):
 @router.get("/find_well_silencing/")
 @version(1)
 async def find_wells_in_silencing_for_region(wells_data: WellsSearchArgs = Depends()):
+
     result = await WellSilencingDAO.find_one_or_none(
         well_number=wells_data.well_number, well_area=wells_data.well_area
     )
