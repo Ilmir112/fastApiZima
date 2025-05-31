@@ -18,11 +18,11 @@ class Settings(BaseSettings):
     def DATABASE_URL(self):
         return f"postgresql+asyncpg://{self.DB_USER}:{self.DB_PASSWORD}@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"
 
-    # TEST_DB_USER: str
-    # TEST_DB_PASSWORD: str
-    # TEST_DB_HOST: str
-    # TEST_DB_PORT: int
-    # TEST_DB_NAME: str
+    TEST_DB_USER: str
+    TEST_DB_PASSWORD: str
+    TEST_DB_HOST: str
+    TEST_DB_PORT: int
+    TEST_DB_NAME: str
 
 
     @property
@@ -46,7 +46,7 @@ class Settings(BaseSettings):
     ALGORITHM: str
 
     class Config:
-        env_file = ".env-non-dev"
+        env_file = ".env"
         # env_file = '../.env'
 
 
