@@ -32,7 +32,6 @@ from zimaApp.wells_data.router import router as wells_data_router
 from zimaApp.prometheus.router import router as prometheus_router
 from zimaApp.logger import logger
 
-from collections.abc import AsyncIterator
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
