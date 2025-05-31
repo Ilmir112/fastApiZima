@@ -53,7 +53,7 @@ class Settings(BaseSettings):
 try:
     # Создайте экземпляр класса Settings
     settings = Settings()
-    print(settings)
+
     # Для проверки
 except ValidationError as e:
     print(f"Ошибка валидации: {e}")
