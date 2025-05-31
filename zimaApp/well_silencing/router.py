@@ -30,7 +30,7 @@ router = APIRouter(
 
 
 @router.post("/find_well_silencing_all/")
-# @cache(expire=1500)
+@cache(expire=1500)
 @version(1)
 async def find_well_silencing_all(wells_data: SWellsSilencingRegion):
     results = await WellSilencingDAO.find_all(region=wells_data.region)
