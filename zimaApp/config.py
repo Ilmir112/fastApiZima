@@ -46,8 +46,8 @@ class Settings(BaseSettings):
     ALGORITHM: str
 
     class Config:
-        # env_file = ".env"
-        env_file = '../.env'
+        env_file = ".env-non-dev"
+        # env_file = '../.env'
 
 
 try:
