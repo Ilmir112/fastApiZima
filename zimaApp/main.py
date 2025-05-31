@@ -32,6 +32,7 @@ from zimaApp.wells_data.router import router as wells_data_router
 from zimaApp.prometheus.router import router as prometheus_router
 from zimaApp.logger import logger
 
+from collections.abc import AsyncIterator
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -39,6 +40,13 @@ async def lifespan(app: FastAPI):
                               decode_responses=True)
     FastAPICache.init(RedisBackend(redis), prefix="cache")
     yield
+
+# @asynccontextmanager
+# async def lifespan(app: FastAPI):
+#     redis = aioredis.from_url(f"redis://{settings.REDIS_HOST}:{settings.REDIS_PORT}", encoding="utf8",
+#                               decode_responses=True)
+#     FastAPICache.init(RedisBackend(redis), prefix="cache")
+#     yield
 
 
 app = FastAPI(lifespan=lifespan, title="Zima", version="0.1.0", root_path="/zimaApp")
