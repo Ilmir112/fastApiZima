@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, Query, Response
-from fastapi_cache.decorator import cache
+
 from starlette.responses import JSONResponse
 
 from zimaApp.logger import logger
@@ -11,6 +11,7 @@ from zimaApp.well_silencing.schemas import (
     SWellsSilencingRegion,
 )
 from fastapi_versioning import VersionedFastAPI, version
+from fastapi_cache.decorator import cache
 
 
 class WellsSearchArgs:
@@ -30,7 +31,7 @@ router = APIRouter(
 
 @router.post("/find_well_silencing_all/")
 @version(1)
-# @cache(expire=20)
+@cache(expire=1500)
 async def find_well_silencing_all(wells_data: SWellsSilencingRegion):
     results = await WellSilencingDAO.find_all(region=wells_data.region)
     if results:
@@ -42,6 +43,15 @@ async def find_well_silencing_all(wells_data: SWellsSilencingRegion):
                 "region": r.region,
                 "today": r.today,
             })
+        return results
+
+
+@router.post("/find_well_silencing_all_one/")
+@version(1)
+@cache(expire=1500)
+async def find_well_silencing_all_one(wells_data: SWellsSilencingRegion):
+    results = await WellSilencingDAO.find_first(region=wells_data.region)
+    if results:
         return results
 
 
@@ -86,8 +96,3 @@ async def add_data_well_silencing(wells_data: SWellsSilencingBatch):
         except Exception as e:
             results.append({"status": "error", "error": str(e), "item": item})
     return results
-
-
-
-
-

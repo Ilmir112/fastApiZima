@@ -22,6 +22,15 @@ class BaseDAO:
             return result.scalars().all()
 
     @classmethod
+    async def find_first(cls, **filter_by):
+        async with async_session_maker() as session:  # Создаем экземпляр сессии
+            query = select(cls.model).filter_by(
+                **filter_by
+            )  # Используем модель для выборки
+            result = await session.execute(query)
+            return result.scalars().first()
+
+    @classmethod
     async def find_by_id(cls, model_id: int):
         async with async_session_maker() as session:  # Создаем экземпляр сессии
             query = select(cls.model).filter_by(
