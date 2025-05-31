@@ -4,7 +4,7 @@ from collections.abc import AsyncIterator
 
 import uvicorn
 from fastapi import FastAPI, Request
-from fastapi.exceptions import RequestValidationError
+from fastapi.exceptions import RequestValidationError, HTTPException
 from fastapi_cache import FastAPICache
 from fastapi_cache.backends.redis import RedisBackend
 from fastapi_versioning import VersionedFastAPI
@@ -36,26 +36,29 @@ from zimaApp.logger import logger
 
 @asynccontextmanager
 async def lifespan(_: FastAPI) -> AsyncIterator[None]:
-    redis = aioredis.from_url(f"redis://{settings.REDIS_HOST}:{settings.REDIS_PORT}", encoding="utf8",
-                              decode_responses=True)
+    redis = aioredis.from_url(f"redis://{settings.REDIS_HOST}:{settings.REDIS_PORT}", encoding="utf8")
     FastAPICache.init(RedisBackend(redis), prefix="cache")
     yield
-
-
 
 
 app = FastAPI(lifespan=lifespan, title="Zima", version="0.1.0", root_path="/zimaApp")
 
 
-@app.get("/redis_ping")
-async def redis_ping():
+@app.get("/redis-test2")
+async def redis_test():
     try:
-        if redis.ping():
-            return {"status": "Redis подключен"}
+        # Устанавливаем значение в кеш
+        await FastAPICache.get_backend().set("test_key", "hello_redis", expire=60)  # например, таймаут 60 секунд
+        # Получаем значение из кеша
+        value = await FastAPICache.get_backend().get("test_key")
+        if value == "hello_redis":
+            return {"status": "success", "message": "Redis работает и успешно подключен!"}
         else:
-            return {"status": "Нет ответа от Redis"}
+            raise HTTPException(status_code=500, detail="Не удалось получить значение из Redis")
     except Exception as e:
-        return {"error": str(e)}
+        raise HTTPException(status_code=500, detail=f"Ошибка при подключении к Redis: {e}")
+
+
 
 if settings.MODE != "TEST":
     hawk = HawkFastapi({

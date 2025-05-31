@@ -1,3 +1,5 @@
+from fastapi_cache.decorator import cache
+
 from fastapi import APIRouter, Depends
 
 from zimaApp.logger import logger
@@ -33,6 +35,7 @@ async def find_well_classifier_all(wells_data: SWellsClassifierRegion):
 
 
 @router.post("/add_data_well_classifier")
+# @cache(expire=1500)
 @version(1)
 async def add_data_well_classifier(wells_data: SWellsClassifierBatch):
     results = []

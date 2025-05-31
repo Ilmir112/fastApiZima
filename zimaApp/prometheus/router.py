@@ -1,7 +1,8 @@
 import time
 from random import random
 
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
+from fastapi_cache import FastAPICache
 
 router = APIRouter(
     prefix="/prometheus",
