@@ -3,10 +3,11 @@ from contextlib import asynccontextmanager
 from collections.abc import AsyncIterator
 
 import uvicorn
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, Response
 from fastapi.exceptions import RequestValidationError, HTTPException
 from fastapi_cache import FastAPICache
 from fastapi_cache.backends.redis import RedisBackend
+from fastapi_cache.decorator import cache
 from fastapi_versioning import VersionedFastAPI
 from prometheus_fastapi_instrumentator import Instrumentator
 from redis import asyncio as aioredis
@@ -37,26 +38,27 @@ from zimaApp.logger import logger
 @asynccontextmanager
 async def lifespan(_: FastAPI) -> AsyncIterator[None]:
     redis = aioredis.from_url(f"redis://{settings.REDIS_HOST}:{settings.REDIS_PORT}", encoding="utf8")
-    FastAPICache.init(RedisBackend(redis), prefix="cache")
+    FastAPICache.init(RedisBackend(redis), prefix="fastapi-cache")
     yield
 
 
 app = FastAPI(lifespan=lifespan, title="Zima", version="0.1.0", root_path="/zimaApp")
 
 
-@app.get("/redis-test2")
-async def redis_test():
-    try:
-        # Устанавливаем значение в кеш
-        await FastAPICache.get_backend().set("test_key", "hello_redis", expire=60)  # например, таймаут 60 секунд
-        # Получаем значение из кеша
-        value = await FastAPICache.get_backend().get("test_key")
-        if value == "hello_redis":
-            return {"status": "success", "message": "Redis работает и успешно подключен!"}
-        else:
-            raise HTTPException(status_code=500, detail="Не удалось получить значение из Redis")
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Ошибка при подключении к Redis: {e}")
+
+@cache(expire=15)
+@app.get("/redis-test")
+def redis_test(request: Request, response: Response):
+    adw = FastAPICache
+    # Устанавливаем значение в кеш
+    FastAPICache.get_backend().set("test_key", "hello_redis", expire=60)  # например, таймаут 60 секунд
+    # Получаем значение из кеша
+    value = FastAPICache.get_backend().get("test_key")
+    if value == "hello_redis":
+        return {"status": "success", "message": "Redis работает и успешно подключен!"}
+    else:
+        raise HTTPException(status_code=500, detail="Не удалось получить значение из Redis")
+
 
 
 

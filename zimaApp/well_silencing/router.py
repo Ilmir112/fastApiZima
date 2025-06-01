@@ -1,5 +1,4 @@
-from fastapi import APIRouter, Depends, Query, Response
-
+from fastapi import APIRouter, Depends, Query, Request, Response
 from starlette.responses import JSONResponse
 
 from zimaApp.config import settings
@@ -31,9 +30,9 @@ router = APIRouter(
 
 
 @router.post("/find_well_silencing_all/")
-# @cache(expire=1500)
 @version(1)
-async def find_well_silencing_all(wells_data: SWellsSilencingRegion):
+@cache(expire=1500)
+async def find_well_silencing_all(request: Request, response: Response, wells_data: SWellsSilencingRegion):
     results = await WellSilencingDAO.find_all(region=wells_data.region)
     if results:
         data = []
@@ -47,10 +46,12 @@ async def find_well_silencing_all(wells_data: SWellsSilencingRegion):
         return results
 
 
+
+
+
+@cache(expire=1500)
 @router.post("/find_well_silencing_all_one/")
-# @cache(expire=1500)
-@version(1)
-async def find_well_silencing_all_one(wells_data: SWellsSilencingRegion):
+async def find_well_silencing_all_one(request: Request, response: Response, wells_data: SWellsSilencingRegion):
     results = await WellSilencingDAO.find_first(region=wells_data.region)
     if results:
         return results

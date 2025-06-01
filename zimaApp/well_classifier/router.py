@@ -1,6 +1,6 @@
 from fastapi_cache.decorator import cache
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request, Response
 
 from zimaApp.logger import logger
 from zimaApp.well_classifier.dao import WellClassifierDAO
@@ -20,7 +20,7 @@ router = APIRouter(
 
 @router.post("/find_well_classifier_all/")
 @version(1)
-async def find_well_classifier_all(wells_data: SWellsClassifierRegion):
+async def find_well_classifier_all(request: Request, response: Response, wells_data: SWellsClassifierRegion):
     data = []
     try:
         results = await WellClassifierDAO.find_all(region=wells_data.region)
