@@ -1,17 +1,20 @@
 import time
 from random import random
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from fastapi_cache import FastAPICache
 
 from zimaApp.config import settings
 from redis import asyncio as aioredis
 
 from zimaApp.logger import logger
+from zimaApp.tasks.telegram_bot_template import TelegramInfo
+from zimaApp.users.dependencies import get_current_user
+from zimaApp.users.models import Users
 
 router = APIRouter(
     prefix="/prometheus",
-    tags=["Тестирование Grafana + Prometheus"]
+    tags=["Тестирование Grafana + Prometheus + redis + logger"]
 )
 
 
@@ -22,7 +25,6 @@ def get_error():
         1 / 0  # Пример деления на ноль
     except Exception as e:
         logger.error(f'Произошла ошибка: {e}')
-
 
 
 @router.get("/time_consumer")
@@ -36,6 +38,14 @@ def memory_consumer():
     _ = [i for i in range(30_000_000)]
     return 1
 
+
+@router.post("/logger_send")
+async def logger_send(message: dict):
+    try:
+        await TelegramInfo.send_message_logger(message)
+    except Exception as e:
+        logger.error(e)
+
 @router.get("/redis/ping")
 async def redis_ping():
     redis = aioredis.from_url(f"redis://{settings.REDIS_HOST}:{settings.REDIS_PORT}", encoding="utf8")
@@ -46,6 +56,7 @@ async def redis_ping():
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Redis error: {e}")
 
+
 @router.get("/redis/set")
 async def redis_set(key: str, value: str):
     redis = aioredis.from_url(f"redis://{settings.REDIS_HOST}:{settings.REDIS_PORT}", encoding="utf8")
@@ -54,6 +65,7 @@ async def redis_set(key: str, value: str):
         return {"status": "success", "message": f"Key '{key}' set to '{value}'"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Redis error: {e}")
+
 
 @router.get("/redis/get")
 async def redis_get(key: str):

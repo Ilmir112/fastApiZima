@@ -34,3 +34,13 @@ class TelegramInfo:
         async with httpx.AsyncClient() as client:
             response = await client.post(TelegramInfo.URL, json=payload)
             response.raise_for_status()
+
+    @classmethod
+    async def send_message_logger(cls, message: dict):
+        payload = {
+            "chat_id": settings.CHAT_ID,
+            "text": message
+        }
+        async with httpx.AsyncClient() as client:
+            response = await client.post(TelegramInfo.URL, json=payload)
+            response.raise_for_status()

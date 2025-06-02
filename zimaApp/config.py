@@ -52,7 +52,6 @@ class Settings(BaseSettings):
         env_file = ".env"
         # env_file = '../.env'
 
-
 try:
     # Создайте экземпляр класса Settings
     settings = Settings()
