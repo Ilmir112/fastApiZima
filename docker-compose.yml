@@ -43,7 +43,7 @@ services:
     container_name: zima_celery
     # Если не работает эта команда, используйте закомментированную
 #    command: ["/zimaApp/docker/celery.sh", "celery"] # Второй аргумен для if/elif в скрипте
-    command: sh -c "celery --app=zimaApp.tasks.celery:celery worker -l INFO"
+    command: sh -c "celery --app=zimaApp.tasks.celery_app:celery_app worker -l INFO"
     env_file:
       - .env-non-dev
     depends_on:
@@ -56,7 +56,7 @@ services:
     container_name: zima_flower
     # Если не работает эта команда, используйте закомментированную
 #    command: ["/docker/celery.sh", "flower"]
-    command: sh -c "celery --app=zimaApp.tasks.celery:celery flower"
+    command: sh -c "celery --app=zimaApp.tasks.celery_app:celery_app flower"
     env_file:
       - .env-non-dev
     depends_on:
