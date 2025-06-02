@@ -6,6 +6,7 @@ from zimaApp.config import settings
 import httpx
 
 from zimaApp.wells_repair_data.schemas import SWellsRepair
+from time import sleep
 
 
 class TelegramInfo:
@@ -14,7 +15,6 @@ class TelegramInfo:
     @classmethod
     async def send_message_users(cls, username: str):
         message = f"Пользователь {username} вошел в систему."
-
         payload = {
             "chat_id": settings.CHAT_ID,
             "text": message

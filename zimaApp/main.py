@@ -55,6 +55,11 @@ async def lifespan(_: FastAPI):
 
 app = FastAPI(lifespan=lifespan, title="Zima", version="0.1.0", root_path="/zimaApp")
 
+# Подключение версионирования
+app = VersionedFastAPI(app,
+                       version_format='{major}',
+                       prefix_format='/api/v{major}',
+                       )
 
 if settings.MODE != "TEST":
     hawk = HawkFastapi({
@@ -116,11 +121,7 @@ app.add_middleware(
     ],
 )
 
-# Подключение версионирования
-app = VersionedFastAPI(app,
-                       version_format='{major}',
-                       prefix_format='/api/v{major}',
-                       )
+
 
 if settings.MODE == "TEST":
     # При тестировании через pytest, необходимо подключать Redis, чтобы кэширование работало.
