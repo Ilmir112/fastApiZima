@@ -1,30 +1,61 @@
-import logging
-from datetime import datetime
+# Ваш обработчик логов
 from zimaApp.config import settings
 
-from pythonjsonlogger import json
-
-logger = logging.getLogger('zimaApp')
-
-logHandler = logging.StreamHandler()
-
-
-class CustomJsonFormatter(json.JsonFormatter):
-    def add_fields(self, log_record, record, message_dict):
-        super(CustomJsonFormatter, self).add_fields(log_record, record, message_dict)
-        if not log_record.get('timestamp'):
-            # this doesn't use record.created, so it is slightly off
-            now = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S.%fZ')
-            log_record['timestamp'] = now
-
-        if log_record.get('level'):
-            log_record['level'] = log_record['level'].upper()
-        else:
-            log_record['level'] = record.levelname
+import threading
+import asyncio
+from queue import Queue
+from telegram import Bot
+import logging
 
 
-formatter = CustomJsonFormatter('%(timestamp)s %(level)s %(name)s %(message)s')
+class TelegramSender:
+    def __init__(self, token):
+        self.bot = Bot(token)
+        self.queue = Queue()
+        self.loop = asyncio.new_event_loop()
+        self.thread = threading.Thread(target=self._worker)
+        self.thread.daemon = True
+        self.thread.start()
 
-logHandler.setFormatter(formatter)
-logger.addHandler(logHandler)
-logger.setLevel(settings.LOG_LEVEL)
+    def _worker(self):
+        asyncio.set_event_loop(self.loop)
+        self.loop.run_until_complete(self._send_messages())
+
+    async def _send_messages(self):
+        while True:
+            chat_id, text = self.queue.get()
+            try:
+                await self.bot.send_message(chat_id=chat_id, text=text)
+            except Exception as e:
+                # Обработка ошибок
+                pass
+
+    def send(self, chat_id, text):
+        self.queue.put((chat_id, text))
+
+
+class TelegramHandler(logging.Handler):
+    def __init__(self, sender: TelegramSender, chat_id):
+        super().__init__()
+        self.sender = sender
+        self.chat_id = chat_id
+
+    def emit(self, record):
+        log_entry = self.format(record)
+        # Помещаем сообщение в очередь для отправки
+        self.sender.send(self.chat_id, log_entry)
+
+
+
+
+# Инициализация
+sender = TelegramSender(settings.TOKEN)
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.ERROR)
+
+telegram_handler = TelegramHandler(sender, settings.CHAT_ID)
+formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+telegram_handler.setFormatter(formatter)
+
+logger.addHandler(telegram_handler)

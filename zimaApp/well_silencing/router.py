@@ -3,6 +3,7 @@ from starlette.responses import JSONResponse
 
 from zimaApp.config import settings
 from zimaApp.logger import logger
+from zimaApp.tasks.tasks import send_message
 from zimaApp.well_silencing.dao import WellSilencingDAO
 from zimaApp.well_silencing.schemas import (
     SWellsSilencing,
@@ -43,6 +44,7 @@ async def find_well_silencing_all(request: Request, response: Response, wells_da
                 "region": r.region,
                 "today": r.today,
             })
+
         return results
 
 

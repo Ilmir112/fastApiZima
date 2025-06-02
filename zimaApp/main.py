@@ -1,4 +1,5 @@
 import time
+import telegram
 from contextlib import asynccontextmanager
 from collections.abc import AsyncIterator
 
@@ -35,31 +36,24 @@ from zimaApp.prometheus.router import router as prometheus_router
 from zimaApp.logger import logger
 
 
+bot = telegram.Bot(token=settings.TOKEN)
+
+
 @asynccontextmanager
-async def lifespan(_: FastAPI) -> AsyncIterator[None]:
+async def lifespan(_: FastAPI):
+    print("Запуск приложения")
     redis = aioredis.from_url(f"redis://{settings.REDIS_HOST}:{settings.REDIS_PORT}", encoding="utf8")
     FastAPICache.init(RedisBackend(redis), prefix="fastapi-cache")
+    try:
+        await bot.send_message(chat_id=settings.CHAT_ID, text="Приложение запущено")
+        print("Сообщение отправлено успешно")
+    except Exception as e:
+        print(f"Ошибка при отправке сообщения: {e}")
     yield
+    print("Завершение работы приложения")
 
 
 app = FastAPI(lifespan=lifespan, title="Zima", version="0.1.0", root_path="/zimaApp")
-
-
-
-@cache(expire=15)
-@app.get("/redis-test")
-def redis_test(request: Request, response: Response):
-    adw = FastAPICache
-    # Устанавливаем значение в кеш
-    FastAPICache.get_backend().set("test_key", "hello_redis", expire=60)  # например, таймаут 60 секунд
-    # Получаем значение из кеша
-    value = FastAPICache.get_backend().get("test_key")
-    if value == "hello_redis":
-        return {"status": "success", "message": "Redis работает и успешно подключен!"}
-    else:
-        raise HTTPException(status_code=500, detail="Не удалось получить значение из Redis")
-
-
 
 
 if settings.MODE != "TEST":

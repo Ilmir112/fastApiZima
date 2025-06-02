@@ -7,6 +7,8 @@ from fastapi_cache import FastAPICache
 from zimaApp.config import settings
 from redis import asyncio as aioredis
 
+from zimaApp.logger import logger
+
 router = APIRouter(
     prefix="/prometheus",
     tags=["Тестирование Grafana + Prometheus"]
@@ -15,10 +17,11 @@ router = APIRouter(
 
 @router.get("/get_error")
 def get_error():
-    if random() > 0.5:
-        raise ZeroDivisionError
-    else:
-        raise KeyError
+    try:
+        # Ваш код, который может вызвать исключение
+        1 / 0  # Пример деления на ноль
+    except Exception as e:
+        logger.error(f'Произошла ошибка: {e}')
 
 
 

@@ -4,6 +4,7 @@ from datetime import date
 from sqlalchemy.exc import SQLAlchemyError
 
 from zimaApp.logger import logger
+from zimaApp.tasks.telegram_bot_template import TelegramInfo
 
 from zimaApp.users.dependencies import get_current_user
 from zimaApp.users.models import Users
@@ -126,6 +127,9 @@ async def add_wells_data(
                 region=wells_repair.region,
                 contractor=user.contractor
             )
+
+            await TelegramInfo.send_message_create_plan(user.login_user, wells_data.well_number,
+                                                        wells_data.well_area, wells_repair.work_plan)
 
             return {"status": "success", "id": result}
 

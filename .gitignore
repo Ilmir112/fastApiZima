@@ -4,3 +4,10 @@ venv
 .env-render
 __pycache__
 # *.ipynb*
+/zimaApp/migrations/versions/6ad4f5257361_изменение_имени_колонок_wells_repair.py
+/zimaApp/migrations/versions/8f82fa9dd73d_добавление.py
+/zimaApp/migrations/versions/169d1376e2c2_добавление_данных_по_подрядчику.py
+/zimaApp/migrations/versions/190a36b157e7_изменение_имени_колонок_wells_repair2.py
+/zimaApp/migrations/versions/5988e13a60a8_изменение_имени_колонок.py
+/zimaApp/migrations/versions/2329436b3fe5_merge_heads.py
+/zimaApp/migrations/versions/bca7c829aca2_wells_repairs_change.py

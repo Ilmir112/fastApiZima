@@ -4,6 +4,7 @@ from fastapi_cache.decorator import cache
 from zimaApp.config import settings
 from zimaApp.exceptions import IncorectLoginOrPassword, UserAlreadyExistsException
 from zimaApp.logger import logger
+from zimaApp.tasks.telegram_bot_template import TelegramInfo
 from zimaApp.users.auth import authenticate_user, create_access_token, get_password_hash
 
 from fastapi_versioning import version
@@ -48,7 +49,10 @@ async def login_user(response: Response, user_data: SUsersAuth):
         raise IncorectLoginOrPassword
     access_token = create_access_token({"sub": str(user.id)})
     response.set_cookie("summary_information_access_token", access_token, httponly=True)
-    logger.info("Users insert", extra={"well_number": user_data.login_user}, exc_info=True)
+    # Отправка сообщения о входе пользователя
+    await TelegramInfo.send_message_users(user.login_user)
+
+    logger.info("Users insert", extra={"users": user_data.login_user}, exc_info=True)
     return {"login_user": user.login_user,
             "position_id": user.position_id,
             "ctcrs": user.ctcrs,

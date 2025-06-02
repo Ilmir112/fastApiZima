@@ -45,9 +45,12 @@ class Settings(BaseSettings):
     SECRET_KEY: str
     ALGORITHM: str
 
+    TOKEN: str
+    CHAT_ID: str
+
     class Config:
-        env_file = ".env"
-        # env_file = '../.env'
+        # env_file = ".env"
+        env_file = '../.env'
 
 
 try:
