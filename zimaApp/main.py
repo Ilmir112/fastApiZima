@@ -78,15 +78,30 @@ instrumentator.instrument(app).expose(app)
 # Обработка ошибок валидации
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
-    logger.error(f"validation_exception: {exc.errors()}, body: {exc.body}")
+    errors = exc.errors()
+    invalid_params = []
+
+    for err in errors:
+        loc = err.get('loc', [])
+        msg = err.get('msg', '')
+        # Обычно loc содержит ['body', 'parameter_name']
+        if len(loc) > 1:
+            param_name = loc[-1]
+        else:
+            param_name = loc[0] if loc else 'unknown'
+        invalid_params.append({param_name: msg})
+
+    logger.error(f"validation_exception: {errors}, body: {invalid_params}")
     return JSONResponse(
         status_code=422,
         content={
-            "detail": exc.errors(),
+            "detail": errors,
+            "invalid_params": invalid_params,
             "body": exc.body,
-            "message": "validation xception"
+            "message": "validation exception"
         },
     )
+
 
 
 app.include_router(user_router)
