@@ -36,6 +36,30 @@ class TelegramInfo:
             response.raise_for_status()
 
     @classmethod
+    async def send_message_create_brigade(cls, username: str, number_brigade: str, contractor: str):
+        message = f"Пользователь {username} создал бригаду № {number_brigade} {contractor}"
+
+        payload = {
+            "chat_id": settings.CHAT_ID,
+            "text": message
+        }
+        async with httpx.AsyncClient() as client:
+            response = await client.post(TelegramInfo.URL, json=payload)
+            response.raise_for_status()
+
+    @classmethod
+    async def send_message_create_norms(cls, username: str, number_brigade: str, contractor: str):
+        message = f"Пользователь {username} создал бригаду № {number_brigade} {contractor}"
+
+        payload = {
+            "chat_id": settings.CHAT_ID,
+            "text": message
+        }
+        async with httpx.AsyncClient() as client:
+            response = await client.post(TelegramInfo.URL, json=payload)
+            response.raise_for_status()
+
+    @classmethod
     async def send_message_logger(cls, message: dict):
         payload = {
             "chat_id": settings.CHAT_ID,

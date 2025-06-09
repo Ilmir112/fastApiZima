@@ -14,8 +14,9 @@ from zimaApp.wells_repair_data.models import WellsRepair
 from zimaApp.wells_data.models import WellsData
 from zimaApp.well_classifier.models import WellClassifier
 from zimaApp.well_silencing.models import WellSilencing
-
 from zimaApp.gnkt_data.models import GnktData
+from zimaApp.brigade.models import Brigade
+from zimaApp.norms.models import NormsWork
 
 
 

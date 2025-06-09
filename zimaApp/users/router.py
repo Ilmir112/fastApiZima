@@ -69,7 +69,6 @@ async def logout_user(response: Response):
 @router.get("/me")
 @version(1)
 async def read_users_me(current_user: Users = Depends(get_current_user)):
-    print(f"redis://{settings.REDIS_HOST}:{settings.REDIS_PORT}")
     return current_user
 
 

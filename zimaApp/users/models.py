@@ -20,3 +20,8 @@ class Users(Base):
     access_level = Column(String, nullable=False)
 
     wells_repairs = relationship("WellsRepair", back_populates="users")
+    norms_repairs = relationship("NormsWork", back_populates="users")
+
+    def __repr__(self):
+        return f"<Users(id={self.id}, login_user={self.login_user}, name_user={self.name_user}, " \
+               f"surname_user={self.surname_user}, access_level={self.access_level})>"
