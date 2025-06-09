@@ -68,25 +68,28 @@ async def find_well_id(well_number: str, user: Users = Depends(get_current_user)
 @router.get("/find_well_id")
 @version(1)
 async def find_well_id(
-        wells_data: WellsSearchArgs = Depends(find_wells_data),
-        wells_repair: WellsSearchRepair = Depends(find_wells_in_repairs),
+        wells_data: WellsSearchArgs = Depends(),
+        wells_repair: WellsSearchRepair = Depends(),
         user: Users = Depends(get_current_user)
 ):
     try:
-        result = await WellsRepairsDAO.find_one_or_none(
-            wells_id=wells_data.id,
-            type_kr=wells_repair.type_kr,
-            date_create=wells_repair.date_create,
-            work_plan=wells_repair.work_plan,
-            contractor=user.contractor
-        )
-        if not result is None:
-            logger.info("Скважина найдена", extra={
-                "well_number": wells_data.well_number,
-                "well_area": wells_data.well_area},
-                        exc_info=True)
+        wells_data = await WellsDatasDAO.find_one_or_none(well_number=wells_data.well_number,
+                                                          well_area=wells_data.well_area)
+        if wells_data:
+            result = await WellsRepairsDAO.find_one_or_none(
+                wells_id=wells_data.id,
+                type_kr=wells_repair.type_kr,
+                date_create=wells_repair.date_create,
+                work_plan=wells_repair.work_plan,
+                contractor=user.contractor
+            )
+            if not result is None:
+                logger.info("Скважина найдена", extra={
+                    "well_number": wells_data.well_number,
+                    "well_area": wells_data.well_area},
+                            exc_info=True)
 
-        return result
+            return result
 
     except SQLAlchemyError as db_err:
         logger.error(f'Database error occurred: {str(db_err)}', exc_info=True)
@@ -94,7 +97,7 @@ async def find_well_id(
 
     except Exception as e:
         logger.error(f'Unexpected error occurred: {str(e)}', exc_info=True)
-        return {"status": "error", "message": "Произошла неожиданная ошибка"}
+        return {"status": "error", "message": f"Произошла неожиданная ошибка {e}"}
 
 
 @router.post("/add_wells_data")
