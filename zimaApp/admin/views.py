@@ -19,6 +19,7 @@ class UserAdmin(ModelView, model=Users):
     # form_excluded_columns = ["login_user"]
 
 
+
 class SilencingAdmin(ModelView, model=WellSilencing):
     column_list = [c.name for c in WellSilencing.__table__.c]
     # Добавляем фильтры по нужным колонкам
