@@ -29,4 +29,9 @@ class WellsRepair(Base):
     contractor: str = Column(String, nullable=False)
 
     well_data = relationship("WellsData", back_populates="repairs")
+    norms = relationship("NormsWork", back_populates="well_repair")
     users = relationship("Users", back_populates="wells_repairs")
+
+    def __repr__(self):
+        return f"<WellsRepair(id={self.id}, wells_id={self.wells_id}, type_kr={self.type_kr}, " \
+               f"date_create={self.date_create}, contractor={self.contractor})>"

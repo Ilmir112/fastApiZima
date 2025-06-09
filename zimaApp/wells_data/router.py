@@ -20,7 +20,7 @@ router = APIRouter(
 
 
 @router.get("/find_wells_data")
-# @cache(expire=60)
+@cache(expire=60)
 @version(1)
 async def find_wells_data(wells_data: WellsSearchArgs = Depends()):
     result = await WellsDatasDAO.find_one_or_none(
@@ -29,8 +29,17 @@ async def find_wells_data(wells_data: WellsSearchArgs = Depends()):
     return result
 
 
+@router.get("/find_wells_data_by_id")
+@cache(expire=60)
+@version(1)
+async def find_wells_data_by_id(wells_id: int):
+    result = await WellsDatasDAO.find_one_or_none(
+        id=wells_id)
+    return result
+
+
 @router.post("/add_wells_data")
-# @cache(expire=60)
+@cache(expire=60)
 @version(1)
 async def add_wells_data(well_data: SWellsData, user: Users = Depends(get_current_user)):
     try:

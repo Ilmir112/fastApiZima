@@ -32,6 +32,8 @@ from zimaApp.well_silencing.router import router as silencing_router
 from zimaApp.wells_repair_data.router import router as wells_repair_router
 from zimaApp.gnkt_data.router import router as gnkt_router
 from zimaApp.wells_data.router import router as wells_data_router
+from zimaApp.norms.router import router as norms_router
+from zimaApp.brigade.router import router as brigades_router
 from zimaApp.prometheus.router import router as prometheus_router
 from zimaApp.logger import logger
 
@@ -103,10 +105,11 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
     )
 
 
-
 app.include_router(user_router)
 app.include_router(wells_data_router)
 app.include_router(wells_repair_router)
+app.include_router(norms_router)
+app.include_router(brigades_router)
 app.include_router(classifier_router)
 app.include_router(silencing_router)
 app.include_router(gnkt_router)
