@@ -96,14 +96,19 @@ async def find_well_id(
         logger.error(f'Unexpected error occurred: {str(e)}', exc_info=True)
         return {"status": "error", "message": "Произошла неожиданная ошибка"}
 
+
 @router.post("/add_wells_data")
 @version(1)
 async def add_wells_data(
         wells_repair: SWellsRepair,
+        wells_data: WellsSearchArgs = Depends(),
         user: Users = Depends(get_current_user),
-        wells_data: SWellsData = Depends(find_wells_data)
+
 ):
     try:
+        wells_data = await WellsDatasDAO.find_one_or_none(
+            well_number=wells_data.well_number, well_area=wells_data.well_area
+        )
         if wells_data:
             await delete_well_by_type_kr_and_date_create(wells_data.id, user.contractor, wells_repair)
             result = await WellsRepairsDAO.add_data(
