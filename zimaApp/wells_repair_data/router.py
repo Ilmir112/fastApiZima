@@ -43,7 +43,7 @@ async def find_wells_in_repairs(wells_data: WellsSearchRepair = Depends()):
 
 @router.get("/find_well_filter_by_number")
 @version(1)
-async def find_well_id(well_number: str, user: Users = Depends(get_current_user)):
+async def find_well_filter_by_number(well_number: str, user: Users = Depends(get_current_user)):
     try:
         data = await WellsDatasDAO.find_all(well_number=well_number, contractor=user.contractor)
         if data:
@@ -68,8 +68,8 @@ async def find_well_id(well_number: str, user: Users = Depends(get_current_user)
 @router.get("/find_well_id")
 @version(1)
 async def find_well_id(
-        wells_data: WellsSearchArgs = Depends(find_wells_data),
         wells_repair: WellsSearchRepair = Depends(),
+        wells_data: WellsSearchArgs = Depends(find_wells_data),
         user: Users = Depends(get_current_user)
 ):
     try:
@@ -95,7 +95,6 @@ async def find_well_id(
     except Exception as e:
         logger.error(f'Unexpected error occurred: {str(e)}', exc_info=True)
         return {"status": "error", "message": "Произошла неожиданная ошибка"}
-
 
 @router.post("/add_wells_data")
 @version(1)
