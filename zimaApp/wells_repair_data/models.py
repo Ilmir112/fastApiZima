@@ -30,3 +30,4 @@ class WellsRepair(Base):
 
     well_data = relationship("WellsData", back_populates="repairs")
     users = relationship("Users", back_populates="wells_repairs")
+    norms = relationship("NormsWork", back_populates="well_repair")

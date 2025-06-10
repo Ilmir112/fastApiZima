@@ -41,10 +41,10 @@ class SWellsData(BaseModel):
     wellhead_fittings: Optional[str]
     appointment: Optional[str]
     angle_data: Optional[Dict]
-    column_direction: Optional[Dict]
-    column_conductor: Optional[Dict]
-    column_production: Optional[Dict]
-    column_additional: Optional[Dict]
+    column_direction: Optional[ColumnDirection] = None
+    column_conductor: Optional[ColumnConductor] = None
+    column_production: Optional[ColumnProduction] = None
+    column_additional: Optional[ColumnAdditional] = None
     bottom_hole_drill: Optional[Union[float, int]] = None
     bottom_hole_artificial: Optional[Union[float, int]] = None
     max_angle: Optional[Union[float, int]] = None
@@ -67,56 +67,45 @@ class SWellsData(BaseModel):
     leakiness: Optional[Dict]
     contractor: Optional[str]
 
-
-
     class Config:
         from_attributes = True
         arbitrary_types_allowed = True
 
-
-    @property
-    def column_direction(self) -> Optional[ColumnDirection]:
-        if self._column_direction:
-            return ColumnDirection.model_validate(self._column_direction)
-        return None
-
-    @column_direction.setter
-    def column_direction(self, value: Optional[ColumnDirection]):
-        if value:
-            self._column_direction = value.dict()
-        else:
-            self._column_direction = False
-
-    @property
-    def column_conductor(self) -> Optional[ColumnConductor]:
-        if self._column_conductor:
-            return ColumnConductor.model_validate(self._column_conductor)
-        return None
-
-    @column_conductor.setter
-    def column_conductor(self, value: Optional[ColumnConductor]):
-        if value:
-            self._column_conductor = value.dict()
-        else:
-            self._column_conductor = False
-
-    @property
-    def column_production(self) -> Optional[ColumnProduction]:
-        if self._column_production:
-            return ColumnProduction.model_validate(self._column_production)
-        return None
-
-    @column_production.setter
-    def column_production(self, value: Optional[ColumnProduction]):
-        if value:
-            self._column_production = value.dict()
-        else:
-            self._column_production = False
-
-
-
-
-
-
-
-
+    # @property
+    # def column_direction(self) -> Optional[ColumnDirection]:
+    #     if self._column_direction:
+    #         return ColumnDirection.model_validate(self._column_direction)
+    #     return None
+    #
+    # @column_direction.setter
+    # def column_direction(self, value: Optional[ColumnDirection]):
+    #     if value:
+    #         self._column_direction = value.dict()
+    #     else:
+    #         self._column_direction = False
+    #
+    # @property
+    # def column_conductor(self) -> Optional[ColumnConductor]:
+    #     if self._column_conductor:
+    #         return ColumnConductor.model_validate(self._column_conductor)
+    #     return None
+    #
+    # @column_conductor.setter
+    # def column_conductor(self, value: Optional[ColumnConductor]):
+    #     if value:
+    #         self._column_conductor = value.dict()
+    #     else:
+    #         self._column_conductor = False
+    #
+    # @property
+    # def column_production(self) -> Optional[ColumnProduction]:
+    #     if self._column_production:
+    #         return ColumnProduction.model_validate(self._column_production)
+    #     return None
+    #
+    # @column_production.setter
+    # def column_production(self, value: Optional[ColumnProduction]):
+    #     if value:
+    #         self._column_production = value.dict()
+    #     else:
+    #         self._column_production = False

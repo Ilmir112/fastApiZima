@@ -30,11 +30,12 @@ from zimaApp.users.router import router as user_router
 from zimaApp.well_classifier.router import router as classifier_router
 from zimaApp.well_silencing.router import router as silencing_router
 from zimaApp.wells_repair_data.router import router as wells_repair_router
+from zimaApp.brigade.router import router as brigade_router
+from zimaApp.norms.router import router as norms_router
 from zimaApp.gnkt_data.router import router as gnkt_router
 from zimaApp.wells_data.router import router as wells_data_router
 from zimaApp.prometheus.router import router as prometheus_router
 from zimaApp.logger import logger
-
 
 bot = telegram.Bot(token=settings.TOKEN)
 
@@ -103,10 +104,11 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
     )
 
 
-
 app.include_router(user_router)
 app.include_router(wells_data_router)
 app.include_router(wells_repair_router)
+app.include_router(brigade_router)
+app.include_router(norms_router)
 app.include_router(classifier_router)
 app.include_router(silencing_router)
 app.include_router(gnkt_router)
@@ -114,13 +116,15 @@ app.include_router(prometheus_router)
 
 # Подключение CORS, чтобы запросы к API могли приходить из браузера
 origins = [
-    "https://fastapizima.onrender.com",
     "http://localhost:3000",
     "http://176.109.106.199:8000",
     "http://176.109.106.199:7777",
     "http://176.109.106.199:80",
-    "http://127.0.0.1:8000",  # для локальной разработки
+    "http://127.0.0.1:8000"
 ]
+# origins = [
+#     "*"  # для локальной разработки
+# ]
 
 app.add_middleware(
     CORSMiddleware,
@@ -135,8 +139,6 @@ app.add_middleware(
         "Authorization",
     ],
 )
-
-
 
 if settings.MODE == "TEST":
     # При тестировании через pytest, необходимо подключать Redis, чтобы кэширование работало.
@@ -165,6 +167,7 @@ async def add_process_time_header(request: Request, call_next):
                 extra={
                     "process_time": round(process_time, 4)
                 })
+
     return response
 
 

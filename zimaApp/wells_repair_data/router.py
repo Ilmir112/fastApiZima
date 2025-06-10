@@ -69,7 +69,7 @@ async def find_well_id(well_number: str, user: Users = Depends(get_current_user)
 @version(1)
 async def find_well_id(
         wells_data: WellsSearchArgs = Depends(find_wells_data),
-        wells_repair: WellsSearchRepair = Depends(find_wells_in_repairs),
+        wells_repair: WellsSearchRepair = Depends(),
         user: Users = Depends(get_current_user)
 ):
     try:

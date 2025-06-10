@@ -1,4 +1,5 @@
 import json
+from datetime import date
 
 from sqlalchemy import JSON, Column, Date, Integer, String, Float, Boolean
 from sqlalchemy.orm import relationship
@@ -23,7 +24,7 @@ class WellsData(Base):
     column_conductor: dict = Column(JSON)
     column_production: dict = Column(JSON)
     column_additional: dict = Column(JSON)
-    bottom_hole_drill = Column(Float)
+    bottom_hole_drill: float = Column(Float)
     bottom_hole_artificial: float = Column(Float)
     max_angle: float = Column(Float)
     distance_from_rotor_table: float = Column(Float)
@@ -36,13 +37,13 @@ class WellsData(Base):
     nkt_data: dict = Column(JSON)
     sucker_pod: dict = Column(JSON)
     diameter_doloto_ek: float = Column(Float)
-    last_pressure_date: Date = Column(Date)
-    date_commissioning: Date = Column(Date)
-    date_drilling_run: Date = Column(Date)
-    date_drilling_finish: Date = Column(Date)
+    last_pressure_date: date = Column(Date)
+    date_commissioning: date = Column(Date)
+    date_drilling_run: date = Column(Date)
+    date_drilling_finish: date = Column(Date)
     leakiness: dict = Column(JSON)
     geolog: str = Column(String)
-    date_create: Date = Column(Date)
+    date_create: date = Column(Date)
     contractor: str = Column(String)
 
     repairs = relationship("WellsRepair", back_populates="well_data", cascade="all, delete")

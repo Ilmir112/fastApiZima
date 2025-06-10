@@ -49,8 +49,8 @@ class Settings(BaseSettings):
     CHAT_ID: str
 
     class Config:
-        env_file = ".env"
-        # env_file = '../.env'
+        # env_file = ".env"
+        env_file = '../.env'
 
 try:
     # Создайте экземпляр класса Settings

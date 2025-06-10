@@ -20,3 +20,4 @@ class Users(Base):
     access_level = Column(String, nullable=False)
 
     wells_repairs = relationship("WellsRepair", back_populates="users")
+    norms_repairs = relationship("NormsWork", back_populates="users")

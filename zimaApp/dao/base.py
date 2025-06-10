@@ -41,10 +41,14 @@ class BaseDAO:
 
     @classmethod
     async def find_one_or_none(cls, **filter_by):
-        async with async_session_maker() as session:
-            query = select(cls.model.__table__.columns).filter_by(**filter_by)
-            result = await session.execute(query)
-            return result.mappings().one_or_none()
+        try:
+            async with async_session_maker() as session:
+                query = select(cls.model.__table__.columns).filter_by(**filter_by)
+                result = await session.execute(query)
+                if result:
+                    return result.mappings().one_or_none()
+        except Exception as e:
+            logger.error(e)
 
     @classmethod
     async def delete_item_all_by_filter(cls, **filter_by):
