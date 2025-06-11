@@ -81,9 +81,9 @@ class BaseDAO:
 
         except (SQLAlchemyError, Exception) as e:
             if isinstance(e, SQLAlchemyError):
-                msg = "Database Exc: Cannot insert data into table"
+                msg = f"Database Exc: Cannot insert data into table {e}"
             elif isinstance(e, Exception):
-                msg = "Unknown Exc: Cannot insert data into table"
+                msg = f"Unknown Exc: Cannot insert data into table {e}"
 
             logger.error(msg, extra={"table": cls.model.__tablename__}, exc_info=True)
             return None

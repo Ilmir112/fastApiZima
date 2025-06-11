@@ -23,8 +23,6 @@ class SNorms(BaseModel):
     lifting_unit: str
     number_brigade: str
     norms_time: float
-    date_create: date
-    norms_time: float
 
     class Config:
         from_attributes = True

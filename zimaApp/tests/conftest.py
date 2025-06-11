@@ -20,6 +20,7 @@ def open_mock_json(model: str):
     with open(f"zimaApp/tests/mock_{model}.json", encoding="utf-8") as file:
         return json.load(file)
 
+
 def validate_data_in_timestamp(value_list):
     value_list_new = []
     value_dict_new = {}
@@ -42,7 +43,6 @@ async def prepare_database():
         await conn.run_sync(Base.metadata.drop_all)
         # Добавление всех заданных нами таблиц из БД
         await conn.run_sync(Base.metadata.create_all)
-
 
     silencing = validate_data_in_timestamp(open_mock_json("silencing"))
     classifier = validate_data_in_timestamp(open_mock_json("classifier"))
@@ -90,7 +90,7 @@ async def authenticated_ac():
         transport=ASGITransport(app=fastapi_app), base_url="http://test"
     ) as ac:
         await ac.post(
-            "/api/v1/auth/login",
+            "/auth/login",
             json={
                 "email": "test@test.com",
                 "password": "test",

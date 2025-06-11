@@ -69,24 +69,27 @@ async def find_well_filter_by_number(well_number: str, user: Users = Depends(get
 @version(1)
 async def find_well_id(
         wells_repair: WellsSearchRepair = Depends(),
-        wells_data: WellsSearchArgs = Depends(find_wells_data),
+        wells_data: WellsSearchArgs = Depends(),
         user: Users = Depends(get_current_user)
 ):
     try:
-        result = await WellsRepairsDAO.find_one_or_none(
-            wells_id=wells_data.id,
-            type_kr=wells_repair.type_kr,
-            date_create=wells_repair.date_create,
-            work_plan=wells_repair.work_plan,
-            contractor=user.contractor
-        )
-        if not result is None:
-            logger.info("Скважина найдена", extra={
-                "well_number": wells_data.well_number,
-                "well_area": wells_data.well_area},
-                        exc_info=True)
+        wells_data = await WellsDatasDAO.find_one_or_none(
+            well_number=wells_data.well_number, well_area=wells_data.well_area)
+        if wells_data:
+            result = await WellsRepairsDAO.find_one_or_none(
+                wells_id=wells_data.id,
+                type_kr=wells_repair.type_kr,
+                date_create=wells_repair.date_create,
+                work_plan=wells_repair.work_plan,
+                contractor=user.contractor
+            )
+            if not result is None:
+                logger.info("Скважина найдена", extra={
+                    "well_number": wells_data.well_number,
+                    "well_area": wells_data.well_area},
+                            exc_info=True)
 
-        return result
+            return result
 
     except SQLAlchemyError as db_err:
         logger.error(f'Database error occurred: {str(db_err)}', exc_info=True)

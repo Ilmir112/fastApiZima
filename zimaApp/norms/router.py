@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends
-from datetime import date
+from datetime import date, datetime
 
 from sqlalchemy.exc import SQLAlchemyError
 
@@ -57,26 +57,25 @@ async def add_norm_data(
         user: Users = Depends(get_current_user)
 ):
     try:
-        if norms:
+        if norms and repair_wells:
             await delete_norms(norms)
             result = await NormDAO.add_data(
                 id=norms.id,
                 repair_id=repair_wells.id,
-                start_well_repair=norms.start_well_repair,
-                repair_well_repair=norms.repair_well_repair,
+                start_well_repair=norms.start_well_repair.strftime("%Y-%m-%d %H:%M:%S"),
+                repair_well_repair=norms.repair_well_repair.strftime("%Y-%m-%d %H:%M:%S"),
                 type_tkrs=norms.type_tkrs,
                 summary_work=norms.summary_work,
                 norms_json=norms.norms_json,
                 lifting_unit=norms.lifting_unit,
                 creater_id=user.id,
                 number_brigade=norms.number_brigade,
-                norms_time=norms.norms_time,
-                date_create=norms.date_create
+                norms_time=norms.norms_time
             )
+            if result:
+                await TelegramInfo.send_message_create_norms(user.login_user, norms.repair_id)
 
-            await TelegramInfo.send_message_create_norms(user.login_user, norms.repair_id)
-
-            return {"status": "success", "id": result}
+                return {"status": "success", "id": result}
 
     except SQLAlchemyError as db_err:
         msg = f'Database Exception Brigade {db_err}'
