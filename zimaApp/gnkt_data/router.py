@@ -36,8 +36,10 @@ async def find_gnkt_data(gnkt_number):
         result = await GnktDatasDAO.find_all(
             gnkt_number=gnkt_number
         )
+        result = sorted(result, key=lambda k: k.date_repair, reverse=True)
+
     except Exception as e:
-        raise HTTPException()
+        raise HTTPException(e)
     return result
 
 
