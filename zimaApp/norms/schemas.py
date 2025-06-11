@@ -1,7 +1,7 @@
 import json
 from datetime import date, datetime
 from enum import Enum
-from typing import Literal
+from typing import Literal, Optional
 
 from pydantic import BaseModel
 
@@ -12,19 +12,16 @@ class TypeTKRS(str, Enum):
 
 
 class SNorms(BaseModel):
-    id: int
     repair_id: int
     start_well_repair: datetime
-    repair_well_repair: datetime
+    repair_well_repair: Optional[datetime] = None
     type_tkrs: TypeTKRS
     summary_work: dict
     norms_json: dict
-    creater_id: int
     lifting_unit: str
     number_brigade: str
     norms_time: float
-    date_create: date
-    norms_time: float
+
 
     class Config:
         from_attributes = True

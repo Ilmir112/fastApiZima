@@ -71,22 +71,42 @@ class BaseDAO:
     @classmethod
     async def add_data(cls, **data):
         try:
+            if 'type_tkrs' in data and hasattr(data['type_tkrs'], 'value'):
+                data['type_tkrs'] = data['type_tkrs'].value
+                logger.debug(f"Преобразовали type_tkrs в строку: {data['type_tkrs']}")
+
             query = (
                 insert(cls.model).values(**data).returning(*cls.model.__table__.columns)
             )
             async with async_session_maker() as session:
-                result = await session.execute(query)
-                await session.commit()
-                return result.mappings().first()
-
-        except (SQLAlchemyError, Exception) as e:
-            if isinstance(e, SQLAlchemyError):
-                msg = f"Database Exc: Cannot insert data into table {e}"
-            elif isinstance(e, Exception):
-                msg = f"Unknown Exc: Cannot insert data into table {e}"
-
-            logger.error(msg, extra={"table": cls.model.__tablename__}, exc_info=True)
-            return None
+                try:
+                    result = await session.execute(query)
+                    await session.commit()
+                    return result.mappings().first()
+                except Exception as e:
+                    logger.error(f"Ошибка при выполнении запроса или коммите: {e}", exc_info=True)
+                    await session.rollback()
+                    raise
+        except Exception as e:
+            logger.error(f"Ошибка в add_data: {e}", exc_info=True)
+            raise
+        # try:
+        #     query = (
+        #         insert(cls.model).values(**data).returning(*cls.model.__table__.columns)
+        #     )
+        #     async with async_session_maker() as session:
+        #         result = await session.execute(query)
+        #         await session.commit()
+        #         return result.mappings().first()
+        #
+        # except (SQLAlchemyError, Exception) as e:
+        #     if isinstance(e, SQLAlchemyError):
+        #         msg = f"Database Exc: Cannot insert data into table {e}"
+        #     elif isinstance(e, Exception):
+        #         msg = f"Unknown Exc: Cannot insert data into table {e}"
+        #
+        #     logger.error(msg, extra={"table": cls.model.__tablename__}, exc_info=True)
+        #     return None
 
     @classmethod
     async def update_data(cls, datas, **data):

@@ -27,10 +27,36 @@ router = APIRouter(
 )
 
 
-class BrigadeSearch:
-    def __init__(self, number_brigade: int, contractor: str):
-        self.number_brigade = number_brigade
+class NormSearchId:
+    def __init__(self, id: int, contractor: str):
+        self.id = id
         self.contractor = contractor
+
+
+@router.get("/find_well_filter_by_number")
+@version(1)
+async def find_well_filter_by_number(well_number: str, user: Users = Depends(get_current_user)):
+    try:
+        result_list =[]
+        wells = await WellsDatasDAO.find_all(well_number=well_number, contractor=user.contractor)
+        if wells:
+            for well in wells:
+                repair_well = await WellsRepairsDAO.find_all(wells_id=well.id)
+                if repair_well:
+                    for repair in repair_well:
+                        result = await NormDAO.find_all(repair_id=repair.id)
+                        if result:
+                            for norms in result:
+                                result_list.append(f'{well.well_number} '
+                                                   f'{well.well_area} '
+                                                   f'{repair.type_kr}'
+                                                   f' {repair.work_plan} от '
+                                                   f'{norms.date_create} {norms.id}')
+            if result_list:
+                return {"ремонты": result_list}
+    except Exception as e:
+        logger.error(e)
+
 
 
 @router.get("/find_norms_by_filter/")
@@ -40,6 +66,15 @@ async def find_norms_one(
 
     result = await NormDAO.find_one_or_none(
         wells_id=wells_repair.wells_id)
+    return result
+
+
+@router.get("/find_norms_by_id/")
+@version(1)
+async def find_norms_one(norms: NormSearchId = Depends(), user: Users = Depends(get_current_user)):
+    if norms.contractor == user.contractor:
+        result = await NormDAO.find_one_or_none(
+            id=norms.id)
     return result
 
 
@@ -61,18 +96,18 @@ async def add_norm_data(
             type_kr=repair_wells.type_kr,
             date_create=repair_wells.date_create,
             work_plan=repair_wells.work_plan,
-            contractor=user.contractor
+            contractor=user.contractor,
+            wells_id=repair_wells.wells_id
         )
 
     try:
         if norms and repair_wells:
             await delete_norms(norms)
             result = await NormDAO.add_data(
-                id=norms.id,
                 repair_id=repair_wells.id,
-                start_well_repair=norms.start_well_repair.strftime("%Y-%m-%d %H:%M:%S"),
-                repair_well_repair=norms.repair_well_repair.strftime("%Y-%m-%d %H:%M:%S"),
-                type_tkrs=norms.type_tkrs,
+                start_well_repair=norms.start_well_repair,
+                repair_well_repair=norms.repair_well_repair,
+                type_tkrs=norms.type_tkrs.value,
                 summary_work=norms.summary_work,
                 norms_json=norms.norms_json,
                 lifting_unit=norms.lifting_unit,

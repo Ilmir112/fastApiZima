@@ -89,7 +89,7 @@ async def find_well_id(
                     "well_area": wells_data.well_area},
                             exc_info=True)
 
-            return result
+                return result
 
     except SQLAlchemyError as db_err:
         logger.error(f'Database error occurred: {str(db_err)}', exc_info=True)
