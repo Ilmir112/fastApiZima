@@ -26,3 +26,9 @@ class SNorms(BaseModel):
     class Config:
         from_attributes = True
         arbitrary_types_allowed = True
+
+class SNormsUpdate(BaseModel):
+    repair_well_repair: Optional[datetime] = None
+    summary_work: dict
+    norms_json: dict
+    norms_time: float

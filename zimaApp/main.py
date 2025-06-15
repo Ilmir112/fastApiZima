@@ -160,15 +160,32 @@ admin.add_view(RepairDataAdmin)
 @app.middleware("http")
 async def add_process_time_header(request: Request, call_next):
     start_time = time.perf_counter()
-    response = await call_next(request)
-    process_time = time.perf_counter() - start_time
-    response.headers["X-Process-Time"] = str(process_time)
-    logger.info("request handling time",
-                extra={
-                    "process_time": round(process_time, 4)
-                })
 
-    return response
+    try:
+        response = await call_next(request)
+        process_time = time.perf_counter() - start_time
+        response.headers["X-Process-Time"] = str(process_time)
+        logger.info("request handling time",
+                    extra={
+                        "process_time": round(process_time, 4)
+                    })
+
+        return response
+    except HTTPException as e:  # Обрабатываем исключения от endpoint
+        process_time = time.time() - start_time
+        response = e  # Или создайте новый Response
+        response.headers["X-Process-Time"] = str(process_time)  # Важно: добавляем заголовок даже при ошибке
+        return response
+
+    except Exception as e:
+        # Логируйте ошибку! Используйте модуль logging
+        print(f"Unexpected error in middleware: {e}")
+        process_time = time.time() - start_time
+        response = Response(status_code=500, content=f"Internal Server Error: {e}")
+        response.headers["X-Process-Time"] = str(process_time)  # Важно: добавляем заголовок даже при ошибке
+        return response
+
+    #
 
 
 if __name__ == "__main__":

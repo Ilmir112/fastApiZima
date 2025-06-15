@@ -45,19 +45,23 @@ async def find_wells_in_repairs(wells_data: WellsSearchRepair = Depends()):
 @version(1)
 async def find_well_filter_by_number(well_number: str, user: Users = Depends(get_current_user)):
     try:
-        data = await WellsDatasDAO.find_all(well_number=well_number, contractor=user.contractor)
-        if data:
-            result_list = []
-            for wells in data:
-                result = await WellsRepairsDAO.find_all(
-                    wells_id=wells.id,
-                )
-                for wells_info in result:
-                    result_list.append(f'{wells.well_number} '
-                                       f'{wells.well_area} '
-                                       f'{wells_info.type_kr}'
-                                       f' {wells_info.work_plan} от '
-                                       f'{wells_info.date_create} {wells.id}')
+        result_list = []
+
+        # Используем новый метод DAO для получения объединенных данных
+        joined_data = await WellsDatasDAO.find_wells_with_repairs(
+            well_number=well_number,
+            contractor_id=user.contractor
+        )
+
+        if joined_data:
+            for row in joined_data:
+                well_num, well_area, type_kr, work_plan, date_create, wells_id = row
+                result_list.append(f'{well_num} '
+                                   f'{well_area} '
+                                   f'{type_kr} '
+                                   f'{work_plan} от '
+                                   f'{date_create} '
+                                   f'{wells_id}')
             if result_list:
                 return {"ремонты": result_list}
 
@@ -73,23 +77,22 @@ async def find_well_id(
         user: Users = Depends(get_current_user)
 ):
     try:
-        wells_data = await WellsDatasDAO.find_one_or_none(
-            well_number=wells_data.well_number, well_area=wells_data.well_area)
-        if wells_data:
-            result = await WellsRepairsDAO.find_one_or_none(
-                wells_id=wells_data.id,
-                type_kr=wells_repair.type_kr,
-                date_create=wells_repair.date_create,
-                work_plan=wells_repair.work_plan,
-                contractor=user.contractor
-            )
-            if not result is None:
-                logger.info("Скважина найдена", extra={
-                    "well_number": wells_data.well_number,
-                    "well_area": wells_data.well_area},
-                            exc_info=True)
+        joined_data = await WellsDatasDAO.find_wells_with_repairs_one_or_none(
+            well_number=wells_data.well_number,
+            well_area=wells_data.well_area,
+            type_kr=wells_repair.type_kr,
+            date_create=wells_repair.date_create,
+            work_plan=wells_repair.work_plan,
+            contractor=user.contractor
+        )
 
-                return result
+        if not joined_data is None:
+            logger.info("Скважина найдена", extra={
+                "well_number": joined_data.well_number,
+                "well_area": joined_data.well_area},
+                        exc_info=True)
+
+            return joined_data
 
     except SQLAlchemyError as db_err:
         logger.error(f'Database error occurred: {str(db_err)}', exc_info=True)
