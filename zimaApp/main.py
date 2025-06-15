@@ -1,14 +1,12 @@
 import time
 import telegram
 from contextlib import asynccontextmanager
-from collections.abc import AsyncIterator
 
 import uvicorn
 from fastapi import FastAPI, Request, Response
 from fastapi.exceptions import RequestValidationError, HTTPException
 from fastapi_cache import FastAPICache
 from fastapi_cache.backends.redis import RedisBackend
-from fastapi_cache.decorator import cache
 from fastapi_versioning import VersionedFastAPI
 from prometheus_fastapi_instrumentator import Instrumentator
 from redis import asyncio as aioredis
@@ -120,7 +118,11 @@ origins = [
     "http://176.109.106.199:8000",
     "http://176.109.106.199:7777",
     "http://176.109.106.199:80",
-    "http://127.0.0.1:8000"
+    "http://127.0.0.1:8000",
+    "http://83.174.202.38:8000",
+    "http://83.174.202.38:7777",
+    "http://83.174.202.38:80",
+    "http://83.174.202.38:5555",
 ]
 # origins = [
 #     "*"  # для локальной разработки
