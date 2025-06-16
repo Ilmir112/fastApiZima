@@ -31,7 +31,7 @@ async def find_wells_data(wells_data: WellsSearchArgs = Depends()):
 
 @router.get("/find_wells_data_by_id")
 @version(1)
-@cache(expire=60)
+# @cache(expire=60)
 async def find_wells_data_by_id(wells_id: int):
     result = await WellsDatasDAO.find_one_or_none(
         id=wells_id)
@@ -93,14 +93,10 @@ async def add_wells_data(well_data: SWellsData, user: Users = Depends(get_curren
 
 @router.put("/update_wells_data")
 @version(1)
-async def update_wells_data(well_data: SWellsData,
+async def update_wells_data(well_data: SWellsData = Depends(find_wells_data),
                             user: Users = Depends(get_current_user)):
     try:
-        data = await find_wells_data(well_data)
-        if data:
-            result = await WellsDatasDAO.update_data(data.id,
-                                                     well_number=well_data.well_number,
-                                                     well_area=well_data.well_area,
+        result = await WellsDatasDAO.update_data(well_data.id,
                                                      well_oilfield=well_data.well_oilfield,
                                                      cdng=well_data.cdng,
                                                      costumer=well_data.costumer,
@@ -134,9 +130,9 @@ async def update_wells_data(well_data: SWellsData,
                                                      date_create=well_data.date_create,
                                                      contractor=well_data.contractor
                                                      )
-            logger.info('wells adding', extra={"well_number": well_data.well_number, "well_area": well_data.well_area},
-                        exc_info=True)
-            return result
+        logger.info('wells update', extra={"well_number": well_data.well_number, "well_area": well_data.well_area},
+                    exc_info=True)
+        return result
 
     except (SQLAlchemyError, Exception) as e:
         msg = f'Unexpected error: {str(e)}'
@@ -147,15 +143,14 @@ async def update_wells_data(well_data: SWellsData,
 
 @router.delete("/delete_wells_data")
 @version(1)
-async def delete_wells_data(well_data: WellsSearchArgs = Depends(), user: Users = Depends(get_current_user)):
+async def delete_wells_data(well_data: WellsSearchArgs = Depends(find_wells_data), user: Users = Depends(get_current_user)):
     try:
-        data = await find_wells_data(well_data)
-        if data:
-            result = await WellsDatasDAO.delete_item_all_by_filter(well_number=well_data.well_number,
-                                                                   well_area=well_data.well_area)
-            logger.info('wells delete', extra={"well_number": well_data.well_number, "well_area": well_data.well_area},
-                        exc_info=True)
-            return {"status": "success", "id": result}
+
+        result = await WellsDatasDAO.delete_item_all_by_filter(well_number=well_data.well_number,
+                                                               well_area=well_data.well_area)
+        logger.info('wells delete', extra={"well_number": well_data.well_number, "well_area": well_data.well_area},
+                    exc_info=True)
+        return {"status": "success", "id": result}
 
     except (SQLAlchemyError, Exception) as e:
         msg = f'Unexpected error: {str(e)}'
