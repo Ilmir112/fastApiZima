@@ -82,6 +82,7 @@ class WellsDatasDAO(BaseDAO):
     ):
         async with async_session_maker() as session:
             query = select(
+                WellsRepair.id,
                 WellsData.well_number,
                 WellsData.well_area,
                 WellsRepair.category_dict,
