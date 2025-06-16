@@ -90,7 +90,12 @@ class WellsDatasDAO(BaseDAO):
                 WellsRepair.excel_json,
                 WellsRepair.data_change_paragraph,
                 WellsRepair.perforation_project,
-                WellsRepair.type_absorbent
+                WellsRepair.type_absorbent,
+                WellsRepair.static_level,
+                WellsRepair.dinamic_level,
+                WellsRepair.expected_data,
+                WellsRepair.curator,
+                WellsRepair.region
                 ).join(WellsRepair, WellsData.id == WellsRepair.wells_id).where(
                 and_(WellsData.well_number == well_number,
                      WellsData.well_area == well_area,
