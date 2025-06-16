@@ -98,6 +98,8 @@ async def update_wells_data(well_data: SWellsData = Depends(find_wells_data),
                             user: Users = Depends(get_current_user)):
     try:
         result = await WellsDatasDAO.update_data(well_data.id,
+                                                     well_number=well_data.well_number,
+                                                     well_area=well_data.well_area,
                                                      well_oilfield=well_data.well_oilfield,
                                                      cdng=well_data.cdng,
                                                      costumer=well_data.costumer,
