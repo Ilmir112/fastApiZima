@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8" />
+    <title>Динамическая таблица</title>
+    <style>
+        /* Общие стили для таблицы */
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 20px 0;
+        }
+        td {
+            border: 1px solid #000;
+            padding: 8px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <h1>Динамическая таблица с объединениями</h1>
+    <div id="tableContainer"></div>
+
+    <script>
+        // Пример данных
+        const tableData = {{ wells_repair | safe }};
+        {
+            "rows": [
+                {
+                    "height": 40,
+                    "cells": [
+                        {
+                            "col": 0,
+                            "row": 0,
+                            "colSpan": 2,
+                            "rowSpan": 1,
+                            "content": "Объединенная ячейка",
+                            "style": {
+                                "backgroundColor": "#f0f0f0"
+                            }
+                        },
+                        {
+                            "col": 2,
+                            "row": 0,
+                            "content": "Ячейка 3",
+                            "style": {}
+                        }
+                    ]
+                },
+                {
+                    "height": 30,
+                    "cells": [
+                        {
+                            "col": 0,
+                            "row": 1,
+                            "content": "Ячейка 4",
+                            "style": {}
+                        },
+                        {
+                            "col": 1,
+                            "row": 1,
+                            "content": "Ячейка 5",
+                            "style": {}
+                        },
+                        {
+                            "col": 2,
+                            "row": 1,
+                            "content": "Ячейка 6",
+                            "style": {}
+                        }
+                    ]
+                }
+            ]
+        }
+        function generateTableHTML(tableData) {
+            const table = document.createElement('table');
+            table.style.borderCollapse = 'collapse';
+
+            // Массив для отслеживания занятых ячеек из-за объединений
+            const occupied = {};
+
+            tableData.rows.forEach((rowData, rowIndex) => {
+                const tr = document.createElement('tr');
+                tr.style.height = rowData.height + 'px';
+
+                rowData.cells.forEach(cell => {
+                    const { col, row: r, colSpan = 1, rowSpan = 1, content = '', style = {} } = cell;
+
+                    // Проверяем, занята ли ячейка из-за объединения
+                    if (occupied[`${r},${col}`]) return;
+
+                    const td = document.createElement('td');
+                    td.innerHTML = content;
+
+                    // Применяем стили
+                    for (const [key, value] of Object.entries(style)) {
+                        td.style[key] = value;
+                    }
+
+                    // Устанавливаем объединения
+                    if (colSpan > 1) td.colSpan = colSpan;
+                    if (rowSpan > 1) td.rowSpan = rowSpan;
+
+                    tr.appendChild(td);
+
+                    // Помечаем занятые ячейки из-за объединений
+                    for (let rOffset = 0; rOffset < rowSpan; rOffset++) {
+                        for (let cOffset = 0; cOffset < colSpan; cOffset++) {
+                            if (rOffset === 0 && cOffset === 0) continue; // текущая ячейка
+                            occupied[`${r + rOffset},${col + cOffset}`] = true;
+                        }
+                    }
+                });
+
+                table.appendChild(tr);
+            });
+
+            return table;
+        }
+
+        // Вставляем таблицу в контейнер
+        const container = document.getElementById('tableContainer');
+        container.appendChild(generateTableHTML(tableData));
+    </script>
+</body>
+</html>

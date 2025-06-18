@@ -39,11 +39,11 @@ class SilencingAdmin(ModelView, model=WellSilencing):
     name_plural = 'Перечень без глушения'
 
 
-class NormsAdmin(ModelView):
-    model = NormsWork
-    pk_columns = [NormsWork.__table__.c.id]  # замените 'id' на ваше имя первичного ключа
+class NormsAdmin(ModelView, model=NormsWork):
+    # pk_columns = [NormsWork.__table__.c.id]  # замените 'id' на ваше имя первичного ключа
 
-    column_list = ["well_repair.well_data.well_number", "well_repair.well_data.area"] + [c.name for c in NormsWork.__table__.columns]
+    column_list = ["well_repair.well_data.well_number", "well_repair.well_data.well_area"] +\
+                  [c.name for c in NormsWork.__table__.columns]
 
     def format_summary_work(self, obj):
         from markupsafe import Markup
@@ -52,8 +52,9 @@ class NormsAdmin(ModelView):
         ''')
 
     column_formatters = {
-        'summary_work': format_summary_work,
-    }
+            'summary_work': format_summary_work,
+        }
+    #
 
     name = 'АВР'
     name_plural = 'АВР'

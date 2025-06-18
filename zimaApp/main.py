@@ -33,6 +33,7 @@ from zimaApp.norms.router import router as norms_router
 from zimaApp.gnkt_data.router import router as gnkt_router
 from zimaApp.wells_data.router import router as wells_data_router
 from zimaApp.prometheus.router import router as prometheus_router
+from zimaApp.pages.router import router as pages_router
 from zimaApp.logger import logger
 
 bot = telegram.Bot(token=settings.TOKEN)
@@ -111,6 +112,7 @@ app.include_router(classifier_router)
 app.include_router(silencing_router)
 app.include_router(gnkt_router)
 app.include_router(prometheus_router)
+app.include_router(pages_router)
 
 # Подключение CORS, чтобы запросы к API могли приходить из браузера
 origins = [

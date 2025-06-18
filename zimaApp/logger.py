@@ -46,8 +46,6 @@ class TelegramHandler(logging.Handler):
         self.sender.send(self.chat_id, log_entry)
 
 
-
-
 # Инициализация
 sender = TelegramSender(settings.TOKEN)
 

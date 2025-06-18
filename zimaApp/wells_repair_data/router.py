@@ -32,11 +32,19 @@ class WellsSearchRepair:
 
 @router.get("/find_well_repairs_by_filter/")
 @version(1)
-async def find_wells_in_repairs(wells_data: WellsSearchRepair = Depends()):
+async def find_wells_in_repairs(wells_data: WellsSearchArgs = Depends(), user: Users = Depends(get_current_user)):
     result = await WellsRepairsDAO.find_one_or_none(
         type_kr=wells_data.type_kr, date_create=wells_data.date_create, work_plan=wells_data.work_plan,
         wells_id=wells_data.wells_id
     )
+
+    return result
+
+
+@router.get("/find_work_plan_all/")
+@version(1)
+async def find_work_plan_all( user: Users = Depends(get_current_user)):
+    result = await WellsRepairsDAO.find_all(1)
 
     return result
 
