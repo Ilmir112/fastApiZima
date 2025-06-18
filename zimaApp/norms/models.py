@@ -26,6 +26,7 @@ class NormsWork(Base):
     well_repair = relationship("WellsRepair", back_populates="norms")
     users = relationship("Users", back_populates="norms_repairs")
 
+
     def __repr__(self):
         return f"<NormsWork(id={self.id}, repair_id={self.repair_id}, start_well_repair={self.start_well_repair}," \
                f" type_tkrs={self.type_tkrs})>"

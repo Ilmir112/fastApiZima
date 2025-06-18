@@ -1,6 +1,8 @@
+from markupsafe import Markup
 from sqladmin import ModelView
 from sqlalchemy.orm import joinedload
 
+from zimaApp.norms.models import NormsWork
 from zimaApp.users.models import Users
 from zimaApp.well_classifier.models import WellClassifier
 from zimaApp.well_silencing.models import WellSilencing
@@ -35,6 +37,26 @@ class SilencingAdmin(ModelView, model=WellSilencing):
 
     name = 'Перечень без глушения'
     name_plural = 'Перечень без глушения'
+
+
+class NormsAdmin(ModelView):
+    model = NormsWork
+    pk_columns = [NormsWork.__table__.c.id]  # замените 'id' на ваше имя первичного ключа
+
+    column_list = ["well_repair.well_data.well_number", "well_repair.well_data.area"] + [c.name for c in NormsWork.__table__.columns]
+
+    def format_summary_work(self, obj):
+        from markupsafe import Markup
+        return Markup(f'''
+            <a href="/admin/norms/{obj.id}/view" target="_blank">Подробнее</a>
+        ''')
+
+    column_formatters = {
+        'summary_work': format_summary_work,
+    }
+
+    name = 'АВР'
+    name_plural = 'АВР'
 
 
 class WellsDataAdmin(ModelView, model=WellsData):
@@ -72,7 +94,7 @@ class ClassifierAdmin(ModelView, model=WellClassifier):
 
 class RepairDataAdmin(ModelView, model=WellsRepair):
 
-    column_list = [WellsRepair.well_data] + \
+    column_list = ["well_data.well_number", "well_data.well_area"] + [WellsRepair.well_data] + \
                   [c.name for c in WellsRepair.__table__.c]
     name = 'план работ'
     name_plural = 'Планы работ'

@@ -19,7 +19,7 @@ from zimaApp.admin.views import (
     ClassifierAdmin,
     RepairDataAdmin,
     SilencingAdmin,
-    UserAdmin, WellsDataAdmin,
+    UserAdmin, WellsDataAdmin, NormsAdmin,
 )
 from zimaApp.config import settings
 from zimaApp.database import engine
@@ -155,6 +155,7 @@ admin = Admin(app, engine, authentication_backend=authentication_backend)
 admin.add_view(UserAdmin)
 admin.add_view(WellsDataAdmin)
 admin.add_view(SilencingAdmin)
+admin.add_view(NormsAdmin)
 admin.add_view(ClassifierAdmin)
 admin.add_view(RepairDataAdmin)
 

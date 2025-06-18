@@ -49,3 +49,4 @@ class WellsData(Base):
     repairs = relationship("WellsRepair", back_populates="well_data", cascade="all, delete")
 
 
+
