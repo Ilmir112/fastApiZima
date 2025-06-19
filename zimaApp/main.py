@@ -14,6 +14,7 @@ from sqladmin import Admin
 from starlette.middleware.cors import CORSMiddleware
 from starlette.responses import JSONResponse
 from starlette.staticfiles import StaticFiles
+from starlette.templating import Jinja2Templates
 
 from zimaApp.admin.auth import authentication_backend
 from zimaApp.admin.views import (

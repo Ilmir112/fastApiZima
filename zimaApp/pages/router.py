@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Request, Depends
 from fastapi.templating import Jinja2Templates
 
+
 from zimaApp.norms.router import find_norms_one
 from zimaApp.pages.dao import ChangeExcelToHtml
 from zimaApp.users.dependencies import get_current_user, get_current_admin_user
@@ -15,15 +16,15 @@ router = APIRouter(
 
 templates = Jinja2Templates(directory="zimaApp/templates")
 
-
 @router.get("/home")
 async def get_home_page(
         request: Request,
-        user: Users = Depends(get_current_user)
+        user: Users = Depends(login_user)
 ):
     return templates.TemplateResponse(
         "home.html", context={
-            "request": request
+            "request": request,
+            "users": user
         })
 
 
