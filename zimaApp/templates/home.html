@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8" />
+    <title>Базовая страница</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+        /* Стиль для навигации */
+        nav {
+            background-color: #333;
+            padding: 10px;
+        }
+        nav a {
+            color: white;
+            margin-right: 15px;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        nav a:hover {
+            text-decoration: underline;
+        }
+        /* Стиль для контента */
+        .content {
+            padding: 20px;
+        }
+        /* Стиль для формы входа */
+        #login-form {
+            max-width: 300px;
+            margin: 50px auto;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        #login-form input[type="text"],
+        #login-form input[type="password"] {
+            width: 100%;
+            padding: 8px;
+            margin-top: 8px;
+            margin-bottom: 16px;
+            box-sizing: border-box;
+        }
+        #login-form button {
+            width: 100%;
+            padding: 10px;
+            background-color: #333;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        #login-form button:hover {
+            background-color: #555;
+        }
+    </style>
+</head>
+<body>
+
+<!-- Блок формы входа -->
+<div id="auth-section">
+    <form id="login-form">
+        <h2>Вход в систему</h2>
+        <label for="username">Имя пользователя:</label>
+        <input type="text" id="username" required />
+
+        <label for="password">Пароль:</label>
+        <input type="password" id="password" required />
+
+        <button type="submit">Войти</button>
+    </form>
+</div>
+
+<!-- Основная страница после авторизации -->
+<div id="main-section" style="display:none;">
+    <!-- Навигация -->
+    <nav>
+        <a href="#plans" onclick="showSection('plans')">Планы</a>
+        <a href="#avr" onclick="showSection('avr')">АВР</a>
+        <a href="#summary" onclick="showSection('summary')">Сводка</a>
+        <a href="#description" onclick="showSection('description')">Описание</a>
+        <a href="#" onclick="logout()">Выход</a>
+    </nav>
+
+    <!-- Контент разделов -->
+    <div class="content">
+        <div id="plans" style="display:none;">
+            <h2>Планы</h2>
+            <p>Здесь отображаются планы.</p>
+        </div>
+
+        <div id="avr" style="display:none;">
+            <h2>АВР</h2>
+            <p>Информация об АВР.</p>
+        </div>
+
+        <div id="summary" style="display:none;">
+            <h2>Сводка</h2>
+            <p>Общая сводка по системе.</p>
+        </div>
+
+        <div id="description" style="display:none;">
+            <h2>Описание</h2>
+            <p>Описание системы и её компонентов.</p>
+        </div>
+    </div>
+</div>
+
+<script>
+// Проверка авторизации
+const authSection = document.getElementById('auth-section');
+const mainSection = document.getElementById('main-section');
+
+// Функция для отображения выбранного раздела
+function showSection(sectionId) {
+    const sections = ['plans', 'avr', 'summary', 'description'];
+    sections.forEach(id => {
+        document.getElementById(id).style.display = (id === sectionId) ? 'block' : 'none';
+    });
+}
+
+// Обработка входа
+document.getElementById('login-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    const username = document.getElementById('username').value.trim();
+    const password = document.getElementById('password').value.trim();
+
+    // Простая проверка (в реальных приложениях используйте серверную аутентификацию)
+    if(username === 'admin' && password === '1234') {
+        // Успешный вход
+        authSection.style.display = 'none';
+        mainSection.style.display = 'block';
+
+        // По умолчанию показываем раздел "Планы"
+        showSection('plans');
+
+        // Можно сохранить статус авторизации в localStorage или sessionStorage
+    } else {
+        alert('Неверное имя пользователя или пароль');
+    }
+});
+
+// Функция выхода
+function logout() {
+    // Очистить данные авторизации, если использовали localStorage/sessionStorage
+    authSection.style.display = 'block';
+    mainSection.style.display = 'none';
+}
+</script>
+
+</body>
+</html>
