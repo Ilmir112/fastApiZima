@@ -13,6 +13,7 @@ from redis import asyncio as aioredis
 from sqladmin import Admin
 from starlette.middleware.cors import CORSMiddleware
 from starlette.responses import JSONResponse
+from starlette.staticfiles import StaticFiles
 
 from zimaApp.admin.auth import authentication_backend
 from zimaApp.admin.views import (
@@ -60,6 +61,8 @@ app = VersionedFastAPI(app,
                        version_format='{major}',
                        prefix_format='/api/v{major}',
                        )
+# Подключение статических файлов (JS, CSS)
+app.mount("/static", StaticFiles(directory="zimaApp/static"), name="static")
 
 if settings.MODE != "TEST":
     hawk = HawkFastapi({
@@ -194,4 +197,4 @@ async def add_process_time_header(request: Request, call_next):
 
 
 if __name__ == "__main__":
-    uvicorn.run("main:app", host="127.0.0.1", port=8000, reload=True)
+    uvicorn.run("zimaApp.main:app", host="127.0.0.1", port=8000, reload=True)

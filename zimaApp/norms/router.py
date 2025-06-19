@@ -28,9 +28,9 @@ router = APIRouter(
 
 
 class NormSearchId:
-    def __init__(self, id: int, contractor: str):
+    def __init__(self, id: int):
         self.id = id
-        self.contractor = contractor
+
 
 
 @router.get("/find_well_filter_by_number")
@@ -79,8 +79,7 @@ async def find_norms_one(
 @router.get("/find_norms_by_id/")
 @version(1)
 async def find_norms_one(norms: NormSearchId = Depends(), user: Users = Depends(get_current_user)):
-    if norms.contractor == user.contractor:
-        result = await NormDAO.find_one_or_none(
+    result = await NormDAO.find_one_or_none(
             id=norms.id)
     return result
 
