@@ -81,23 +81,23 @@ async def find_repair_filter_by_number(well_number: str, user: Users = Depends(g
 @router.get("/find_well_filter_by_number")
 @version(1)
 async def find_well_filter_by_number(
-        joined_data=Depends(find_repair_filter_by_number),
-        user: Users = Depends(get_current_user)):
+        joined_data=Depends(find_repair_filter_by_number)):
     try:
         result_list = []
         if joined_data:
             for row in joined_data:
-                result_list.append(f'{row["well_number"]} '
-                                   f'{row["well_area"]} '
-                                   f'{row["type_kr"]} '
-                                   f'{row["work_plan"]} от '
-                                   f'{row["date_create"]} '
+                result_list.append(f'{row["Номер скважины"]} '
+                                   f'{row["площадь"]} '
+                                   f'{row["КР"]} '
+                                   f'{row["вид ПР"]} от '
+                                   f'{row["Дата создания"]} '
                                    f'{row["id"]}')
             if result_list:
                 return {"ремонты": result_list}
 
     except Exception as e:
         logger.error("error message", extra=e, exc_info=True)
+        raise HTTPException(status_code=500, detail="Internal Server Error")
 
 
 @router.get("/find_repair_id")

@@ -56,8 +56,6 @@ async def lifespan(_: FastAPI):
 
 app = FastAPI(lifespan=lifespan, title="Zima", version="0.1.0", root_path="/zimaApp")
 
-
-
 # Подключение версионирования
 app = VersionedFastAPI(app,
                        version_format='{major}',
@@ -72,9 +70,11 @@ if settings.MODE != "TEST":
         'token': settings.HAWK_DSN
     })
 
+
 @app.get("/")
 async def root():
-    return RedirectResponse(url="/pages/home#")
+    return RedirectResponse(url="/pages/home")
+
 
 # Подключение эндпоинта для отображения метрик для их дальнейшего сбора Прометеусом
 instrumentator = Instrumentator(
