@@ -1,3 +1,5 @@
+import json
+
 from fastapi import APIRouter, Depends, HTTPException
 from datetime import date, datetime
 
@@ -47,7 +49,7 @@ async def find_wells_in_repairs(
 @router.get("/find_work_plan_all/")
 @version(1)
 async def find_work_plan_all(user: Users = Depends(get_current_user)):
-    result = await WellsRepairsDAO.find_all(2)
+    result = await WellsRepairsDAO.find_all(1)
     return result
 
 
@@ -108,6 +110,8 @@ async def find_repair_id(
         result = await WellsRepairsDAO.find_one_or_none(id=id)
         if result:
             return result
+        else:
+            return {"status": "not_found", "message": "Запись не найдена"}
 
     except SQLAlchemyError as db_err:
         logger.error(f'Database error occurred: {str(db_err)}', exc_info=True)

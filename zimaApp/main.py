@@ -12,9 +12,8 @@ from prometheus_fastapi_instrumentator import Instrumentator
 from redis import asyncio as aioredis
 from sqladmin import Admin
 from starlette.middleware.cors import CORSMiddleware
-from starlette.responses import JSONResponse
+from starlette.responses import JSONResponse, HTMLResponse, RedirectResponse
 from starlette.staticfiles import StaticFiles
-from starlette.templating import Jinja2Templates
 
 from zimaApp.admin.auth import authentication_backend
 from zimaApp.admin.views import (
@@ -35,7 +34,7 @@ from zimaApp.norms.router import router as norms_router
 from zimaApp.gnkt_data.router import router as gnkt_router
 from zimaApp.wells_data.router import router as wells_data_router
 from zimaApp.prometheus.router import router as prometheus_router
-from zimaApp.pages.router import router as pages_router
+from zimaApp.pages.router import router as pages_router, templates
 from zimaApp.logger import logger
 
 bot = telegram.Bot(token=settings.TOKEN)
@@ -57,6 +56,8 @@ async def lifespan(_: FastAPI):
 
 app = FastAPI(lifespan=lifespan, title="Zima", version="0.1.0", root_path="/zimaApp")
 
+
+
 # Подключение версионирования
 app = VersionedFastAPI(app,
                        version_format='{major}',
@@ -70,6 +71,10 @@ if settings.MODE != "TEST":
         'app_instance': app,
         'token': settings.HAWK_DSN
     })
+
+@app.get("/")
+async def root():
+    return RedirectResponse(url="/pages/home#")
 
 # Подключение эндпоинта для отображения метрик для их дальнейшего сбора Прометеусом
 instrumentator = Instrumentator(
@@ -116,6 +121,7 @@ app.include_router(classifier_router)
 app.include_router(silencing_router)
 app.include_router(gnkt_router)
 app.include_router(prometheus_router)
+
 app.include_router(pages_router)
 
 # Подключение CORS, чтобы запросы к API могли приходить из браузера

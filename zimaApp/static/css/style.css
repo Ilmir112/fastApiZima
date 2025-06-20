@@ -10,3 +10,22 @@
 #logoutBtn {
     margin-top: 10px;
 }
+
+/* static/css/styles.css */
+body {
+    font-family: Arial, sans-serif;
+    margin: 20px;
+}
+#dataTable {
+    border-collapse: collapse;
+    width: 100%;
+    margin-top: 20px;
+}
+#dataTable th, #dataTable td {
+    border: 1px solid #ddd;
+    padding: 8px;
+}
+#dataTable th {
+    background-color: #f2f2f2;
+    text-align: left;
+}

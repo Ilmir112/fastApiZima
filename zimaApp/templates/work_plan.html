@@ -5,9 +5,10 @@
 
 {% block content %}
 
-
 <div id="tableContainer"></div>
 {% block scripts %}
+
+<div class="content-container" style="margin-top: 20px;">
     <!-- Подключение внешнего JS файла -->
     <script src="/static/js/plan.js"></script>
 
@@ -23,5 +24,7 @@
             }
         });
     </script>
+</div>
+
 {% endblock %}
 {% endblock %}

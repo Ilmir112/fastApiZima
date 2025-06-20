@@ -1,5 +1,3 @@
-
-
 function generateTableHTML(tableData) {
     const table = document.createElement('table');
     table.style.borderCollapse = 'collapse';
@@ -72,4 +70,99 @@ function generateTableHTML(tableData) {
     const container = document.getElementById('tableContainer');
     container.innerHTML = '';
     container.appendChild(table);
+}
+
+// static/js/scripts.js
+
+document.addEventListener('DOMContentLoaded', () => {
+    const loadBtn = document.getElementById('loadDataBtn');
+    if (loadBtn) {
+        loadBtn.addEventListener('click', () => {
+            const wellNumber = document.getElementById('wellNumberInput').value.trim();
+            if (!wellNumber) {
+                alert('Пожалуйста, введите номер скважины.');
+                return;
+            }
+
+            const url = `/wells_repair_router/find_repair_filter_by_number?well_number=${encodeURIComponent(wellNumber)}`;
+
+            fetch(url)
+              .then(response => {
+                if (!response.ok) {
+                  throw new Error(`HTTP error! статус: ${response.status}`);
+                }
+                return response.json();
+              })
+              .then(data => {
+                displayData(data);
+              })
+              .catch(error => {
+                console.error('Ошибка:', error);
+                alert('Произошла ошибка при загрузке данных.');
+              });
+        });
+    }
+});
+
+// Функция для отображения данных в виде таблицы
+function displayData(data) {
+    const container = document.getElementById('tableContainer');
+    container.innerHTML = '';
+
+    if (!data || data.length === 0) {
+        container.innerHTML = '<p>Нет данных для отображения.</p>';
+        return;
+    }
+
+    const table = document.createElement('table');
+    table.id = 'dataTable';
+
+    // Заголовки таблицы
+    const headers = Object.keys(data[0]);
+    const thead = document.createElement('thead');
+    const headerRow = document.createElement('tr');
+
+    headers.forEach(key => {
+        const th = document.createElement('th');
+        th.textContent = key;
+        headerRow.appendChild(th);
+    });
+    thead.appendChild(headerRow);
+    table.appendChild(thead);
+
+    // Тело таблицы
+    const tbody = document.createElement('tbody');
+
+    data.forEach(item => {
+        const row = document.createElement('tr');
+
+        headers.forEach(key => {
+            const td = document.createElement('td');
+
+            if (key === 'Номер скважины') {
+                const link = document.createElement('a');
+                link.href = '#';
+                link.textContent = item[key];
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    findWellById(item['id']);
+                });
+                td.appendChild(link);
+            } else {
+                td.textContent = item[key];
+            }
+
+            row.appendChild(td);
+        });
+
+        tbody.appendChild(row);
+    });
+
+    table.appendChild(tbody);
+    container.appendChild(table);
+}
+
+// Функция для перехода по ID скважины
+function findWellById(wellId) {
+    window.location.href = `/pages/plan_work?id=${wellId}`;
 }

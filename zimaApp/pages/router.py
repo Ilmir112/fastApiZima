@@ -1,13 +1,14 @@
 from fastapi import APIRouter, Request, Depends
 from fastapi.templating import Jinja2Templates
 
+from zimaApp.logger import logger
 from zimaApp.norms.router import find_norms_one
 from zimaApp.pages.dao import ChangeExcelToHtml
 from zimaApp.users.auth import authenticate_user
 from zimaApp.users.dependencies import get_current_user, get_current_admin_user
 from zimaApp.users.models import Users
 from zimaApp.users.router import login_user
-from zimaApp.wells_repair_data.router import find_work_plan_all, find_repair_filter_by_number
+from zimaApp.wells_repair_data.router import find_work_plan_all, find_repair_filter_by_number, find_repair_id
 
 router = APIRouter(
     prefix="/pages",
@@ -15,6 +16,7 @@ router = APIRouter(
 )
 
 templates = Jinja2Templates(directory="zimaApp/templates")
+
 
 
 @router.get("/home")
@@ -39,7 +41,6 @@ async def get_repair_list(
     )
 
 
-
 @router.get("/find_repair_list")
 async def get_repair_list(
         request: Request,
@@ -57,17 +58,31 @@ async def get_repair_list(
 @router.get("/plan_work")
 async def get_plan_page(
         request: Request,
-        wells_repair=Depends(find_work_plan_all),
+        wells_repair=Depends(find_repair_id),
         user: Users = Depends(get_current_user)
 ):
-    excel_answer = ChangeExcelToHtml.change_method(wells_repair[1].excel_json)
+    excel_answer = ChangeExcelToHtml.change_method(wells_repair.excel_json)
 
-    return templates.TemplateResponse(
-        "work_plan.html", context={
-            "request": request,
-            "wells_repair": excel_answer
+    try:
+        return templates.TemplateResponse(
+            "work_plan.html", context={
+                "request": request,
+                "wells_repair": excel_answer
+            }
+        )
+    except Exception as e:
+        # Обработка ошибок при рендеринге шаблона
+        logger.error(f"Ошибка при рендеринге шаблона: {e}")
 
-        })
+        print(f"Ошибка при рендеринге шаблона: {e}")
+        # Можно вернуть ошибку или fallback страницу
+        return templates.TemplateResponse(
+            "error.html",
+            context={"request": request,
+                     "error_message": "Произошла ошибка при отображении страницы."}
+        )
+
+
 
 
 @router.get("/norms")
