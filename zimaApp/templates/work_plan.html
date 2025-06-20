@@ -1,26 +1,13 @@
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="UTF-8" />
-    <title>Динамическая таблица</title>
-    <style>
-        /* Общие стили для таблицы */
-        table {
-            border-collapse: collapse;
-            width: 100%;
-            margin: 20px 0;
-        }
-        td {
-            border: 0px solid #000;
-            padding: 8px;
-            text-align: center;
-        }
-    </style>
-</head>
-<body>
-    <h1>Динамическая таблица с объединениями</h1>
-    <div id="tableContainer"></div>
+<!-- templates/base.html -->
+{% extends "layout/base.html" %}
 
+{% block title %}Главная{% endblock %}
+
+{% block content %}
+
+
+<div id="tableContainer"></div>
+{% block scripts %}
     <!-- Подключение внешнего JS файла -->
     <script src="/static/js/plan.js"></script>
 
@@ -36,5 +23,5 @@
             }
         });
     </script>
-</body>
-</html>
+{% endblock %}
+{% endblock %}

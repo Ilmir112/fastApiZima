@@ -1,0 +1,12 @@
+/* Немного стилизации для формы входа */
+#login-container {
+    max-width: 400px;
+    margin: 50px auto;
+    padding: 20px;
+    border: 1px solid #ccc;
+    border-radius: 25px;
+    background-color: #f8f9ff;
+}
+#logoutBtn {
+    margin-top: 10px;
+}

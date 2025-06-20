@@ -58,7 +58,7 @@ class WellsDatasDAO(BaseDAO):
                 WellsRepair.type_kr,
                 WellsRepair.work_plan,
                 WellsRepair.date_create,
-                WellsData.id
+                WellsRepair.id
             ).join(
                 WellsRepair, WellsData.id == WellsRepair.wells_id  # JOIN WellsDatas с WellsRepairs
             ).where(

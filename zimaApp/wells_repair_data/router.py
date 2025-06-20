@@ -1,5 +1,5 @@
-from fastapi import APIRouter, Depends
-from datetime import date
+from fastapi import APIRouter, Depends, HTTPException
+from datetime import date, datetime
 
 from sqlalchemy.exc import SQLAlchemyError
 
@@ -32,7 +32,10 @@ class WellsSearchRepair:
 
 @router.get("/find_well_repairs_by_filter/")
 @version(1)
-async def find_wells_in_repairs(wells_data: WellsSearchArgs = Depends(), user: Users = Depends(get_current_user)):
+async def find_wells_in_repairs(
+        wells_data: WellsSearchArgs = Depends(),
+        user: Users = Depends(get_current_user)
+):
     result = await WellsRepairsDAO.find_one_or_none(
         type_kr=wells_data.type_kr, date_create=wells_data.date_create, work_plan=wells_data.work_plan,
         wells_id=wells_data.wells_id
@@ -43,39 +46,76 @@ async def find_wells_in_repairs(wells_data: WellsSearchArgs = Depends(), user: U
 
 @router.get("/find_work_plan_all/")
 @version(1)
-async def find_work_plan_all( user: Users = Depends(get_current_user)):
-    result = await WellsRepairsDAO.find_all(1)
-
+async def find_work_plan_all(user: Users = Depends(get_current_user)):
+    result = await WellsRepairsDAO.find_all(2)
     return result
 
 
-@router.get("/find_well_filter_by_number")
+@router.get("/find_repair_filter_by_number")
 @version(1)
-async def find_well_filter_by_number(well_number: str, user: Users = Depends(get_current_user)):
+async def find_repair_filter_by_number(well_number: str, user: Users = Depends(get_current_user)):
     try:
-        result_list = []
-
         # Используем новый метод DAO для получения объединенных данных
         joined_data = await WellsDatasDAO.find_wells_with_repairs(
             well_number=well_number,
             contractor_id=user.contractor
         )
+        if joined_data:
+            # Преобразуем каждый кортеж в словарь с понятными ключами
+            keys = ['Номер скважины', 'площадь', 'КР', 'вид ПР', 'Дата создания', 'id']
+            serialized_data = [
+                dict(zip(keys, row))
+                for row in joined_data
+            ]
+            print(serialized_data)
+            return serialized_data
+        else:
+            return None
+    except Exception as e:
+        logger.error("error message", extra=e, exc_info=True)
+        raise HTTPException(status_code=500, detail="Internal Server Error")
 
+
+@router.get("/find_well_filter_by_number")
+@version(1)
+async def find_well_filter_by_number(
+        joined_data=Depends(find_repair_filter_by_number),
+        user: Users = Depends(get_current_user)):
+    try:
+        result_list = []
         if joined_data:
             for row in joined_data:
-                well_num, well_area, type_kr, work_plan, date_create, wells_id = row
-                result_list.append(f'{well_num} '
-                                   f'{well_area} '
-                                   f'{type_kr} '
-                                   f'{work_plan} от '
-                                   f'{date_create} '
-                                   f'{wells_id}')
+                result_list.append(f'{row["well_number"]} '
+                                   f'{row["well_area"]} '
+                                   f'{row["type_kr"]} '
+                                   f'{row["work_plan"]} от '
+                                   f'{row["date_create"]} '
+                                   f'{row["id"]}')
             if result_list:
                 return {"ремонты": result_list}
 
     except Exception as e:
         logger.error("error message", extra=e, exc_info=True)
 
+
+@router.get("/find_repair_id")
+@version(1)
+async def find_repair_id(
+        id: int,
+        user: Users = Depends(get_current_user)
+):
+    try:
+        result = await WellsRepairsDAO.find_one_or_none(id=id)
+        if result:
+            return result
+
+    except SQLAlchemyError as db_err:
+        logger.error(f'Database error occurred: {str(db_err)}', exc_info=True)
+        return {"status": "error", "message": "Ошибка базы данных"}
+
+    except Exception as e:
+        logger.error(f'Unexpected error occurred: {str(e)}', exc_info=True)
+        return {"status": "error", "message": "Произошла неожиданная ошибка"}
 
 @router.get("/find_well_id")
 @version(1)

@@ -2,19 +2,20 @@
         document.addEventListener('DOMContentLoaded', () => {
             const token = localStorage.getItem('access_token');
             if (token) {
-                // Если есть токен, скрываем форму входа и показываем навигацию и контент
+                // Если есть токен, скрываем форму входа
                 document.getElementById('login-container').style.display = 'none';
                 document.getElementById('content').style.display = 'block';
                 document.querySelector('nav').classList.remove('d-none');
-                // Можно сразу загрузить домашнюю страницу или проверить текущий URL
-                if (window.location.pathname === '/' || window.location.pathname === '/login') {
-                    window.location.href = '/home';
-                } else {
-                    // Можно добавить обработку текущего URL
-                }
+
+                // Показываем кнопку выхода
                 showLogoutButton(true);
+
+                // // Перенаправление на /home, если нужно
+                // if (window.location.pathname === '/' || window.location.pathname === '/login') {
+                //     window.location.href = '/home';
+                // }
             } else {
-                // Нет токена, показываем форму входа
+                // Нет токена
                 document.getElementById('login-container').style.display = 'block';
                 document.getElementById('content').style.display = 'none';
                 showLogoutButton(false);
@@ -65,7 +66,7 @@
                     document.getElementById('content').style.display = 'block';
                     showLogoutButton(true);
                     // Загружаем домашнюю страницу или другой контент
-                    window.location.href = '/home';
+                    window.location.href = '/pages/home';
                 } else {
                     const errorText = await response.text();
                     alert('Ошибка входа: ' + errorText);

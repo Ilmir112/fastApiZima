@@ -1,3 +1,5 @@
+
+
 function generateTableHTML(tableData) {
     const table = document.createElement('table');
     table.style.borderCollapse = 'collapse';

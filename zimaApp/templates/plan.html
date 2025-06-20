@@ -1,0 +1,147 @@
+<!-- templates/base.html -->
+{% extends "layout/base.html" %}
+
+{% block title %}Главная{% endblock %}
+
+{% block content %}
+<head>
+    <meta charset="UTF-8" />
+    <title>Поиск ремонтных данных по скважине</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        #dataTable {
+            border-collapse: collapse;
+            width: 100%;
+            margin-top: 20px;
+        }
+        #dataTable th, #dataTable td {
+            border: 1px solid #ddd;
+            padding: 8px;
+        }
+        #dataTable th {
+            background-color: #f2f2f2;
+            text-align: left;
+        }
+    </style>
+</head>
+<body>
+
+<h1>Поиск ремонтных данных по скважине</h1>
+
+<!-- Поле ввода и кнопка -->
+<input type="text" id="wellNumberInput" placeholder="Введите номер скважины" />
+<button id="loadDataBtn">Загрузить данные</button>
+
+<!-- Контейнер для отображения таблицы -->
+<div id="tableContainer"></div>
+
+<script>
+document.getElementById('loadDataBtn').addEventListener('click', () => {
+    const wellNumber = document.getElementById('wellNumberInput').value.trim();
+    if (!wellNumber) {
+        alert('Пожалуйста, введите номер скважины.');
+        return;
+    }
+
+    const url = `/wells_repair_router/find_repair_filter_by_number?well_number=${encodeURIComponent(wellNumber)}`;
+
+    fetch(url)
+      .then(response => {
+        if (!response.ok) {
+          throw new Error(`HTTP error! статус: ${response.status}`);
+        }
+        return response.json();
+      })
+      .then(data => {
+        // Обработка полученных данных
+        displayData(data);
+      })
+      .catch(error => {
+        console.error('Ошибка:', error);
+        alert('Произошла ошибка при загрузке данных.');
+      });
+});
+
+// Функция для отображения данных в виде таблицы
+function displayData(data) {
+    const container = document.getElementById('tableContainer');
+    container.innerHTML = '';
+
+    if (!data || data.length === 0) {
+        container.innerHTML = '<p>Нет данных для отображения.</p>';
+        return;
+    }
+
+    const table = document.createElement('table');
+    table.id = 'dataTable';
+
+    const headers = Object.keys(data[0]);
+    const thead = document.createElement('thead');
+    const headerRow = document.createElement('tr');
+
+    headers.forEach(key => {
+        const th = document.createElement('th');
+        th.textContent = key;
+        headerRow.appendChild(th);
+    });
+    thead.appendChild(headerRow);
+    table.appendChild(thead);
+
+    const tbody = document.createElement('tbody');
+
+    data.forEach(item => {
+        const row = document.createElement('tr');
+
+        headers.forEach(key => {
+            const td = document.createElement('td');
+
+            // Для поля 'Номер скважины' делаем гиперссылку
+            if (key === 'Номер скважины') {
+                const link = document.createElement('a');
+                link.href = '#'; // или можно оставить пустым
+                link.textContent = item[key];
+                // Передача параметра в функцию
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    // Вызовите вашу функцию поиска или откройте страницу
+                    print(item)
+                    findWellById(item['id']);
+                });
+                td.appendChild(link);
+            } else {
+                td.textContent = item[key];
+            }
+
+            row.appendChild(td);
+        });
+
+        tbody.appendChild(row);
+    });
+
+    table.appendChild(tbody);
+    container.appendChild(table);
+}
+
+function findWellById(wellId) {
+    // Например, делаем запрос к API для получения деталей по ID
+    fetch(`/wells_repair_router/find_repair_id?id=${wellId}`)
+      .then(response => response.json())
+      .then(data => {
+          // Обработка полученных данных
+          console.log(data);
+          // Можно открыть модальное окно или перейти на другую страницу
+          alert(`Детали скважины: ${JSON.stringify(data)}`);
+      })
+      .catch(error => {
+          console.error('Ошибка при получении данных:', error);
+          alert('Ошибка при получении данных по скважине.');
+      });
+}
+
+</script>
+{% endblock %}
+</body>
+</html>
