@@ -2,6 +2,8 @@ from fastapi import APIRouter, Request, Depends
 from fastapi.templating import Jinja2Templates
 
 from zimaApp.logger import logger
+from fastapi_cache.decorator import cache
+from fastapi_versioning import version
 from zimaApp.norms.router import find_norms_one
 from zimaApp.pages.dao import ChangeExcelToHtml
 from zimaApp.users.auth import authenticate_user
@@ -18,18 +20,20 @@ router = APIRouter(
 templates = Jinja2Templates(directory="zimaApp/templates")
 
 
-
 @router.get("/home")
+@version(1)
 async def get_home_page(
         request: Request
 ):
     return templates.TemplateResponse(
-        "layout/base.html", context={
+        "home.html", context={
             "request": request
         })
 
 
 @router.get("/plan")
+@version(1)
+# @cache(expire=1500)
 async def get_repair_list(
         request: Request,
         user: Users = Depends(get_current_user)
@@ -42,6 +46,7 @@ async def get_repair_list(
 
 
 @router.get("/find_repair_list")
+@version(1)
 async def get_repair_list(
         request: Request,
         wells_repair=Depends(find_repair_filter_by_number),
@@ -56,6 +61,7 @@ async def get_repair_list(
 
 
 @router.get("/plan_work")
+@version(1)
 async def get_plan_page(
         request: Request,
         wells_repair=Depends(find_repair_id),
@@ -83,9 +89,8 @@ async def get_plan_page(
         )
 
 
-
-
 @router.get("/norms")
+@version(1)
 async def get_norms_page(
         request: Request,
         wells_repair=Depends(find_norms_one),

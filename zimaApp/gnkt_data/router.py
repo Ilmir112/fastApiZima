@@ -1,17 +1,14 @@
-from datetime import datetime
+from datetime import datetime, date
 
 from fastapi import APIRouter, Depends, HTTPException
-from pydantic import ValidationError
 from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.testing.suite.test_reflection import users
+
 
 from zimaApp.logger import logger
 from zimaApp.tasks.telegram_bot_template import TelegramInfo
 from zimaApp.users.dependencies import get_current_user
 from zimaApp.users.models import Users
-from zimaApp.well_silencing.router import WellsSearchArgs
 from zimaApp.gnkt_data.dao import GnktDatasDAO
-from zimaApp.gnkt_data.models import GnktData
 from zimaApp.gnkt_data.schemas import SGnktData
 from fastapi_versioning import version
 
@@ -28,7 +25,8 @@ async def find_gnkt_data_all():
         result = await GnktDatasDAO.find_all(
         )
     except Exception as e:
-        raise HTTPException(e)
+        raise HTTPException(status_code=500, detail=f"Internal Server Error {e}")
+
     return result
 
 
@@ -42,7 +40,8 @@ async def find_gnkt_data(gnkt_number):
         result = sorted(result, key=lambda k: k.date_repair, reverse=True)
 
     except Exception as e:
-        raise HTTPException(e)
+        raise HTTPException(status_code=500, detail=f"Internal Server Error {e}")
+
     return result
 
 
@@ -57,7 +56,8 @@ async def find_gnkt_data(well_number, well_area, date_repair):
         )
     except Exception as e:
         logger.critical(e)
-        raise HTTPException(e)
+        raise HTTPException(status_code=500, detail="Internal Server Error")
+
     return result
 
 
@@ -65,6 +65,11 @@ async def find_gnkt_data(well_number, well_area, date_repair):
 @version(1)
 async def add_wells_data(gnkt_data: SGnktData,
                          user: Users = Depends(get_current_user)):
+    await delete_well_by_type_kr_and_date_create(
+        gnkt_data.well_number,
+        gnkt_data.well_area,
+        gnkt_data.date_repair)
+
     try:
         result = await GnktDatasDAO.add_data(
             gnkt_number=gnkt_data.gnkt_number,
@@ -95,3 +100,23 @@ async def add_wells_data(gnkt_data: SGnktData,
                                  "well_number": gnkt_data.well_number}, exc_info=True)
 
 
+@router.delete("/delete_well")
+@version(1)
+async def delete_well_by_type_kr_and_date_create(
+        well_number:str,
+        well_area: str,
+        date_repair: date,
+        user: Users = Depends(get_current_user)):
+    data = await GnktDatasDAO.find_one_or_none(
+        well_number=well_number,
+        well_area=well_area,
+        date_repair=date_repair,
+        contractor=user.contractor
+    )
+    if data:
+        return await GnktDatasDAO.delete_item_all_by_filter(
+            well_number=well_number,
+            well_area=well_area,
+            date_repair=date_repair,
+            contractor=user.contractor
+        )

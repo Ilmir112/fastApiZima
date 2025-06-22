@@ -16,7 +16,7 @@ class WellsDatasDAO(BaseDAO):
     @staticmethod
     async def find_wells_with_repairs_and_norms(
             well_number: str,
-            contractor_id: int
+            contractor: str
     ):
         async with async_session_maker() as session:
             """
@@ -36,7 +36,7 @@ class WellsDatasDAO(BaseDAO):
             ).where(
                 and_(
                     WellsData.well_number == well_number,
-                    WellsData.contractor == contractor_id
+                    WellsData.contractor == contractor
                 )
             )
 
@@ -46,7 +46,7 @@ class WellsDatasDAO(BaseDAO):
     @staticmethod
     async def find_wells_with_repairs(
             well_number: str,
-            contractor_id: int
+            contractor: str
     ):
         async with async_session_maker() as session:
             """
@@ -64,7 +64,7 @@ class WellsDatasDAO(BaseDAO):
             ).where(
                 and_(
                     WellsData.well_number == well_number,
-                    WellsData.contractor == contractor_id
+                    WellsData.contractor == contractor
                 )
             )
 

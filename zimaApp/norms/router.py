@@ -42,7 +42,7 @@ async def find_well_filter_by_number(well_number: str, user: Users = Depends(get
         # Используем новый метод DAO для получения объединенных данных
         joined_data = await WellsDatasDAO.find_wells_with_repairs_and_norms(
             well_number=well_number,
-            contractor_id=user.contractor
+            contractor=user.contractor
         )
 
         if joined_data:

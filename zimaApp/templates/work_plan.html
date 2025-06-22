@@ -4,17 +4,38 @@
 {% block title %}Главная{% endblock %}
 
 {% block content %}
+<head>
+    <meta charset="UTF-8"/>
+    <title>план работ</title>
+    <link rel="stylesheet" href="../static/css/style.css">
 
+
+</head>
+
+<div class="content-container">
+    <head>
+        <meta charset="UTF-8"/>
+        <title> </title>
+        <h1 style="margin-top: 20px;">Поиск ремонтных данных по скважине</h1>
+    </head>
+
+    <!-- Поле ввода и кнопка -->
+    <label for="wellNumberInput"></label><input type="text" id="wellNumberInput" placeholder="Введите номер скважины"/>
+    <button id="loadDataBtn">Загрузить данные</button>
+</div>
+<!-- Контейнер для отображения таблицы -->
 <div id="tableContainer"></div>
+
+
 {% block scripts %}
 
 <div class="content-container" style="margin-top: 20px;">
     <!-- Подключение внешнего JS файла -->
-    <script src="/static/js/plan.js"></script>
+    <script src="../static/js/plan.js"></script>
 
     <!-- Передача данных из Python в JS -->
     <script>
-        const tableData = {{ wells_repair | tojson }};
+        const tableData = {{wells_repair | tojson}}
         // Инициализация таблицы после загрузки страницы
         document.addEventListener("DOMContentLoaded", () => {
             if (tableData && Array.isArray(tableData.row)) {

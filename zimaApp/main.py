@@ -136,9 +136,6 @@ origins = [
     "http://83.174.202.38:80",
     "http://83.174.202.38:5555",
 ]
-# origins = [
-#     "*"  # для локальной разработки
-# ]
 
 app.add_middleware(
     CORSMiddleware,

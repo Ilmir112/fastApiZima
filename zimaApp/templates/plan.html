@@ -1,7 +1,7 @@
 <!-- templates/base.html -->
 {% extends "layout/base.html" %}
 
-{% block title %}Главная{% endblock %}
+{% block title %}План работы{% endblock %}
 
 
 <body>
@@ -9,11 +9,12 @@
 <div class="content-container">
     <head>
         <meta charset="UTF-8"/>
+        <title> </title>
         <h1 style="margin-top: 20px;">Поиск ремонтных данных по скважине</h1>
     </head>
 
     <!-- Поле ввода и кнопка -->
-    <input type="text" id="wellNumberInput" placeholder="Введите номер скважины"/>
+    <label for="wellNumberInput"></label><input type="text" id="wellNumberInput" placeholder="Введите номер скважины"/>
     <button id="loadDataBtn">Загрузить данные</button>
 </div>
 <!-- Контейнер для отображения таблицы -->
@@ -21,9 +22,8 @@
 
 {% block scripts %}
 <!-- Подключение внешнего JS файла -->
-<script src="/static/js/plan.js"></script>
+<script src="../static/js/plan.js"></script>
 
 {% endblock %}
 {% endblock %}
 </body>
-</html>

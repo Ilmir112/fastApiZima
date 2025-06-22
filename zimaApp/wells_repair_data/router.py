@@ -1,7 +1,6 @@
-import json
 
 from fastapi import APIRouter, Depends, HTTPException
-from datetime import date, datetime
+from datetime import date
 
 from sqlalchemy.exc import SQLAlchemyError
 
@@ -12,8 +11,6 @@ from zimaApp.users.dependencies import get_current_user
 from zimaApp.users.models import Users
 from zimaApp.well_silencing.router import WellsSearchArgs
 from zimaApp.wells_data.dao import WellsDatasDAO
-from zimaApp.wells_data.router import find_wells_data
-from zimaApp.wells_data.schemas import SWellsData
 from zimaApp.wells_repair_data.dao import WellsRepairsDAO
 from zimaApp.wells_repair_data.schemas import SWellsRepair
 from fastapi_versioning import version
@@ -35,7 +32,7 @@ class WellsSearchRepair:
 @router.get("/find_well_repairs_by_filter/")
 @version(1)
 async def find_wells_in_repairs(
-        wells_data: WellsSearchArgs = Depends(),
+        wells_data: WellsSearchRepair = Depends(),
         user: Users = Depends(get_current_user)
 ):
     result = await WellsRepairsDAO.find_one_or_none(
@@ -60,7 +57,7 @@ async def find_repair_filter_by_number(well_number: str, user: Users = Depends(g
         # Используем новый метод DAO для получения объединенных данных
         joined_data = await WellsDatasDAO.find_wells_with_repairs(
             well_number=well_number,
-            contractor_id=user.contractor
+            contractor=user.contractor
         )
         if joined_data:
             # Преобразуем каждый кортеж в словарь с понятными ключами
@@ -69,7 +66,6 @@ async def find_repair_filter_by_number(well_number: str, user: Users = Depends(g
                 dict(zip(keys, row))
                 for row in joined_data
             ]
-            print(serialized_data)
             return serialized_data
         else:
             return None
@@ -211,18 +207,11 @@ async def add_wells_data(
 async def delete_well_by_type_kr_and_date_create(wells_id: int, contractor: str,
                                                  wells_repair: WellsSearchRepair = Depends(),
                                                  user: Users = Depends(get_current_user)):
-    data = await WellsRepairsDAO.find_one_or_none(
+
+    return await WellsRepairsDAO.delete_item_all_by_filter(
         type_kr=wells_repair.type_kr,
         date_create=wells_repair.date_create,
         work_plan=wells_repair.work_plan,
         wells_id=wells_id,
         contractor=contractor
     )
-    if data:
-        return await WellsRepairsDAO.delete_item_all_by_filter(
-            type_kr=wells_repair.type_kr,
-            date_create=wells_repair.date_create,
-            work_plan=wells_repair.work_plan,
-            wells_id=wells_id,
-            contractor=contractor
-        )
