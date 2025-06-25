@@ -62,8 +62,8 @@ app = VersionedFastAPI(app,
                        prefix_format='/api/v{major}',
                        )
 # Подключение статических файлов (JS, CSS)
-# app.mount("/static", StaticFiles(directory="zimaApp/static"), name="static")
-app.mount("/static", StaticFiles(directory="static"), name="static")
+app.mount("/static", StaticFiles(directory="zimaApp/static"), name="static")
+# app.mount("/static", StaticFiles(directory="static"), name="static")
 
 if settings.MODE != "TEST":
     hawk = HawkFastapi({
