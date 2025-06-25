@@ -20,7 +20,7 @@ from zimaApp.admin.views import (
     ClassifierAdmin,
     RepairDataAdmin,
     SilencingAdmin,
-    UserAdmin, WellsDataAdmin, NormsAdmin,
+    UserAdmin, WellsDataAdmin, NormsAdmin, GnktAdmin,
 )
 from zimaApp.config import settings
 from zimaApp.database import engine
@@ -62,7 +62,8 @@ app = VersionedFastAPI(app,
                        prefix_format='/api/v{major}',
                        )
 # Подключение статических файлов (JS, CSS)
-app.mount("/static", StaticFiles(directory="zimaApp/static"), name="static")
+# app.mount("/static", StaticFiles(directory="zimaApp/static"), name="static")
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
 if settings.MODE != "TEST":
     hawk = HawkFastapi({
@@ -167,6 +168,7 @@ admin.add_view(SilencingAdmin)
 admin.add_view(NormsAdmin)
 admin.add_view(ClassifierAdmin)
 admin.add_view(RepairDataAdmin)
+admin.add_view(GnktAdmin)
 
 
 @app.middleware("http")

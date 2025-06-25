@@ -65,17 +65,27 @@ async def find_gnkt_data(well_number, well_area, date_repair):
 @version(1)
 async def add_wells_data(gnkt_data: SGnktData,
                          user: Users = Depends(get_current_user)):
-    await delete_well_by_type_kr_and_date_create(
-        gnkt_data.well_number,
-        gnkt_data.well_area,
-        gnkt_data.date_repair)
+    print(gnkt_data)
+    data = await GnktDatasDAO.find_one_or_none(
+        well_number=gnkt_data.well_number,
+        well_area=gnkt_data.well_area,
+        date_repair=gnkt_data.date_repair,
+        contractor=user.contractor
+    )
+    print(data)
+    if data:
+        await delete_well_by_type_kr_and_date_create(
+            gnkt_data.well_number,
+            gnkt_data.well_area,
+            gnkt_data.date_repair,
+            data.contractor)
 
     try:
         result = await GnktDatasDAO.add_data(
             gnkt_number=gnkt_data.gnkt_number,
             well_number=gnkt_data.well_number,
             well_area=gnkt_data.well_area,
-            contractor=gnkt_data.contractor,
+            contractor=user.contractor,
             length_gnkt=gnkt_data.length_gnkt,
             diameter_gnkt=gnkt_data.diameter_gnkt,
             wear_gnkt=gnkt_data.wear_gnkt,
@@ -103,20 +113,15 @@ async def add_wells_data(gnkt_data: SGnktData,
 @router.delete("/delete_well")
 @version(1)
 async def delete_well_by_type_kr_and_date_create(
-        well_number:str,
+        well_number: str,
         well_area: str,
         date_repair: date,
+        contractor: str,
         user: Users = Depends(get_current_user)):
-    data = await GnktDatasDAO.find_one_or_none(
+
+    return await GnktDatasDAO.delete_item_all_by_filter(
         well_number=well_number,
         well_area=well_area,
         date_repair=date_repair,
-        contractor=user.contractor
+        contractor=contractor
     )
-    if data:
-        return await GnktDatasDAO.delete_item_all_by_filter(
-            well_number=well_number,
-            well_area=well_area,
-            date_repair=date_repair,
-            contractor=user.contractor
-        )
