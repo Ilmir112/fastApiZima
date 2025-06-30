@@ -20,7 +20,7 @@ from zimaApp.admin.views import (
     ClassifierAdmin,
     RepairDataAdmin,
     SilencingAdmin,
-    UserAdmin, WellsDataAdmin, NormsAdmin,
+    UserAdmin, WellsDataAdmin, NormsAdmin, GnktAdmin,
 )
 from zimaApp.config import settings
 from zimaApp.database import engine
@@ -168,6 +168,7 @@ admin.add_view(SilencingAdmin)
 admin.add_view(NormsAdmin)
 admin.add_view(ClassifierAdmin)
 admin.add_view(RepairDataAdmin)
+admin.add_view(GnktAdmin)
 
 
 @app.middleware("http")

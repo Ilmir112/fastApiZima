@@ -5,7 +5,7 @@ from pydantic import BaseModel, confloat, constr, conint
 
 
 class SGnktData(BaseModel):
-    id: int
+
     gnkt_number: str
     well_number: str
     well_area: str

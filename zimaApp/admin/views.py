@@ -2,6 +2,7 @@ from markupsafe import Markup
 from sqladmin import ModelView
 from sqlalchemy.orm import joinedload
 
+from zimaApp.gnkt_data.models import GnktData
 from zimaApp.norms.models import NormsWork
 from zimaApp.users.models import Users
 from zimaApp.well_classifier.models import WellClassifier
@@ -39,11 +40,19 @@ class SilencingAdmin(ModelView, model=WellSilencing):
     name_plural = 'Перечень без глушения'
 
 
+class GnktAdmin(ModelView, model=GnktData):
+    column_list = [c.name for c in GnktData.__table__.columns]
+    name = 'ГНКТ'
+    name_plural = 'ГНКТ'
+
+
 class NormsAdmin(ModelView, model=NormsWork):
     # pk_columns = [NormsWork.__table__.c.id]  # замените 'id' на ваше имя первичного ключа
 
     column_list = ["well_repair.well_data.well_number", "well_repair.well_data.well_area"] +\
                   [c.name for c in NormsWork.__table__.columns]
+
+
 
     def format_summary_work(self, obj):
         from markupsafe import Markup
@@ -72,7 +81,6 @@ class WellsDataAdmin(ModelView, model=WellsData):
         "region": "регион"
     }
     column_filters = ["well_number", "well_area"]
-
 
 
 class ClassifierAdmin(ModelView, model=WellClassifier):
