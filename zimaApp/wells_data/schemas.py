@@ -31,7 +31,6 @@ class ColumnProduction(ColumnInfo):
 
 
 class SWellsData(BaseModel):
-    id: int
     well_number: str
     well_area: str
     well_oilfield: str
