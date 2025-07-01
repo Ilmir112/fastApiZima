@@ -78,7 +78,9 @@ async def find_wells_in_silencing_for_region(wells_data: WellsSearchArgs = Depen
 @version(1)
 async def add_data_well_silencing(wells_data: SWellsSilencingBatch):
     region = wells_data.data[0].region
-    await delete_well_silencing_for_region(region)
+    # find_result = await find_well_silencing_all(region)
+    # if find_result:
+    #     await delete_well_silencing_for_region(region)
 
     results = []
     for item in wells_data.data:
