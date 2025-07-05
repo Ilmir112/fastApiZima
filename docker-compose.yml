@@ -60,7 +60,7 @@ services:
     env_file:
       - .env-non-dev
     depends_on:
-      - redis90
+      - redis
     ports:
       - 5555:5555
   rabbitmq:
