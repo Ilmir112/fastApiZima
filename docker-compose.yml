@@ -60,7 +60,7 @@ services:
     env_file:
       - .env-non-dev
     depends_on:
-      - redis
+      - redis90
     ports:
       - 5555:5555
   rabbitmq:
@@ -69,8 +69,8 @@ services:
     ports:
       - 15672:15672
       - 5672:5672
-      - 4369:4369     # Erlang Port Mapper Daemon (EPMD)
-      - 25672:25672   # Cluster communication
+#      - 4369:4369     # Erlang Port Mapper Daemon (EPMD)
+#      - 25672:25672   # Cluster communication
     environment:
       RABBITMQ_DEFAULT_USER: myuser       # Пользователь по умолчанию
       RABBITMQ_DEFAULT_PASS: mypassword   # Пароль по умолчанию
