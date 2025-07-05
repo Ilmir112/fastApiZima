@@ -63,6 +63,25 @@ services:
       - redis
     ports:
       - 5555:5555
+  rabbitmq:
+    image: rabbitmq:3.10.7-management
+    hostname: rabbitmq
+    ports:
+      - 15672:15672
+      - 5672:5672
+      - 4369:4369     # Erlang Port Mapper Daemon (EPMD)
+      - 25672:25672   # Cluster communication
+    environment:
+      RABBITMQ_DEFAULT_USER: myuser       # Пользователь по умолчанию
+      RABBITMQ_DEFAULT_PASS: mypassword   # Пароль по умолчанию
+      RABBITMQ_ERLANG_COOKIE: 'mysecretcookie'  # Для кластеризации (должен совпадать у всех нод)
+
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq       # Хранение данных RabbitMQ
+      - ./rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf  # Конфигурационный файл (опционально)
+    networks:
+      - rabbitmq_network
+
 
   prometheus:
     image: prom/prometheus:v2.43.0
@@ -87,3 +106,8 @@ volumes:
   postgresdata:
   grafanadata:
   prometheusdata:
+  rabbitmq_data:
+
+networks:
+  rabbitmq_network:
+    driver: bridge
