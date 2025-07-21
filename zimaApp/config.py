@@ -1,7 +1,9 @@
 from typing import Literal
 
+from faststream.rabbit import RabbitBroker
 from pydantic import ValidationError, model_validator
 from pydantic_settings import BaseSettings
+from urllib.parse import quote
 
 
 class Settings(BaseSettings):
@@ -12,6 +14,7 @@ class Settings(BaseSettings):
     DB_HOST: str
     DB_PORT: int
     DB_NAME: str
+
     # DATABASE_URL: str = None
 
     @property
@@ -23,7 +26,6 @@ class Settings(BaseSettings):
     TEST_DB_HOST: str
     TEST_DB_PORT: int
     TEST_DB_NAME: str
-
 
     @property
     def TEST_DATABASE_URL(self):
@@ -41,6 +43,19 @@ class Settings(BaseSettings):
     SMTP_USER: str
     SMTP_PASS: str
 
+    RABBITMQ_USERNAME: str
+    RABBITMQ_PASSWORD: str
+    RABBITMQ_HOST: str
+    RABBITMQ_PORT: int
+    VHOST: str
+
+    @property
+    def rabbitmq_url(self) -> str:
+        return (
+            f"amqp://{self.RABBITMQ_USERNAME}:{quote(self.RABBITMQ_PASSWORD)}@"
+            f"{self.RABBITMQ_HOST}:{self.RABBITMQ_PORT}/{self.VHOST}"
+        )
+
     REDIS_HOST: str
     REDIS_PORT: int
 
@@ -56,13 +71,15 @@ class Settings(BaseSettings):
         # env_file = ".env"
         env_file = '../.env'
 
+
 try:
     # Создайте экземпляр класса Settings
     settings = Settings()
+
+    # Создание брокера сообщений RabbitMQ
+    broker = RabbitBroker(url=settings.rabbitmq_url)
 
     # Для проверки
 except ValidationError as e:
     print(f"Ошибка валидации: {e}")
     print(e)
-
-

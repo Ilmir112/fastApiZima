@@ -8,6 +8,7 @@ from fastapi.exceptions import RequestValidationError, HTTPException
 from fastapi_cache import FastAPICache
 from fastapi_cache.backends.redis import RedisBackend
 from fastapi_versioning import VersionedFastAPI
+
 from prometheus_fastapi_instrumentator import Instrumentator
 from redis import asyncio as aioredis
 from sqladmin import Admin
@@ -22,7 +23,8 @@ from zimaApp.admin.views import (
     SilencingAdmin,
     UserAdmin, WellsDataAdmin, NormsAdmin, GnktAdmin,
 )
-from zimaApp.config import settings
+from zimaApp.config import settings, broker
+
 from zimaApp.database import engine
 from hawk_python_sdk.modules.fastapi import HawkFastapi
 from zimaApp.users.router import router as user_router
@@ -46,13 +48,18 @@ async def lifespan(_: FastAPI):
     print("Запуск приложения")
     redis = aioredis.from_url(f"redis://{settings.REDIS_HOST}:{settings.REDIS_PORT}", encoding="utf8")
     FastAPICache.init(RedisBackend(redis), prefix="fastapi-cache")
+    await broker.connect()
     try:
         await bot.send_message(chat_id=settings.CHAT_ID, text="Приложение запущено")
         print("Сообщение отправлено успешно")
+
     except Exception as e:
         print(f"Ошибка при отправке сообщения: {e}")
     yield
+    await broker.close()
+
     print("Завершение работы приложения")
+
 
 
 app = FastAPI(lifespan=lifespan, title="Zima", version="0.1.0", root_path="/zimaApp")
@@ -125,7 +132,6 @@ app.include_router(classifier_router)
 app.include_router(silencing_router)
 app.include_router(gnkt_router)
 app.include_router(prometheus_router)
-
 app.include_router(pages_router)
 
 # Подключение CORS, чтобы запросы к API могли приходить из браузера

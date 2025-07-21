@@ -18,6 +18,7 @@ from zimaApp.brigade.dao import BrigadeDAO
 from zimaApp.brigade.schemas import SWellsBrigade, SBrigadeSearch
 from fastapi_versioning import version
 
+
 router = APIRouter(
     prefix="/repair_gis",
     tags=["Данные по простоям ГИС"],

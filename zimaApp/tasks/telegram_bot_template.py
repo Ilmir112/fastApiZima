@@ -1,9 +1,10 @@
 from datetime import datetime
 
-from zimaApp.repairGis.schemas import SRepairsGis
-from zimaApp.tasks.tasks import send_message
-from zimaApp.config import settings
 
+from zimaApp.repairGis.schemas import SRepairsGis
+from zimaApp.tasks.rabbit_app import check_emails
+from zimaApp.tasks.tasks import send_message
+from zimaApp.config import settings, broker
 
 import httpx
 
@@ -64,12 +65,24 @@ class TelegramInfo:
 
     @classmethod
     async def send_message_create_repair_gis(cls, result: SRepairsGis,
-                                             wells_id: SWellsData, ):
+                                             wells_id: SWellsData):
+
         message = f"Подрядчик по ГИС {result.contractor_gis} открыл простой по скважине " \
                   f"{wells_id.well_number} {wells_id.well_area} " \
                   f"в {result.downtime_start.strftime('%d-%m-%Y %H:%M')}. " \
                   f"по причине: {result.downtime_reason}. Телефонограмма от " \
                   f"{result.message_time.strftime('%d-%m-%Y %H:%M')}"
+
+        await check_emails()
+
+        try:
+            await broker.connect()
+            await broker.publish(message, "repair_gis")
+        except Exception as e:
+            print(e)
+
+            await broker.publish(message, "repair_gis")
+
 
         payload = {
             "chat_id": settings.CHAT_ID,
