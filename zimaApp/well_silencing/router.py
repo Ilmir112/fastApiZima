@@ -34,8 +34,9 @@ router = APIRouter(
 @version(1)
 async def find_well_silencing_all(request: Request, response: Response, wells_data: SWellsSilencingRegion):
     results = await WellSilencingDAO.find_all(region=wells_data.region)
+    data = []
     if results:
-        data = []
+
         for r in results:
             data.append({
                 "well_number": r.well_number,
@@ -44,7 +45,7 @@ async def find_well_silencing_all(request: Request, response: Response, wells_da
                 "today": r.today,
             })
 
-        return results
+    return data
 
 
 @cache(expire=1500)
