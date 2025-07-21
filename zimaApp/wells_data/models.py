@@ -47,6 +47,8 @@ class WellsData(Base):
     contractor: str = Column(String)
 
     repairs = relationship("WellsRepair", back_populates="well_data", cascade="all, delete")
+    repairs_gis = relationship("RepairsGis", back_populates="well", cascade="all, delete")
+
 
 
 

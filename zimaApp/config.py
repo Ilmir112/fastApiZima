@@ -32,6 +32,10 @@ class Settings(BaseSettings):
             f"{self.TEST_DB_HOST}:{self.TEST_DB_PORT}/{self.TEST_DB_NAME}"
         )
 
+    IMAP_SERVER: str
+    EMAIL_ACCOUNT: str
+    PASSWORD: str
+
     SMTP_HOST: str
     SMTP_PORT: int
     SMTP_USER: str
@@ -49,8 +53,8 @@ class Settings(BaseSettings):
     CHAT_ID: str
 
     class Config:
-        env_file = ".env"
-        # env_file = '../.env'
+        # env_file = ".env"
+        env_file = '../.env'
 
 try:
     # Создайте экземпляр класса Settings

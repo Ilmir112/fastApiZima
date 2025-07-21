@@ -23,9 +23,12 @@ router = APIRouter(
 @version(1)
 # @cache(expire=60)
 async def find_wells_data(wells_data: WellsSearchArgs = Depends()):
-    result = await WellsDatasDAO.find_one_or_none(
-        well_number=wells_data.well_number, well_area=wells_data.well_area
-    )
+    try:
+        result = await WellsDatasDAO.find_one_or_none(
+            well_number=wells_data.well_number, well_area=wells_data.well_area
+        )
+    except SQLAlchemyError as e:
+        logger.error(e)
     return result
 
 

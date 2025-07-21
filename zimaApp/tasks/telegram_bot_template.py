@@ -1,10 +1,13 @@
+from datetime import datetime
 
+from zimaApp.repairGis.schemas import SRepairsGis
 from zimaApp.tasks.tasks import send_message
 from zimaApp.config import settings
 
 
 import httpx
 
+from zimaApp.wells_data.schemas import SWellsData
 from zimaApp.wells_repair_data.schemas import SWellsRepair
 from time import sleep
 
@@ -50,6 +53,23 @@ class TelegramInfo:
     @classmethod
     async def send_message_create_brigade(cls, username: str, number_brigade: str, contractor: str):
         message = f"Пользователь {username} создал бригаду № {number_brigade} {contractor}"
+
+        payload = {
+            "chat_id": settings.CHAT_ID,
+            "text": message
+        }
+        async with httpx.AsyncClient() as client:
+            response = await client.post(TelegramInfo.URL, json=payload)
+            response.raise_for_status()
+
+    @classmethod
+    async def send_message_create_repair_gis(cls, result: SRepairsGis,
+                                             wells_id: SWellsData, ):
+        message = f"Подрядчик по ГИС {result.contractor_gis} открыл простой по скважине " \
+                  f"{wells_id.well_number} {wells_id.well_area} " \
+                  f"в {result.downtime_start.strftime('%d-%m-%Y %H:%M')}. " \
+                  f"по причине: {result.downtime_reason}. Телефонограмма от " \
+                  f"{result.message_time.strftime('%d-%m-%Y %H:%M')}"
 
         payload = {
             "chat_id": settings.CHAT_ID,
