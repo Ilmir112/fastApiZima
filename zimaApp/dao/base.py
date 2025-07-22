@@ -16,6 +16,7 @@ class BaseDAO:
             query = select(cls.model).filter_by(
                 **filter_by
             )  # Используем модель для выборки
+
             if limit is not None:
                 query = query.limit(limit)  # Добавляем лимит, если он задан
             result = await session.execute(query)

@@ -3,7 +3,7 @@ import email
 import imaplib
 import re
 import smtplib
-from datetime import datetime
+from datetime import datetime, timedelta
 from nntplib import decode_header
 
 from pydantic import EmailStr
@@ -48,6 +48,8 @@ async def check_emails():
         status, messages = mail.search(None, search_bytes)
         email_ids = messages[0].split()
 
+        now_time = datetime.now()
+
         for email_id in email_ids:
             status, msg_data = mail.fetch(email_id, "(RFC822)")
 
@@ -64,6 +66,9 @@ async def check_emails():
                     if date_tuple:
                         dt = datetime.fromtimestamp(email.utils.mktime_tz(date_tuple))
                         received_date = dt.strftime("%Y-%m-%d %H:%M")
+
+                        if dt < now_time - timedelta(minutes=10):
+                            continue  # пропускаем это письмо
 
                     # Обработка заголовка Subject
                     raw_subject = msg["Subject"]
@@ -105,7 +110,6 @@ async def check_emails():
         logger.error(f"Error checking emails: {e}")
 
 
-
 def find_best_match(name: str, text: str):
     # Проверка точного вхождения
     if name in text:
@@ -118,8 +122,6 @@ def find_best_match(name: str, text: str):
         seq = difflib.SequenceMatcher(None, name, text)
         ratio = seq.ratio()
         return ratio
-
-
 
 
 # Функция для парсинга тела письма и извлечения нужных данных
@@ -192,7 +194,6 @@ async def parse_telephonegram(body_text: str, from_address: email, dt: datetime)
             # добавьте другие поля по необходимости
         }
     return None
-
 
 
 async def add_telephonegram_to_db(parsed_data: dict):

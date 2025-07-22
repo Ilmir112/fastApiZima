@@ -33,9 +33,9 @@ def time_consumer():
     time.sleep(random() * 5)
     return 1
 
-@router.get("/run-check-emails/")
+@router.get("/run-check-emails")
 async def run_check_emails():
-    await check_emails()
+    await check_emails().delay()
     return {"message": "Задача запущена"}
 
 @router.get("/memory_consumer")

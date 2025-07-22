@@ -82,13 +82,13 @@ class TelegramInfo:
             await broker.publish(message, "repair_gis")
 
 
-        payload = {
-            "chat_id": settings.CHAT_ID,
-            "text": message
-        }
-        async with httpx.AsyncClient() as client:
-            response = await client.post(TelegramInfo.URL, json=payload)
-            response.raise_for_status()
+        # payload = {
+        #     "chat_id": settings.CHAT_ID,
+        #     "text": message
+        # }
+        # async with httpx.AsyncClient() as client:
+        #     response = await client.post(TelegramInfo.URL, json=payload)
+        #     response.raise_for_status()
 
     @classmethod
     async def send_message_update_brigade(cls, username: str, number_brigade: str, contractor: str):

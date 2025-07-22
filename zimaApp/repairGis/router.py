@@ -23,7 +23,16 @@ router = APIRouter(
     prefix="/repair_gis",
     tags=["Данные по простоям ГИС"],
 )
-
+@router.get("/all")
+@version(1)
+async def get_repair_gis_all():
+    try:
+        repair_all = await RepairsGisDAO.find_all()
+        return repair_all
+    except SQLAlchemyError as e:
+        logger.error(e)
+    except Exception as e:
+        logger.error(e)
 
 @router.post("/add_data")
 @version(1)

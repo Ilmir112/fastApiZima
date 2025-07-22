@@ -5,13 +5,14 @@ from zimaApp.config import settings
 celery_app = Celery(
     "tasks",
     broker=settings.rabbitmq_url,
+    backend="rpc://",
     include=["zimaApp.tasks.tasks"],
 )
 
 celery_app.conf.beat_schedule = {
     'check-emails-every-2-minutes': {
         'task': 'tasks.check_emails',
-        'schedule': 10.0,  # интервал в секундах (2 минуты)
+        'schedule': 120,  # интервал в секундах (2 минуты)
     },
 }
-celery_app.conf.timezone = 'UTC+5'
+celery_app.conf.timezone = 'UTC'
