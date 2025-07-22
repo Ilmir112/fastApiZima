@@ -2,12 +2,13 @@ from datetime import datetime
 
 
 from zimaApp.repairGis.schemas import SRepairsGis
-from zimaApp.tasks.rabbit_app import check_emails
+
 from zimaApp.tasks.tasks import send_message
 from zimaApp.config import settings, broker
 
 import httpx
 
+from zimaApp.wells_data.dao import WellsDatasDAO
 from zimaApp.wells_data.schemas import SWellsData
 from zimaApp.wells_repair_data.schemas import SWellsRepair
 from time import sleep
@@ -64,16 +65,13 @@ class TelegramInfo:
             response.raise_for_status()
 
     @classmethod
-    async def send_message_create_repair_gis(cls, result: SRepairsGis,
-                                             wells_id: SWellsData):
-
+    async def send_message_create_repair_gis(cls, result: SRepairsGis):
+        wells_id = await WellsDatasDAO.find_one_or_none(id=result.well_id)
         message = f"Подрядчик по ГИС {result.contractor_gis} открыл простой по скважине " \
                   f"{wells_id.well_number} {wells_id.well_area} " \
                   f"в {result.downtime_start.strftime('%d-%m-%Y %H:%M')}. " \
                   f"по причине: {result.downtime_reason}. Телефонограмма от " \
                   f"{result.message_time.strftime('%d-%m-%Y %H:%M')}"
-
-        await check_emails()
 
         try:
             await broker.connect()

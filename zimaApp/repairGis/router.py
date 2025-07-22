@@ -28,13 +28,14 @@ router = APIRouter(
 @router.post("/add_data")
 @version(1)
 async def add_wells_data(
-        repair_info: SRepairsGis, wells=Depends(find_wells_data)
+        repair_info: SRepairsGis
 ):
     try:
         if repair_info:
             # await delete_brigade(repair_info)
             result = await RepairsGisDAO.add_data(
-                well_id=wells.id,
+                status='открыт',
+                well_id=repair_info.well_id,
                 contractor_gis=repair_info.contractor_gis,
                 message_time=repair_info.message_time,
                 downtime_start=repair_info.downtime_start,
@@ -48,7 +49,7 @@ async def add_wells_data(
                 image_pdf=repair_info.image_pdf,
             )
 
-            await TelegramInfo.send_message_create_repair_gis(result, wells)
+            await TelegramInfo.send_message_create_repair_gis(result)
 
             return {"status": "success", "id": result}
 
