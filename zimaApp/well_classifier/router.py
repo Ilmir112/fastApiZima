@@ -1,9 +1,12 @@
+from typing import List
+
 from fastapi_cache.decorator import cache
 
-from fastapi import APIRouter, Depends, Request, Response
+from fastapi import APIRouter, Depends, Request, Response, HTTPException
 
 from zimaApp.logger import logger
 from zimaApp.well_classifier.dao import WellClassifierDAO
+from zimaApp.well_classifier.models import WellClassifier
 from zimaApp.well_classifier.schemas import (
     SWellsClassifierBatch,
     SWellsClassifierRegion,
@@ -33,6 +36,15 @@ async def find_well_classifier_all(request: Request, response: Response, wells_d
         data.append({"status": "error", "error": str(e), "item": items})
     return results
 
+
+@router.get("/get_wells_area/", response_model=List[str])
+@version(1)
+async def get_unique_well_data(request: Request):
+    try:
+        results = await WellClassifierDAO.get_unique_well_area()
+        return [result for result in results if len(result) > 3]
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/add_data_well_classifier")
 # @cache(expire=1500)

@@ -1,5 +1,6 @@
 import time
 from random import random
+from zimaApp.tasks.tasks import check_emails
 
 from fastapi import APIRouter, HTTPException, Depends
 from fastapi_cache import FastAPICache
@@ -32,6 +33,10 @@ def time_consumer():
     time.sleep(random() * 5)
     return 1
 
+@router.get("/run-check-emails/")
+async def run_check_emails():
+    await check_emails()
+    return {"message": "Задача запущена"}
 
 @router.get("/memory_consumer")
 def memory_consumer():
@@ -55,7 +60,6 @@ async def redis_ping():
         return {"status": "ok", "redis": pong}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Redis error: {e}")
-
 
 @router.get("/redis/set")
 async def redis_set(key: str, value: str):
