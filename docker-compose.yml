@@ -1,6 +1,4 @@
-# docker compose build - используем эту команду, если меняли что-то в Dockerfile
-# docker compose up - если изменили только docker-compose
-
+version: '3.8'
 
 services:
   db:
@@ -10,104 +8,84 @@ services:
       POSTGRES_PASSWORD: 195375AsD+
     volumes:
       - postgresdata:/var/lib/postgresql/data
-    env_file: # Файл с переменными окружения (Вместо environment)
+    env_file:
       - .env-non-dev
     ports:
-      - 5433:5432 # Порт нужен, только если нам нужен доступ к контейнеру напрямую
+      - 5433:5432
 
   redis:
     image: redis:7
     container_name: zima_redis
 
-  zima:
-    image: zima_image2
-    restart: always
-    build:
-      context: .
-    container_name: zima_app
-    env_file:
-      - .env-non-dev
-    depends_on: # Запускаем только после запуска БД и Redis (depends on = зависит от)
-      - db
-      - redis
-    # Если не работает эта команда, используйте закомментированную
-    # command: ["/zimaApp/docker/zimaApp.sh"]
-    command: sh -c "alembic upgrade head && gunicorn zimaApp.main:app --workers 2 --worker-class uvicorn.workers.UvicornWorker --bind=0.0.0.0:8000"
-    ports:
-      - 7777:8000
+
   rabbitmq:
     image: rabbitmq:3.10.7-management
     hostname: rabbitmq
+    container_name: rabbitmq
     ports:
       - 15672:15672
       - 5672:5672
-#      - 4369:4369     # Erlang Port Mapper Daemon (EPMD)
-#      - 25672:25672   # Cluster communication
     environment:
-      RABBITMQ_DEFAULT_USER: myuser       # Пользователь по умолчанию
-      RABBITMQ_DEFAULT_PASS: mypassword   # Пароль по умолчанию
-      RABBITMQ_ERLANG_COOKIE: 'mysecretcookie'  # Для кластеризации (должен совпадать у всех нод)
-  celery:
-    image: zima_celery
+      RABBITMQ_DEFAULT_USER: myuser
+      RABBITMQ_DEFAULT_PASS: mypassword
+      RABBITMQ_ERLANG_COOKIE: 'mysecretcookie'
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+      - ./rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf # если есть конфиг, иначе можно убрать
+    networks:
+      - my_network
+
+  zima:
     build:
-      context: . # celery это библиотека, у неё нет образа, берём из основного билда
+      context: .
+    image: zima_image2
+    restart: always
+    container_name: zima_app
+    env_file:
+      - .env-non-dev
+    depends_on:
+      - db
+      - redis
+      - rabbitmq
+    command: sh -c "alembic upgrade head && gunicorn zimaApp.main:app --workers 2 --worker-class uvicorn.workers.UvicornWorker --bind=0.0.0.0:8000"
+    ports:
+      - 7777:8000
+    networks:
+      - my_network
+
+  celery:
+    build:
+      context: .
+    image: zima_celery # или оставьте как есть, если билд из того же контекста
     container_name: zima_celery
-    # Если не работает эта команда, используйте закомментированную
-#    command: ["/zimaApp/docker/celery.sh", "celery"] # Второй аргумен для if/elif в скрипте
-    command: sh -c "celery --app=zimaApp.tasks.celery_app:celery_app worker -l INFO & celery --app=zimaApp.tasks.celery_app:celery_app beat -l INFO"
     env_file:
       - .env-non-dev
     depends_on:
       - redis
+      - rabbitmq
+    command: sh -c "celery --app=zimaApp.tasks.celery_app:celery_app worker -l INFO & celery --app=zimaApp.tasks.celery_app:celery_app beat -l INFO"
+    networks:
+      - my_network
 
   flower:
-    image: zima_flower
     build:
-      context: . # flower это библиотека, у неё нет образа, берём из основного билда
+      context: .
+    image: zima_flower # или оставьте как есть, если билд из того же контекста
     container_name: zima_flower
-    # Если не работает эта команда, используйте закомментированную
-#    command: ["/docker/celery.sh", "flower"]
-    command: sh -c "celery --app=zimaApp.tasks.celery_app:celery_app flower"
     env_file:
       - .env-non-dev
     depends_on:
       - redis
+      - rabbitmq
+    command: sh -c "celery --app=zimaApp.tasks.celery_app:celery_app flower"
     ports:
       - 5555:5555
-
-
-    volumes:
-      - rabbitmq_data:/var/lib/rabbitmq       # Хранение данных RabbitMQ
-      - ./rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf  # Конфигурационный файл (опционально)
     networks:
-      - rabbitmq_network
-
-
-  prometheus:
-    image: prom/prometheus:v2.43.0
-    container_name: prometheus
-    volumes:
-      - ./prometheus.yml:/etc/prometheus/prometheus.yml
-      - prometheusdata:/prometheus
-    restart: unless-stopped
-    ports:
-      - 9090:9090
-
-  grafana:
-    image: grafana/grafana:9.4.7
-    container_name: grafana
-    volumes:
-      - grafanadata:/var/lib/grafana
-    restart: unless-stopped
-    ports:
-      - 3000:3000
+      - my_network
 
 volumes:
   postgresdata:
-  grafanadata:
-  prometheusdata:
   rabbitmq_data:
 
 networks:
-  rabbitmq_network:
-    driver: bridge
+  my_network:
