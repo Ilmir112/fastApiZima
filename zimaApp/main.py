@@ -30,7 +30,7 @@ from zimaApp.database import engine
 from hawk_python_sdk.modules.fastapi import HawkFastapi
 
 from zimaApp.tasks.rabbitmq.consumer import start_consumer
-from zimaApp.tasks.tasks import check_emails, check_emails_async
+# from zimaApp.tasks.tasks import check_emails, check_emails_async
 from zimaApp.users.router import router as user_router
 from zimaApp.well_classifier.router import router as classifier_router
 from zimaApp.well_silencing.router import router as silencing_router

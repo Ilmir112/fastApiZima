@@ -32,12 +32,12 @@ def send_plan_work_confirmation_email(well_repair: dict, email_to: EmailStr):
         server.login(settings.SMTP_USER, settings.SMTP_PASS)
         server.send_message(msg_content)
 
-#
-# @celery_app.task
-# async def send_message(chat_id, text, token=settings.TOKEN):
-#     bot = Bot(token)
-#     await bot.send_message(chat_id, text=text)
-#
+
+@celery_app.task
+async def send_message(chat_id, text, token=settings.TOKEN):
+    bot = Bot(token)
+    await bot.send_message(chat_id, text=text)
+
 #
 # @celery_app.task(name='tasks.check_emails_async')
 # async def check_emails_async():
