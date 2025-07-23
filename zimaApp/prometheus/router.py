@@ -1,6 +1,6 @@
 import time
 from random import random
-from zimaApp.tasks.tasks import check_emails
+from zimaApp.tasks.tasks import check_emails, check_emails_async
 
 from fastapi import APIRouter, HTTPException, Depends
 from fastapi_cache import FastAPICache
@@ -35,7 +35,7 @@ def time_consumer():
 
 @router.get("/run-check-emails")
 async def run_check_emails():
-    await check_emails().delay()
+    result = await check_emails_async()
     return {"message": "Задача запущена"}
 
 @router.get("/memory_consumer")

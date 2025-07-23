@@ -66,18 +66,22 @@ class Settings(BaseSettings):
 
     TOKEN: str
     CHAT_ID: str
+    EMAIL_CHECK_LIST: list
 
     class Config:
         env_file = ".env"
         # env_file = '../.env'
 
+# В асинхронной функции
+async def init_broker():
+    await router_broker.connect()
 
 try:
     # Создайте экземпляр класса Settings
     settings = Settings()
 
     # Создание брокера сообщений RabbitMQ
-    broker = RabbitBroker(url=settings.rabbitmq_url)
+    router_broker = RabbitBroker(url=settings.rabbitmq_url)
 
     # Для проверки
 except ValidationError as e:

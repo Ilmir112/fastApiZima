@@ -2,9 +2,10 @@ from datetime import datetime
 
 
 from zimaApp.repairGis.schemas import SRepairsGis
+from zimaApp.tasks.rabbitmq.producer import send_message_to_queue
 
 from zimaApp.tasks.tasks import send_message
-from zimaApp.config import settings, broker
+from zimaApp.config import settings
 
 import httpx
 
@@ -24,9 +25,10 @@ class TelegramInfo:
             "chat_id": settings.CHAT_ID,
             "text": message
         }
-        async with httpx.AsyncClient() as client:
-            response = await client.post(TelegramInfo.URL, json=payload)
-            response.raise_for_status()
+        await send_message(message, settings.CHAT_ID)
+        # async with httpx.AsyncClient() as client:
+        #     response = await client.post(TelegramInfo.URL, json=payload)
+        #     response.raise_for_status()
 
     @classmethod
     async def send_message_create_plan(cls, username: str, well_number: str, well_area: str, work_plan: str):
@@ -73,13 +75,8 @@ class TelegramInfo:
                   f"по причине: {result.downtime_reason}. Телефонограмма от " \
                   f"{result.message_time.strftime('%d-%m-%Y %H:%M')}"
 
-        try:
-            await broker.connect()
-            await broker.publish(message, "repair_gis")
-        except Exception as e:
-            print(e)
 
-            await broker.publish(message, "repair_gis")
+        await broker.publish(message, "repair_gis")
 
 
         # payload = {

@@ -1,3 +1,4 @@
+import asyncio
 import difflib
 import email
 import imaplib
@@ -6,6 +7,7 @@ import smtplib
 from datetime import datetime, timedelta
 from nntplib import decode_header
 
+from celery.bin.result import result
 from pydantic import EmailStr
 import email.utils
 
@@ -16,6 +18,7 @@ from zimaApp.tasks.celery_app import celery_app
 from zimaApp.tasks.email_templates import create_zima_confirmation_template
 from telegram import Bot
 
+from zimaApp.tasks.rabbitmq.producer import send_message_to_queue
 from zimaApp.well_classifier.dao import WellClassifierDAO
 from zimaApp.wells_data.dao import WellsDatasDAO
 
@@ -31,13 +34,25 @@ def send_plan_work_confirmation_email(well_repair: dict, email_to: EmailStr):
 
 
 @celery_app.task
-async def send_message(chat_id, text, token):
+async def send_message(chat_id, text, token=settings.TOKEN):
     bot = Bot(token)
     await bot.send_message(chat_id, text=text)
 
 
-@celery_app.task
-async def check_emails():
+@celery_app.task(name='tasks.check_emails_async')
+async def check_emails_async():
+    try:
+        loop = asyncio.get_event_loop()
+        msg_bytes = await loop.run_in_executor(None, check_emails)
+        print("Задача check_emails_async запущена")
+
+        result = await send_message_to_queue(msg_bytes, "repair_gis")
+        return result
+    except Exception as e:
+        logger.info(e)
+    return result
+
+def check_emails():
     try:
         mail = imaplib.IMAP4_SSL(settings.IMAP_SERVER)
         mail.login(settings.EMAIL_ACCOUNT, settings.PASSWORD)
@@ -49,6 +64,7 @@ async def check_emails():
         email_ids = messages[0].split()
 
         now_time = datetime.now()
+        print(now_time)
 
         for email_id in email_ids:
             status, msg_data = mail.fetch(email_id, "(RFC822)")
@@ -67,8 +83,6 @@ async def check_emails():
                         dt = datetime.fromtimestamp(email.utils.mktime_tz(date_tuple))
                         received_date = dt.strftime("%Y-%m-%d %H:%M")
 
-                        if dt < now_time - timedelta(minutes=10):
-                            continue  # пропускаем это письмо
 
                     # Обработка заголовка Subject
                     raw_subject = msg["Subject"]
@@ -87,6 +101,9 @@ async def check_emails():
                             subject = ""
                     else:
                         subject = ""
+                    if subject and "RE:" not in subject.upper():
+                        if dt < now_time - timedelta(days=2):
+                            continue  # пропускаем это письмо
 
                     # Остальной код обработки тела письма...
                     body_text = ""
@@ -99,11 +116,21 @@ async def check_emails():
                         body_bytes = msg.get_payload(decode=True)
                         body_text = body_bytes.decode(msg.get_content_charset() or "utf-8")
 
-                    # Проверка содержания письма
-                    if "просто" in body_text:
-                        parsed_data = await parse_telephonegram(body_text, from_address, dt)
-                        if parsed_data:
-                            return await add_telephonegram_to_db(parsed_data)
+
+                    if from_address in settings.EMAIL_CHECK_LIST:
+                        return msg_bytes
+                    #     try:
+                    #        result = await send_message_to_queue(msg_bytes, "repair_gis")
+                    #
+                    #        return result
+                    #     except Exception as e:
+                    #         print(e)
+
+                    # # Проверка содержания письма
+                    # if "просто" in body_text:
+                    #     parsed_data = parse_telephonegram(body_text, from_address, dt)
+                    #     if parsed_data:
+                    #         return add_telephonegram_to_db(parsed_data)
 
         mail.logout()
     except Exception as e:
@@ -125,15 +152,17 @@ def find_best_match(name: str, text: str):
 
 
 # Функция для парсинга тела письма и извлечения нужных данных
-async def parse_telephonegram(body_text: str, from_address: email, dt: datetime):
+def parse_telephonegram(body_text: str, from_address: email, dt: datetime):
     from zimaApp.well_classifier.router import get_unique_well_data
     # Пример парсинга: ищем дату и описание (подстроить под конкретный формат)
     # Для примера ищем строку с датой и текст сообщения
     date_match = re.search(r'(\d{2}\.\d{2}\.\d{4}г\.)', body_text)
     if from_address == "teh-BNPT@bn.rosneft.ru":
         contractor_gis = "ООО «Башнефть-ПЕТРОТЕСТ»"
+    elif from_address == "alert@bngf.ru":
+        contractor_gis = "АО «Башнефтегеофизика»"
     else:
-        pass
+        contractor_gis = ""
 
     body_text = body_text[:600]
     # Ваши шаблоны
@@ -169,7 +198,7 @@ async def parse_telephonegram(body_text: str, from_address: email, dt: datetime)
     # Поиск номера скважины
     well_match = re.search(well_number_pattern, body_text)
     well_number_found = well_match.group(1) if well_match else None
-    wells_area_list = [result for result in await WellClassifierDAO.get_unique_well_area() if len(result) > 4]
+    wells_area_list = [result for result in WellClassifierDAO.get_unique_well_area() if len(result) > 4]
 
     # Для каждого элемента ищем лучшее совпадение
     results = []
@@ -182,7 +211,7 @@ async def parse_telephonegram(body_text: str, from_address: email, dt: datetime)
 
     well_area = max(results, key=lambda x: x[1])[0]
 
-    find_wells = await WellsDatasDAO.find_one_or_none(well_area=well_area, well_number=well_number_found)
+    find_wells = WellsDatasDAO.find_one_or_none(well_area=well_area, well_number=well_number_found)
     if find_wells:
         return {
             "wells_id": find_wells.id,
@@ -196,7 +225,7 @@ async def parse_telephonegram(body_text: str, from_address: email, dt: datetime)
     return None
 
 
-async def add_telephonegram_to_db(parsed_data: dict):
+def add_telephonegram_to_db(parsed_data: dict):
     from zimaApp.repairGis.router import add_wells_data
 
     # Предполагается, что у вас есть экземпляр router или вы можете вызвать функцию напрямую.
@@ -218,4 +247,4 @@ async def add_telephonegram_to_db(parsed_data: dict):
     )
 
     # Вызов вашего роутера или функции добавления данных
-    return await add_wells_data(repair_info)
+    return add_wells_data(repair_info)

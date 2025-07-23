@@ -1,3 +1,4 @@
+import asyncio
 import time
 import telegram
 from contextlib import asynccontextmanager
@@ -23,10 +24,13 @@ from zimaApp.admin.views import (
     SilencingAdmin,
     UserAdmin, WellsDataAdmin, NormsAdmin, GnktAdmin,
 )
-from zimaApp.config import settings, broker
+from zimaApp.config import settings, router_broker
 
 from zimaApp.database import engine
 from hawk_python_sdk.modules.fastapi import HawkFastapi
+
+from zimaApp.tasks.rabbitmq.consumer import start_consumer
+from zimaApp.tasks.tasks import check_emails, check_emails_async
 from zimaApp.users.router import router as user_router
 from zimaApp.well_classifier.router import router as classifier_router
 from zimaApp.well_silencing.router import router as silencing_router
@@ -48,15 +52,17 @@ async def lifespan(_: FastAPI):
     print("Запуск приложения")
     redis = aioredis.from_url(f"redis://{settings.REDIS_HOST}:{settings.REDIS_PORT}", encoding="utf8")
     FastAPICache.init(RedisBackend(redis), prefix="fastapi-cache")
-    await broker.connect()
+
+    async with router_broker:
+        logger.info("Брокер стартовал")
+        await router_broker.start()
     try:
         await bot.send_message(chat_id=settings.CHAT_ID, text="Приложение запущено")
         print("Сообщение отправлено успешно")
 
     except Exception as e:
         print(f"Ошибка при отправке сообщения: {e}")
-    yield
-    await broker.close()
+    logger.info("Брокер остановлен")
 
     print("Завершение работы приложения")
 
@@ -73,8 +79,10 @@ app = VersionedFastAPI(app,
 
 
 # Подключение статических файлов (JS, CSS)
-app.mount("/static", StaticFiles(directory="zimaApp/static"), name="static")
-# app.mount("/static", StaticFiles(directory="static"), name="static")
+try:
+    app.mount("/static", StaticFiles(directory="zimaApp/static"), name="static")
+except Exception as e:
+    app.mount("/static", StaticFiles(directory="static"), name="static")
 
 if settings.MODE != "TEST":
     hawk = HawkFastapi({
