@@ -1,6 +1,5 @@
 import asyncio
 import time
-from urllib import request
 
 import telegram
 from contextlib import asynccontextmanager
@@ -15,11 +14,13 @@ from fastapi_versioning import VersionedFastAPI
 from prometheus_fastapi_instrumentator import Instrumentator
 from redis import asyncio as aioredis
 from sqladmin import Admin
+from starlette.middleware import Middleware
 from starlette.middleware.cors import CORSMiddleware
-from starlette.responses import JSONResponse, HTMLResponse, RedirectResponse
+from starlette.middleware.sessions import SessionMiddleware
+from starlette.responses import JSONResponse, RedirectResponse
 from starlette.staticfiles import StaticFiles
 
-from zimaApp.admin.auth import authentication_backend, AdminAuth
+from zimaApp.admin.auth import authentication_backend
 from zimaApp.admin.views import (
     ClassifierAdmin,
     RepairDataAdmin,
@@ -44,16 +45,16 @@ from zimaApp.gnkt_data.router import router as gnkt_router
 from zimaApp.wells_data.router import router as wells_data_router
 from zimaApp.repairGis.router import router as repair_gis_router
 from zimaApp.prometheus.router import router as prometheus_router
-from zimaApp.pages.router import router as pages_router, templates
+from zimaApp.pages.router import router as pages_router
 from zimaApp.logger import logger
 
 bot = telegram.Bot(token=settings.TOKEN)
 
 
 @asynccontextmanager
-async def lifespan(base_app: FastAPI):
+async def lifespan(_: FastAPI):
     # Запускаем потребителя как фоновую задачу
-    # consumer_task = asyncio.create_task(start_consumer())
+    consumer_task = asyncio.create_task(start_consumer())
     try:
         print("Запуск приложения")
         redis = aioredis.from_url(f"redis://{settings.REDIS_HOST}:{settings.REDIS_PORT}", encoding="utf8")
@@ -69,46 +70,44 @@ async def lifespan(base_app: FastAPI):
     try:
         if settings.MODE == "PROD":
             await bot.send_message(chat_id=settings.CHAT_ID, text="Приложение запущено")
-            print("Сообщение отправлено успешно")
+            logger.warning("Сообщение отправлено успешно")
 
     except Exception as e:
         print(f"Ошибка при отправке сообщения: {e}")
     yield  # здесь приложение запустится, когда управление вернется после этого yield
     logger.info("Брокер остановлен")
 
-    print("Завершение работы приложения")
-
     # При завершении работы отменяем задачу потребителя
-    # if consumer_task:
-    #     consumer_task.cancel()
-    #     try:
-    #         await consumer_task
-    #     except asyncio.CancelledError:
-    #         print("Потребитель остановлен")
-
+    if consumer_task:
+        consumer_task.cancel()
+        try:
+            await consumer_task
+        except asyncio.CancelledError:
+            print("Потребитель остановлен")
     print("Завершение работы приложения")
 
 
-base_app = FastAPI(lifespan=lifespan, title="Zima", version="0.1.0", root_path="/zimaApp")
-#
-# # # Подключение версионирования
-app = VersionedFastAPI(base_app,
+app = FastAPI(lifespan=lifespan, title="Zima", version="0.1.0", root_path="")
+
+# Подключение версионирования
+vapp = VersionedFastAPI(app,
                        version_format='{major}',
-                       prefix_format='/api/v{major}',
+                       prefix_format='/v{major}',
+                       description="Zima API",
+                       middleware=[Middleware(SessionMiddleware, secret_key=settings.SESSION_COOKIE_SECRET)]
                        )
 
 # Подключение статических файлов (JS, CSS)
 try:
-    base_app.mount("/static", StaticFiles(directory="zimaApp/static"), name="static")
+    app.mount("/static", StaticFiles(directory="zimaApp/static"), name="static")
 except Exception as e:
-    base_app.mount("/static", StaticFiles(directory="static"), name="static")
+    app.mount("/static", StaticFiles(directory="static"), name="static")
 
 if settings.MODE != "TEST":
     hawk = HawkFastapi({
-        'app_instance': base_app,
+        'app_instance': app,
         'token': settings.HAWK_DSN
     })
-
 
 @app.get("/")
 async def root():
@@ -120,11 +119,11 @@ instrumentator = Instrumentator(
     should_group_status_codes=False,
     excluded_handlers=[".*admin.*", "/metrics"],
 )
-instrumentator.instrument(base_app).expose(base_app)
+instrumentator.instrument(app).expose(app)
 
 
 # Обработка ошибок валидации
-@base_app.exception_handler(RequestValidationError)
+@app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
     errors = exc.errors()
     invalid_params = []
@@ -150,18 +149,17 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
         },
     )
 
-
-base_app.include_router(user_router)
-base_app.include_router(wells_data_router)
-base_app.include_router(wells_repair_router)
-base_app.include_router(repair_gis_router)
-base_app.include_router(brigade_router)
-base_app.include_router(norms_router)
-base_app.include_router(classifier_router)
-base_app.include_router(silencing_router)
-base_app.include_router(gnkt_router)
-base_app.include_router(prometheus_router)
-base_app.include_router(pages_router)
+app.include_router(user_router)
+app.include_router(wells_data_router)
+app.include_router(wells_repair_router)
+app.include_router(repair_gis_router)
+app.include_router(brigade_router)
+app.include_router(norms_router)
+app.include_router(classifier_router)
+app.include_router(silencing_router)
+app.include_router(gnkt_router)
+app.include_router(prometheus_router)
+app.include_router(pages_router)
 
 # Подключение CORS, чтобы запросы к API могли приходить из браузера
 origins = [
@@ -175,7 +173,7 @@ origins = [
     "http://83.174.202.38:80",
     "http://83.174.202.38:5555",
 ]
-
+#
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
@@ -239,4 +237,4 @@ async def add_process_time_header(request: Request, call_next):
 
 
 if __name__ == "__main__":
-    uvicorn.run("zimaApp.main:base_app", host="127.0.0.1", port=8000)
+    uvicorn.run("zimaApp.main:app", host="127.0.0.1", port=8000)

@@ -44,20 +44,25 @@ async def register_user(user_data: SUsersRegister):
 @router.post("/login")
 @version(1)
 async def login_user(response: Response, user_data: SUsersAuth):
-    user = await authenticate_user(user_data.login_user, user_data.password)
-    if not user:
-        raise IncorectLoginOrPassword
-    access_token = create_access_token({"sub": str(user.id)})
-    response.set_cookie("summary_information_access_token", access_token, httponly=True)
-    # Отправка сообщения о входе пользователя
-    await TelegramInfo.send_message_users(user.login_user)
+    try:
+        user = await authenticate_user(user_data.login_user, user_data.password)
+        if not user:
+            raise IncorectLoginOrPassword
+        access_token = create_access_token({"sub": str(user.id)})
+        response.set_cookie("summary_information_access_token", access_token, httponly=True)
+        # Отправка сообщения о входе пользователя
 
-    logger.info("Users insert", extra={"users": user_data.login_user}, exc_info=True)
-    return {"login_user": user.login_user,
-            "position_id": user.position_id,
-            "ctcrs": user.ctcrs,
-            "contractor": user.contractor,
-            "access_token": access_token}
+        await TelegramInfo.send_message_users(user.login_user)
+
+
+        logger.info("Users insert", extra={"users": user_data.login_user}, exc_info=True)
+        return {"login_user": user.login_user,
+                "position_id": user.position_id,
+                "ctcrs": user.ctcrs,
+                "contractor": user.contractor,
+                "access_token": access_token}
+    except Exception as e:
+        logger.error('Critical error', extra=e, exc_info=True)
 
 
 @router.post("/logout")

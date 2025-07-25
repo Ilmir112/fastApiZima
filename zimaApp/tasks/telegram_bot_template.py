@@ -25,10 +25,10 @@ class TelegramInfo:
             "chat_id": settings.CHAT_ID,
             "text": message
         }
-        # await send_message(message, settings.CHAT_ID)
-        async with httpx.AsyncClient() as client:
-            response = await client.post(TelegramInfo.URL, json=payload)
-            response.raise_for_status()
+        await send_message(message, settings.CHAT_ID)
+        # async with httpx.AsyncClient() as client:
+        #     response = await client.post(TelegramInfo.URL, json=payload)
+        #     response.raise_for_status()
 
     @classmethod
     async def send_message_create_plan(cls, username: str, well_number: str, well_area: str, work_plan: str):

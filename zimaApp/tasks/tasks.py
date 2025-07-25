@@ -34,19 +34,19 @@ def send_plan_work_confirmation_email(well_repair: dict, email_to: EmailStr):
 
 
 @celery_app.task
-async def send_message(chat_id, text, token=settings.TOKEN):
+def send_message(chat_id, text, token=settings.TOKEN):
     bot = Bot(token)
-    await bot.send_message(chat_id, text=text)
+    bot.send_message(chat_id, text=text)
 
 
 @celery_app.task(name='tasks.check_emails_async')
-async def check_emails_async():
+def check_emails_async():
     try:
         loop = asyncio.get_event_loop()
-        msg_bytes = await loop.run_in_executor(None, check_emails)
+        msg_bytes = check_emails()
         print("Задача check_emails_async запущена")
 
-        result = await send_message_to_queue(msg_bytes, "repair_gis")
+        result = asyncio.run(send_message_to_queue(msg_bytes, "repair_gis"))
         return result
     except Exception as e:
         logger.info(e)
@@ -102,7 +102,7 @@ def check_emails():
                     else:
                         subject = ""
                     if subject and "RE:" not in subject.upper():
-                        if dt < now_time - timedelta(days=2):
+                        if dt < now_time - timedelta(minutes=2):
                             continue  # пропускаем это письмо
 
                     # Остальной код обработки тела письма...

@@ -164,5 +164,5 @@ function displayData(data) {
 
 // Функция для перехода по ID скважины
 function findWellById(wellId) {
-    window.location.href = `/pages/plan_work?id=${wellId}`;
+    window.location.href = `/zimaApp/pages/plan_work?id=${wellId}`;
 }

@@ -60,6 +60,7 @@ class Settings(BaseSettings):
     REDIS_PORT: int
 
     HAWK_DSN: str
+    SESSION_COOKIE_SECRET: str
 
     SECRET_KEY: str
     ALGORITHM: str
@@ -68,8 +69,8 @@ class Settings(BaseSettings):
     CHAT_ID: str
     EMAIL_CHECK_LIST: list
 
-    # model_config = ConfigDict(env_file=".env")
-    model_config = ConfigDict(env_file='../.env')
+    model_config = ConfigDict(env_file=".env")
+    # model_config = ConfigDict(env_file='../.env')
 
 # В асинхронной функции
 async def init_broker():

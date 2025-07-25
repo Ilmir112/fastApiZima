@@ -19,6 +19,15 @@ router = APIRouter(
 
 templates = Jinja2Templates(directory="zimaApp/templates")
 
+@router.get("/login")
+@version(1)
+async def get_home_page(
+        request: Request
+):
+    return templates.TemplateResponse(
+        "home.html", context={
+            "request": request
+        })
 
 @router.get("/home")
 @version(1)
@@ -33,7 +42,6 @@ async def get_home_page(
 
 @router.get("/plan")
 @version(1)
-# @cache(expire=1500)
 async def get_repair_list(
         request: Request,
         user: Users = Depends(get_current_user)
