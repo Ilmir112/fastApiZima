@@ -1,4 +1,4 @@
-
+from celery.bin.result import result
 from pika import ConnectionParameters, BlockingConnection
 from pika.connection import URLParameters
 
@@ -23,7 +23,7 @@ from zimaApp.logger import logger
 async def send_message_to_queue(body: str, QUEUE_NAME: str):
     try:
         await init_broker()
-        await router_broker.publish(body, QUEUE_NAME)
+        result = await router_broker.publish(body, QUEUE_NAME)
 
         # parameters = URLParameters(settings.rabbitmq_url)
         # connection = BlockingConnection(parameters)

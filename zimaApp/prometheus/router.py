@@ -1,6 +1,8 @@
 import time
 from random import random
-# from zimaApp.tasks.tasks import check_emails, check_emails_async
+
+# from zimaApp.tasks.rabbitmq.consumer import start_consumer
+from zimaApp.tasks.tasks import check_emails, check_emails_async
 
 from fastapi import APIRouter, HTTPException, Depends
 from fastapi_cache import FastAPICache
@@ -18,7 +20,6 @@ router = APIRouter(
     tags=["Тестирование Grafana + Prometheus + redis + logger"]
 )
 
-
 @router.get("/get_error")
 def get_error():
     try:
@@ -33,10 +34,11 @@ def time_consumer():
     time.sleep(random() * 5)
     return 1
 #
-# @router.get("/run-check-emails")
-# async def run_check_emails():
-#     result = await check_emails_async()
-#     return {"message": "Задача запущена"}
+@router.get("/run-check-emails")
+async def run_check_emails():
+    # result = await start_consumer()
+    result = await check_emails_async()
+    return result
 
 @router.get("/memory_consumer")
 def memory_consumer():

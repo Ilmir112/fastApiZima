@@ -22,7 +22,8 @@ class AdminAuth(AuthenticationBackend):
         request.session.clear()
         return True
 
-    async def authenticate(self, request: Request) -> bool:
+    @classmethod
+    async def authenticate(cls, request: Request) -> bool:
         token = request.session.get("token")
 
         if not token:
