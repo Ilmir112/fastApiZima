@@ -66,7 +66,7 @@ async def lifespan(_: FastAPI):
     except Exception as e:
         print(e)
 
-    logger.info("Брокер стартовал")
+    logger.error("Брокер стартовал")
     try:
         if settings.MODE == "PROD":
             await bot.send_message(chat_id=settings.CHAT_ID, text="Приложение запущено")
