@@ -36,7 +36,7 @@ def send_plan_work_confirmation_email(well_repair: dict, email_to: EmailStr):
 @celery_app.task
 def send_message(chat_id, text, token=settings.TOKEN):
     bot = Bot(token)
-    bot.send_message(chat_id, text=text)
+    asyncio.run(bot.send_message(chat_id, text=text))
 
 
 @celery_app.task(name='tasks.check_emails_async')
