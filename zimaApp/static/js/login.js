@@ -92,7 +92,7 @@ async function loadHomePage() {
         return;
     }
 
-    const response = await fetch('/zimaApp/pages/home', {
+    const response = await fetch('/pages/home', {
         headers: {
             'Authorization': `Bearer ${token}`
         }
@@ -121,7 +121,7 @@ window.addEventListener('load', () => {
         return;
     }
 
-    if (path === '/zimaApp/pages/home' || path === '/') {
+    if (path === '/pages/home' || path === '/') {
         loadHomePage();
     }
     // Можно добавить обработку других URL

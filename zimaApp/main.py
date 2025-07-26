@@ -51,6 +51,7 @@ from zimaApp.logger import logger
 bot = telegram.Bot(token=settings.TOKEN)
 
 
+
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     # Запускаем потребителя как фоновую задачу
