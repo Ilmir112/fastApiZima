@@ -41,15 +41,14 @@ def send_message(chat_id, text, token=settings.TOKEN):
 
 @celery_app.task(name='tasks.check_emails_async')
 def check_emails_async():
+    result = None
     try:
-        loop = asyncio.get_event_loop()
-        msg_bytes = check_emails()
         print("Задача check_emails_async запущена")
-
+        msg_bytes = check_emails()
         result = asyncio.run(send_message_to_queue(msg_bytes, "repair_gis"))
         return result
     except Exception as e:
-        logger.info(e)
+        logger.info(f"Ошибка в check_emails_async: {e}")
         return result
 
 def check_emails():
