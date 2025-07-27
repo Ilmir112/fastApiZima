@@ -61,15 +61,12 @@ async def lifespan(_: FastAPI):
         redis = aioredis.from_url(f"redis://{settings.REDIS_HOST}:{settings.REDIS_PORT}", encoding="utf8")
         FastAPICache.init(RedisBackend(redis), prefix="fastapi-cache")
 
-        # router_broker.start()
-        # Запуск потребителя в фоне при старте приложения
-
     except Exception as e:
         print(e)
 
-    logger.error("Брокер стартовал")
     try:
         if settings.MODE == "PROD":
+            logger.warning("Брокер стартовал")
             await bot.send_message(chat_id=settings.CHAT_ID, text="Приложение запущено")
             logger.warning("Сообщение отправлено успешно")
 
