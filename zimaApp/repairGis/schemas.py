@@ -1,6 +1,11 @@
 from datetime import datetime, timedelta
+from typing import Dict, Any
 
 from pydantic import BaseModel
+
+class RepairGisUpdate(BaseModel):
+    id: int
+    fields: Dict[str, Any]
 
 
 class SRepairsGis(BaseModel):

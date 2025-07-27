@@ -1,3 +1,4 @@
+
 from fastapi import APIRouter, Depends, Request
 from fastapi.templating import Jinja2Templates
 
@@ -6,6 +7,9 @@ from fastapi_cache.decorator import cache
 from fastapi_versioning import version
 from zimaApp.norms.router import find_norms_one
 from zimaApp.pages.dao import ChangeExcelToHtml
+from fastapi.responses import HTMLResponse
+
+from zimaApp.repairGis.router import get_repair_gis_all
 from zimaApp.users.auth import authenticate_user
 from zimaApp.users.dependencies import get_current_user, get_current_admin_user
 from zimaApp.users.models import Users
@@ -29,14 +33,28 @@ async def get_home_page(
             "request": request
         })
 
-@router.get("/home")
+@router.get("/repair_gis", response_class=HTMLResponse)
+@version(1)
+async def get_repair_gis(
+        request: Request,
+        repairs = Depends(get_repair_gis_all)
+        ):
+
+    return templates.TemplateResponse(
+        "repair_gis.html", context={
+            "request": request,
+            "repairs": repairs
+        })
+
+@router.get("/home", response_class=HTMLResponse)
 @version(1)
 async def get_home_page(
         request: Request
 ):
     return templates.TemplateResponse(
         "home.html", context={
-            "request": request
+            "request": request,
+            "title": "Главная страница"
         })
 
 

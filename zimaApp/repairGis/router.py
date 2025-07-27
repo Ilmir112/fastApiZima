@@ -5,7 +5,7 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from zimaApp.logger import logger
 from zimaApp.repairGis.dao import RepairsGisDAO
-from zimaApp.repairGis.schemas import SRepairsGis
+from zimaApp.repairGis.schemas import SRepairsGis, RepairGisUpdate
 from zimaApp.tasks.telegram_bot_template import TelegramInfo
 
 from zimaApp.users.dependencies import get_current_user
@@ -72,39 +72,25 @@ async def add_wells_data(
 
 @router.put("/update")
 @version(1)
-async def update_brigade_data(brigade: SWellsBrigade,
+async def update_repair_gis_data(repair_info: RepairGisUpdate,
                               user: Users = Depends(get_current_user)):
     try:
-        data = await find_brigade_one(brigade)
-        if data:
-            result = await WellsDatasDAO.update_data(data.id,
-                                                     id=brigade.id,
-                                                     contractor=brigade.contractor,
-                                                     costumer=brigade.costumer,
-                                                     expedition=brigade.expedition,
-                                                     number_brigade=brigade.number_brigade,
-                                                     brigade_master=brigade.brigade_master,
-                                                     phone_number_brigade=brigade.phone_number_brigade,
-                                                     lifting_unit=brigade.lifting_unit,
-                                                     hydraulic_wrench=brigade.hydraulic_wrench,
-                                                     weight_indicator=brigade.weight_indicator,
-                                                     brigade_composition=brigade.brigade_composition,
-                                                     pvo_type=brigade.pvo_type,
-                                                     number_pvo=brigade.number_pvo)
+        if repair_info:
+            result = await RepairsGisDAO.update(id=repair_info.id, **repair_info.dict())
 
-            await TelegramInfo.send_message_update_brigade(user.login_user, brigade.number_brigade,
-                                                           brigade.contractor)
+            # await TelegramInfo.send_message_update_brigade(user.login_user, repair_info.number_brigade,
+            #                                                brigade.contractor)
 
             return result
     except SQLAlchemyError as db_err:
         msg = f'Database Exception Brigade {db_err}'
-        logger.error(msg, extra={"number_brigade": brigade.number_brigade,
-                                 "contractor": brigade.contractor}, exc_info=True)
+        logger.error(msg, extra={"number_brigade": repair_info.number_brigade,
+                                 "contractor": repair_info.contractor}, exc_info=True)
 
     except Exception as e:
         msg = f'Unexpected error: {str(e)}'
-        logger.error(msg, extra={"number_brigade": brigade.number_brigade,
-                                 "contractor": brigade.contractor}, exc_info=True)
+        logger.error(msg, extra={"number_brigade": repair_info.number_brigade,
+                                 "contractor": repair_info.contractor}, exc_info=True)
 
 
 @router.delete("/delete_brigade")
@@ -112,7 +98,7 @@ async def update_brigade_data(brigade: SWellsBrigade,
 async def delete_brigade(
         brigade: SWellsBrigade = Depends(),
         user: Users = Depends(get_current_user)):
-    data = await find_brigade_one(brigade)
+    data = await RepairsGisDAO.find_one_or_none(brigade)
     if data:
         return await BrigadeDAO.delete_item_all_by_filter(
             number_brigade=brigade.number_brigade, contractor=brigade.contractor

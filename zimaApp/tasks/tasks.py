@@ -7,7 +7,6 @@ import smtplib
 from datetime import datetime, timedelta
 from nntplib import decode_header
 
-from celery.bin.result import result
 from pydantic import EmailStr
 import email.utils
 
@@ -51,6 +50,7 @@ def check_emails_async():
         logger.info(f"Ошибка в check_emails_async: {e}")
         return result
 
+
 def check_emails():
     try:
         mail = imaplib.IMAP4_SSL(settings.IMAP_SERVER)
@@ -64,7 +64,6 @@ def check_emails():
 
         now_time = datetime.now()
         message_list = []
-
         for email_id in email_ids:
             status, msg_data = mail.fetch(email_id, "(RFC822)")
 

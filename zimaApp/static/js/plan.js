@@ -166,3 +166,4 @@ function displayData(data) {
 function findWellById(wellId) {
     window.location.href = `/pages/plan_work?id=${wellId}`;
 }
+

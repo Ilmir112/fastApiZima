@@ -45,7 +45,6 @@ def memory_consumer():
     _ = [i for i in range(30_000_000)]
     return 1
 
-
 @router.post("/logger_send")
 async def logger_send(message: dict):
     try:

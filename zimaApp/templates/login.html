@@ -6,7 +6,7 @@
 {% block content %}
 <div class="login-container">
     <h2>Войти в аккаунт</h2>
-    <form method="post" action="/login/">
+    <form id="loginForm" method="post" action="pages/login/">
         {% csrf_token %}
         <div class="form-group">
             <label for="username">Логин:</label>
@@ -19,10 +19,6 @@
         <button type="submit">Войти</button>
     </form>
 </div>
-
 {% endblock %}
 
 {% block scripts %}
-
-
-{% endblock %}

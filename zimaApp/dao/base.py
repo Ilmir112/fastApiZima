@@ -2,6 +2,7 @@ from sqlalchemy import and_, delete, insert, update
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
+from sqlalchemy import update as sqlalchemy_update
 
 from zimaApp.logger import logger
 from zimaApp.database import async_session_maker
@@ -121,4 +122,33 @@ class BaseDAO:
             result = await session.execute(query)
             await session.commit()
             return result.mappings().first()
+
+    @classmethod
+    async def update(cls, filter_by, **values):
+        """
+        Асинхронно обновляет экземпляры модели, удовлетворяющие критериям фильтрации, указанным в filter_by,
+        новыми значениями, указанными в values.
+
+        Аргументы:
+            filter_by: Критерии фильтрации в виде именованных параметров.
+            **values: Именованные параметры для обновления значений экземпляров модели.
+
+        Возвращает:
+            Количество обновленных экземпляров модели.
+        """
+        async with async_session_maker() as session:
+            async with session.begin():
+                query = (
+                    sqlalchemy_update(cls.model)
+                    .where(*[getattr(cls.model, k) == v for k, v in filter_by.items()])
+                    .values(**values)
+                    .execution_options(synchronize_session="fetch")
+                )
+                result = await session.execute(query)
+                try:
+                    await session.commit()
+                except SQLAlchemyError as e:
+                    await session.rollback()
+                    raise e
+                return result.rowcount
 

@@ -1,0 +1,59 @@
+<!-- templates/repair_gis.html -->
+{% extends "layout/base.html" %}
+
+{% block title %}
+{{ title }}
+{% endblock %}
+
+{% block content %}
+<div class="content-container">
+    <h1 style="margin-top: 20px;">Простои по скважине</h1>
+
+    <div class="loading" id="loading">Загрузка данных...</div>
+    <table id="repairs" style="display:none;">
+        <thead>
+        <tr>
+            <th>ID</th>
+            <th>Well ID</th>
+            <th>Статус</th>
+            <th>ГИС подрядчика</th>
+            <th>Время сообщения</th>
+            <th>Начало простоя</th>
+            <th>Окончание простоя</th>
+            <th>Длительность простоя (ч)</th>
+            <th>Причина простоя</th>
+            <th>Цель работ</th>
+            <th>Мнение подрядчика</th>
+            <th>Результат совещания</th>
+            <th>PDF изображение/документ</th>
+        </tr>
+        </thead>
+        <tbody id="tableBody">
+        <!-- Данные будут вставлены сюда -->
+        </tbody>
+    </table>
+</div>
+{% endblock %}
+
+{% block styles %}
+<!-- Подключение внешнего CSS файла -->
+<link rel="stylesheet" href="{{ url_for('static', path='css/repair_gis.css') }}">
+{% endblock %}
+
+{% block scripts %}
+<!-- Подключение внешних JS файлов -->
+<script src="{{ url_for('static', path='js/repair_gis.js') }}"></script>
+
+<!-- Передача API URL в глобальную переменную -->
+<script>
+    const apiUrl = "{{ url_for('get_repair_gis_all') }}"; // или укажите статический путь, если нужно
+</script>
+
+<!-- Вызов функции при загрузке страницы -->
+<script>
+// Используем addEventListener для безопасного вызова после загрузки DOM
+document.addEventListener('DOMContentLoaded', () => {
+    fetchAndDisplayData();
+});
+</script>
+{% endblock %}

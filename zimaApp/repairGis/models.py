@@ -17,7 +17,6 @@ class RepairsGis(Base):
     __tablename__ = "repair_gis"
 
     id = Column(Integer, primary_key=True, index=True)
-
     well_id = Column(Integer, ForeignKey('wells_data.id'), nullable=False)
     status = Column(String, default=StatusEnum.OPEN, nullable=False)
     contractor_gis = Column(String, nullable=False)

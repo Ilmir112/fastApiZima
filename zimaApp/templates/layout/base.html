@@ -8,7 +8,6 @@
     <link rel="stylesheet" href="{{ url_for('static', path='css/style.css') }}"/>
 
     {% block head %}
-
     {% endblock %}
 </head>
 <body>
@@ -38,7 +37,6 @@
                             <a class="nav-link" href="#">Мой аккаунт</a>
                         </li>
                         <!-- Можно добавлять динамически -->
-
                         <li class="nav-item d-none" id="logoutItem">
                             <button class="btn btn-outline-secondary" id="logoutBtn">Выйти</button>
                         </li>
@@ -54,33 +52,41 @@
                         <li class="nav-item">
                             <a class="nav-link" href="#">Данные по скважине</a>
                         </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/pages/repair_gis">Простои ГИС</a>
+                        </li>
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown"
                                aria-expanded="false">
                                 Dropdown
                             </a>
                             <ul class="dropdown-menu dropdown-menu-dark">
-                                <li><a class="dropdown-item" href="#">Action</a></li>
-                                <li><a class="dropdown-item" href="#">Another action</a></li>
+                                <li><a class='dropdown-item' href='#'>Action</a></li>
+                                <li><a class='dropdown-item' href='#'>Another action</a></li>
                                 <li>
-                                    <hr class="dropdown-divider">
+                                    <hr class='dropdown-divider'>
                                 </li>
-                                <li><a class="dropdown-item" href="#">Something else here</a></li>
+                                <li><a class='dropdown-item' href='#'>Something else here</a></li>
                             </ul>
                         </li>
                     </ul>
-                    <form class="d-flex mt-3" role="search">
-                        <input class="form-control me-2" type="search" placeholder="Search" aria-label="Search"/>
-                        <button class="btn btn-success" type="submit">Search</button>
+                    <!-- Форма поиска -->
+                    <form class='d-flex mt-3' role='search'>
+                        <input class='form-control me-2' type='search' placeholder='Search' aria-label='Search'/>
+                        <button class='btn btn-success' type='submit'>Search</button>
                     </form>
                 </div>
             </div>
         </div>
     </nav>
+
     <!-- Форма входа -->
-<div id="login-container" class="container mt-5 pt-5">
+    <!-- Можно оставить внутри контейнера или вынести по необходимости -->
+    <!-- В данном случае оставляем внутри header, если это так задумано -->
     {% block login_form %}
-    <h3 class="mb-3">Войти в систему</h3>
+<div id="login-container" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+ background-color: white; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.5); z-index: 9999;">
+    <h3>Войти в систему</h3>
     <form id="loginForm">
         <div class="mb-3">
             <label for="login_user" class="form-label">Логин</label>
@@ -91,36 +97,35 @@
             <input type="password" class="form-control" id="password" required>
         </div>
         <button type="submit" class="btn btn-primary">Войти</button>
-        <!-- Кнопка регистрации -->
-        <a href="registration.html" class="btn btn-secondary ms-2">Регистрация</a>
-
     </form>
+</div>
+{% endblock %}
+</header>
+
+<!-- Основной контент -->
+<div id='content' style='margin-top: 80px;'> <!-- добавил отступ для учета фиксированной навигации -->
+    {% block content %}
     {% endblock %}
 </div>
 
-
-    <body>
-    <div id="content" style="display: none;">
-        ...
-        {% block content %}{% endblock %}
-
-        {% block scripts %}{% endblock %}
-    </div>
-    </body>
-</header>
-<div class="content-container" style="margin-top: 20px;">
+<!-- Подвал сайта -->
+<div class='content-container' style='margin-top: 20px;'>
     <footer>
-        <p>&copy; 2025
-            Все права защищены. Интелектуальная собственность Зуфарова И.М.</p>
+        <p>&copy; 2025 Все права защищены. Интелектуальная собственность Зуфарова И.М.</p>
         <!-- Добавьте информацию об авторских правах, контактные данные или другую информацию -->
     </footer>
 </div>
-<script
-        src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js"
-        integrity="sha384-ndDqU0Gzau9qJ1lfW4pNLlhNTkCfHzAVBReH9diLvGRem5+R9g2FzA8ZGN954O5Q"
-        crossorigin="anonymous">
-</script>
-<!-- Подключение внешнего JS файла -->
-<script src="../static/js/login.js"></script>
+
+<!-- Скрипты -->
+<script src='https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js'
+        integrity='sha384-ndDqU0Gzau9qJ1lfW4pNLlhNTkCfHzAVBReH9diLvGRem5+R9g2FzA8ZGN954O5Q'
+        crossorigin='anonymous'></script>
+
+<!-- Внешний JS файл -->
+<script src='../static/js/login.js'></script>
+
+{% block scripts %}
+{% endblock %}
+
 </body>
 </html>
