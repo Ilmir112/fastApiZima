@@ -36,18 +36,18 @@ services:
     ports:
       - 7777:8000
 
-  celery:
-    image: zima_celery
-    build:
-      context: . # celery это библиотека, у неё нет образа, берём из основного билда
-    container_name: zima_celery
-    # Если не работает эта команда, используйте закомментированную
-    #    command: ["/zimaApp/docker/celery.sh", "celery"] # Второй аргумен для if/elif в скрипте
-    command: sh -c "celery --app=zimaApp.tasks.celery_app:celery_app worker -l INFO"
-    env_file:
-      - .env-non-dev
-    depends_on:
-      - redis
+#  celery:
+#    image: zima_celery
+#    build:
+#      context: . # celery это библиотека, у неё нет образа, берём из основного билда
+#    container_name: zima_celery
+#    # Если не работает эта команда, используйте закомментированную
+#    #    command: ["/zimaApp/docker/celery.sh", "celery"] # Второй аргумен для if/elif в скрипте
+#    command: sh -c "celery --app=zimaApp.tasks.celery_app:celery_app worker -l INFO"
+#    env_file:
+#      - .env-non-dev
+#    depends_on:
+#      - redis
 #  celery-beat:
 #    image: zima_celery
 #    build:
