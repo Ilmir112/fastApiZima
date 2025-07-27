@@ -48,16 +48,16 @@ services:
       - .env-non-dev
     depends_on:
       - redis
-  celery-beat:
-    image: zima_celery
-    build:
-      context: .
-    container_name: zima_celery_beat
-    command: sh -c "celery --app=zimaApp.tasks.celery_app:celery_app beat -l INFO"
-    env_file:
-      - .env-non-dev
-    depends_on:
-      - redis
+#  celery-beat:
+#    image: zima_celery
+#    build:
+#      context: .
+#    container_name: zima_celery_beat
+#    command: sh -c "celery --app=zimaApp.tasks.celery_app:celery_app beat -l INFO"
+#    env_file:
+#      - .env-non-dev
+#    depends_on:
+#      - redis
 
   flower:
     image: zima_flower
