@@ -59,20 +59,20 @@ services:
 #    depends_on:
 #      - redis
 
-  flower:
-    image: zima_flower
-    build:
-      context: . # flower это библиотека, у неё нет образа, берём из основного билда
-    container_name: zima_flower
-    # Если не работает эта команда, используйте закомментированную
-    #    command: ["/docker/celery.sh", "flower"]
-    command: sh -c "celery --app=zimaApp.tasks.celery_app:celery_app flower"
-    env_file:
-      - .env-non-dev
-    depends_on:
-      - redis
-    ports:
-      - 5555:5555
+#  flower:
+#    image: zima_flower
+#    build:
+#      context: . # flower это библиотека, у неё нет образа, берём из основного билда
+#    container_name: zima_flower
+#    # Если не работает эта команда, используйте закомментированную
+#    #    command: ["/docker/celery.sh", "flower"]
+#    command: sh -c "celery --app=zimaApp.tasks.celery_app:celery_app flower"
+#    env_file:
+#      - .env-non-dev
+#    depends_on:
+#      - redis
+#    ports:
+#      - 5555:5555
 
   prometheus:
     image: prom/prometheus:v2.43.0
