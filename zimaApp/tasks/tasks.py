@@ -42,7 +42,7 @@ def send_message(chat_id, text, token=settings.TOKEN):
 def check_emails_async():
     result = None
     try:
-        print("Задача check_emails_async запущена")
+        logger.info("Задача check_emails_async запущена")
         msg_bytes = check_emails()
         result = asyncio.run(send_message_to_queue(msg_bytes, "repair_gis"))
         return result
