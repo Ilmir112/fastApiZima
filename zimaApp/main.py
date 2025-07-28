@@ -55,7 +55,7 @@ bot = telegram.Bot(token=settings.TOKEN)
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     # Запускаем потребителя как фоновую задачу
-    consumer_task = await start_consumer()
+    consumer_task = asyncio.create_task(start_consumer())
     try:
         print("Запуск приложения")
         redis = aioredis.from_url(f"redis://{settings.REDIS_HOST}:{settings.REDIS_PORT}", encoding="utf8")
