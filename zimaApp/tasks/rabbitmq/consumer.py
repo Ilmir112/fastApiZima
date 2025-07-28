@@ -24,9 +24,13 @@ async def process_message(message: aio_pika.IncomingMessage):
                     await bot.send_message(
                         chat_id=settings.CHAT_ID,
                         text=body_text[:600])
+    except json.JSONDecodeError as e:
+        print(f"Ошибка при парсинге JSON: {e}")
+        print(f"Данные для парсинга: {body}")
+        raise
     except aio_pika.exceptions.AMQPConnectionError as e:
         logger.error(f"Connection lost: {e}")
-        # Здесь можно реализовать логику повторного подключения или перезапуска
+
 
     except Exception as e:
         logger.error(e)
