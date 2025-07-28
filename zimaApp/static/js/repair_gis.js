@@ -1,64 +1,63 @@
+// Получение данных и отображение таблицы
 async function fetchAndDisplayData() {
-    const loadingEl = document.getElementById('loading');
-    const tableBody = document.getElementById('tableBody');
-    const repairsTable = document.getElementById('repairs');
-
-    if (loadingEl) {
-        loadingEl.innerText = "Загрузка данных...";
-        loadingEl.style.display = 'block';
-    }
-    if (repairsTable) {
-        repairsTable.style.display = 'none';
-    }
-
     try {
         const response = await fetch(apiUrl);
-        if (!response.ok) throw new Error("Ошибка сети");
+        if (!response.ok) {
+            throw new Error(`Ошибка при получении данных: ${response.status}`);
+        }
         const data = await response.json();
 
-        // Очистка таблицы
-        if (tableBody) tableBody.innerHTML = '';
+        const tbody = document.getElementById('tableBody');
+        tbody.innerHTML = ""; // Очистка перед вставкой
 
-        // Заполнение таблицы данными
         data.forEach(item => {
-            const row = document.createElement('tr');
-            // добавьте ячейки для каждого поля item
-            row.innerHTML = `
-                <td>${item.id}</td>
-                <td>${item.well_id}</td>
-                <td>${item.status}</td>
-                <td>${item.contractor_gis}</td>
-                <td>${item.message_time}</td>
-                <td>${item.start_time}</td>
-                <td>${item.end_time}</td>
-                <td>${item.duration_hours}</td>
-                <td>${item.reason}</td>
-                <td>${item.work_goal}</td>
-                <td>${item.contractor_opinion}</td>
-                <td>${item.meeting_result}</td>
-                <td><a href="${item.pdf_url}" target="_blank">PDF</a></td>
-            `;
-            tableBody.appendChild(row);
+    const row = document.createElement('tr');
+    row.innerHTML = `
+        <td>${item.id}</td>
+        <td>${item.well_id}</td>
+        <td>
+            <select class="status-select" data-id="${item.id}">
+                <option value="открыт" ${item.status === 'открыт' ? 'selected' : ''}>открыт</option>
+                <option value="закрыт" ${item.status === 'закрыт' ? 'selected' : ''}>закрыт</option>
+                <option value="без простоя" ${item.status === 'без простоя' ? 'selected' : ''}>без простоя</option>
+            </select>
+        </td>
+        <td>${item.contractor_gis}</td>
+        <td>${formatDate(item.message_time)}</td>
+        <td>${formatDate(item.downtime_start)}</td>
+        <td>${formatDate(item.downtime_end)}</td>
+        <td>${item.downtime_duration !== null ? item.downtime_duration.toFixed(2) : ""}</td>
+        <td>${item.downtime_reason || ""}</td>
+        <td><input type="text" class="work-goal-input" data-id="${item.id}" value="${item.work_goal || ''}"></td>
+        <td><input type="text" class="contractor-opinion-input" data-id="${item.id}" value="${item.contractor_opinion || ''}"></td>
+        <td><input type="text" class="meeting-result-input" data-id="${item.id}" value="${item.meeting_result || ''}"></td>
+        ${item.image_pdf ? `<td><a href="${item.image_pdf}" target="_blank">Открыть PDF</a></td>` : `<td></td>`}
+    `;
+    tbody.appendChild(row);
+});
+
+        // Назначаем обработчики изменения для селектов и инпутов
+        document.querySelectorAll('.status-select').forEach(select => {
+            select.addEventListener('change', handleUpdate);
+        });
+        document.querySelectorAll('.work-goal-input').forEach(input => {
+            input.addEventListener('change', handleUpdate);
+        });
+        document.querySelectorAll('.contractor-opinion-input').forEach(input => {
+            input.addEventListener('change', handleUpdate);
+        });
+        document.querySelectorAll('.meeting-result-input').forEach(input => {
+            input.addEventListener('change', handleUpdate);
         });
 
-        if (loadingEl) {
-            loadingEl.style.display = 'none';
-        }
-        if (repairsTable) {
-            repairsTable.style.display = 'table';
-        }
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('repairs').style.display = 'table';
+
     } catch (error) {
-        if (loadingEl) {
-            loadingEl.innerText = "Ошибка загрузки данных.";
-        }
+        document.getElementById('loading').innerText = "Ошибка загрузки данных.";
         console.error(error);
     }
 }
-
-// Вызов при загрузке DOM
-document.addEventListener('DOMContentLoaded', () => {
-    fetchAndDisplayData();
-});
 
 // Обработчик изменения
 async function handleUpdate(event) {

@@ -3,6 +3,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy import update as sqlalchemy_update
+from sqlalchemy.orm import joinedload
 
 from zimaApp.logger import logger
 from zimaApp.database import async_session_maker
@@ -10,6 +11,28 @@ from zimaApp.database import async_session_maker
 
 class BaseDAO:
     model = None
+
+    @classmethod
+    async def filter_for_filter(cls, model, filter_by: dict = None, join_related: str = None):
+        """
+        Общий метод для фильтрации данных с опциональной загрузкой связанной модели.
+
+        :param model: Модель SQLAlchemy для запроса.
+        :param filter_by: Словарь фильтров.
+        :param join_related: Название отношения для eager loading (например, 'well').
+        :return: Список объектов модели.
+        """
+        async with async_session_maker() as session:
+            query = select(model)
+            if join_related:
+                # Динамически применяем joinedload к отношению
+                query = query.options(joinedload(getattr(model, join_related)))
+            if filter_by:
+                query = query.filter_by(**filter_by)
+            result = await session.execute(query)
+            if result:
+                return result.scalars().all()
+            return []
 
     @classmethod
     async def find_all(cls, limit=None, **filter_by):

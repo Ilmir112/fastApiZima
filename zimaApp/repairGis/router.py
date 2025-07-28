@@ -34,6 +34,8 @@ async def get_repair_gis_all():
     except Exception as e:
         logger.error(e)
 
+
+
 @router.post("/add_data")
 @version(1)
 async def add_wells_data(

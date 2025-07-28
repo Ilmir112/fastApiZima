@@ -84,22 +84,22 @@
     <!-- Можно оставить внутри контейнера или вынести по необходимости -->
     <!-- В данном случае оставляем внутри header, если это так задумано -->
     {% block login_form %}
-<div id="login-container" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
- background-color: white; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.5); z-index: 9999;">
-    <h3>Войти в систему</h3>
-    <form id="loginForm">
-        <div class="mb-3">
-            <label for="login_user" class="form-label">Логин</label>
-            <input type="text" class="form-control" id="login_user" required>
-        </div>
-        <div class="mb-3">
-            <label for="password" class="form-label">Пароль</label>
-            <input type="password" class="form-control" id="password" required>
-        </div>
-        <button type="submit" class="btn btn-primary">Войти</button>
-    </form>
-</div>
-{% endblock %}
+    <div id="login-container" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+     background-color: white; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.5); z-index: 9999;">
+        <h3>Войти в систему</h3>
+        <form id="loginForm">
+            <div class="mb-3">
+                <label for="login_user" class="form-label">Логин</label>
+                <input type="text" class="form-control" id="login_user" required>
+            </div>
+            <div class="mb-3">
+                <label for="password" class="form-label">Пароль</label>
+                <input type="password" class="form-control" id="password" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Войти</button>
+        </form>
+    </div>
+    {% endblock %}
 </header>
 
 <!-- Основной контент -->

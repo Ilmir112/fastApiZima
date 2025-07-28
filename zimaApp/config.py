@@ -69,8 +69,8 @@ class Settings(BaseSettings):
     CHAT_ID: str
     EMAIL_CHECK_LIST: list
 
-    model_config = ConfigDict(env_file=".env")
-    # model_config = ConfigDict(env_file='../.env')
+    # model_config = ConfigDict(env_file=".env")
+    model_config = ConfigDict(env_file='../.env')
 
 # В асинхронной функции
 async def init_broker():

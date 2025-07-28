@@ -7,8 +7,6 @@ if (loginForm) {
     });
 }
 
-// Обработчик выхода — навешан внутри функции showLogoutButton при необходимости
-
 // Функция для входа пользователя
 async function loginUser() {
     const loginInput = document.getElementById('login_user');
@@ -32,19 +30,7 @@ async function loginUser() {
         if (response.ok) {
             const data = await response.json();
             localStorage.setItem('access_token', data.access_token);
-            // После входа скрываем форму и показываем контент
-            const loginContainer = document.getElementById('login-container');
-            const contentContainer = document.getElementById('content');
-
-            if (loginContainer && contentContainer) {
-                loginContainer.style.display = 'none';
-                contentContainer.style.display = 'block';
-            }
-
-            // Показываем кнопку выхода
-            showLogoutButton(true);
-
-            // Перенаправляем на /home
+            // После входа — редирект на домашнюю страницу
             window.location.href = '/pages/home';
         } else {
             const errorText = await response.text();
@@ -66,50 +52,107 @@ function showLogoutButton(show) {
             if (logoutBtn) {
                 logoutBtn.addEventListener('click', () => {
                     localStorage.removeItem('access_token');
-                    window.location.reload();
+                    // Можно перезагрузить страницу или редиректить
+                    window.location.href = '/pages/login';
                 });
                 logoutItem.hasListener = true; // чтобы не навешивать повторно
             }
         }
     }
 }
+
+// Обработка загрузки страницы
 window.addEventListener('load', async () => {
     const path = window.location.pathname;
     const token = localStorage.getItem('access_token');
 
+    // Получаем общие элементы
     const loginContainer = document.getElementById('login-container');
     const contentContainer = document.getElementById('content');
 
-    if (!token) {
-        // Нет токена — показываем форму входа
-        if (loginContainer) loginContainer.style.display = 'block';
-        // if (contentContainer) contentContainer.style.display = 'none';
-
-        showLogoutButton(false);
-        return;
+    // Функция для проверки авторизации
+    async function checkAuth() {
+        if (!token) {
+            // Нет токена — перенаправляем или показываем логин
+            alert('Пожалуйста, войдите в систему.');
+            window.location.href = '/pages/login';
+            return false;
+        }
+        // Можно дополнительно проверить валидность токена на сервере, если нужно
+        return true;
     }
 
-    try {
-        const response = await fetch('/pages/home', {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-
-        if (response.ok) {
-            const htmlContent = await response.text();
-            if (contentContainer) {
-                contentContainer.innerHTML = htmlContent;
-                contentContainer.style.display = 'block';
-            }
-
-            // Показываем кнопку выхода
-            showLogoutButton(true);
-        } else {
-            // Не авторизован или ошибка — редирект на логин
-            alert('Пожалуйста, войдите в систему.');
-            localStorage.removeItem('access_token');
-            window.location.href = '/pages/login';
+    if (path === '/pages/login') {
+        // Страница логина
+        if (token) {
+            // Уже есть токен — редирект на домашнюю страницу
+            window.location.href = '/pages/home';
+            return;
         }
-    } catch (error) {
-        alert('Ошибка при загрузке домашней страницы: ' + error);
+        // Нет токена — показываем форму входа
+        if (loginContainer) loginContainer.style.display = 'block';
+        if (contentContainer) contentContainer.style.display = 'none';
+
+        showLogoutButton(false);
+
+    } else if (path === '/pages/home') {
+        // Страница домашней страницы
+        if (!(await checkAuth())) return;
+
+        try {
+            const response = await fetch('/pages/home', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+
+            if (response.ok) {
+                const htmlContent = await response.text();
+                if (contentContainer) {
+                    contentContainer.innerHTML = htmlContent;
+                    contentContainer.style.display = 'block';
+                }
+                showLogoutButton(true);
+                if (loginContainer) loginContainer.style.display = 'none';
+
+            } else {
+                alert('Пожалуйста, войдите в систему.');
+                localStorage.removeItem('access_token');
+                window.location.href = '/pages/login';
+            }
+        } catch (error) {
+            alert('Ошибка при загрузке домашней страницы: ' + error);
+        }
+
+    } else if (
+        path === '/pages/profile' ||
+        path === '/pages/settings' ||
+        path.startsWith('/pages/') // добавьте сюда нужные пути
+    ) {
+        // Для других страниц с ограниченным доступом
+        if (!(await checkAuth())) return;
+
+        // Можно делать дополнительные запросы или показывать контент
+        try {
+            const response = await fetch(path, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (response.ok) {
+                const htmlContent = await response.text();
+                if (contentContainer) {
+                    // contentContainer.innerHTML = htmlContent;
+                    // contentContainer.style.display = 'block';
+                }
+                showLogoutButton(true);
+                if (loginContainer) loginContainer.style.display = 'none';
+            } else {
+                alert('Пожалуйста, войдите в систему.');
+                localStorage.removeItem('access_token');
+                window.location.href = '/pages/login';
+            }
+        } catch (error) {
+            alert('Ошибка при загрузке страницы: ' + error);
+        }
+
+    } else {
+        // Для остальных страниц — можно оставить как есть или добавить обработку по необходимости
     }
 });

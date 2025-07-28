@@ -1,4 +1,3 @@
-<!-- templates/repair_gis.html -->
 {% extends "layout/base.html" %}
 
 {% block title %}
@@ -14,7 +13,7 @@
         <thead>
         <tr>
             <th>ID</th>
-            <th>Well ID</th>
+            <th></th>
             <th>Статус</th>
             <th>ГИС подрядчика</th>
             <th>Время сообщения</th>
@@ -38,6 +37,34 @@
 {% block styles %}
 <!-- Подключение внешнего CSS файла -->
 <link rel="stylesheet" href="{{ url_for('static', path='css/repair_gis.css') }}">
+<style>
+/* Для подсказки при наведении на reason */
+.tooltip {
+    position: relative;
+    display: inline-block;
+    cursor: pointer;
+}
+.tooltip .tooltiptext {
+    visibility: hidden;
+    width: 300px;
+    background-color: #555;
+    color: #fff;
+    text-align: left;
+    border-radius: 6px;
+    padding: 5px;
+    position: absolute;
+    z-index: 1;
+    bottom: 125%; /* Расположение над текстом */
+    left: 50%;
+    margin-left: -150px; /* Центрирование */
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+.tooltip:hover .tooltiptext {
+    visibility: visible;
+    opacity: 1;
+}
+</style>
 {% endblock %}
 
 {% block scripts %}
@@ -46,7 +73,7 @@
 
 <!-- Передача API URL в глобальную переменную -->
 <script>
-    const apiUrl = "{{ url_for('get_repair_gis_all') }}"; // или укажите статический путь, если нужно
+const apiUrl = "{{ url_for('get_repair_gis_all') }}"; // Укажите правильный путь
 </script>
 
 <!-- Вызов функции при загрузке страницы -->
