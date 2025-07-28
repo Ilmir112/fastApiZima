@@ -15,7 +15,9 @@ async def process_message(message: aio_pika.IncomingMessage):
     try:
         async with message.process():  # автоматически подтверждает сообщение после блока
             body = message.body.decode()
-            # print(f"Received message: {body}")
+            if not body.strip():
+                logger.warning("Received empty message body")
+                return
             for from_address, subject, body_text, dt in json.loads(body):
                 parsed_data = await parse_telephonegram(body_text, from_address, dt)
                 if parsed_data:
