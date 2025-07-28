@@ -24,11 +24,10 @@ async def process_message(message: aio_pika.IncomingMessage):
                     await bot.send_message(
                         chat_id=settings.CHAT_ID,
                         text=body_text[:600])
+    except aio_pika.exceptions.AMQPConnectionError as e:
+        logger.error(f"Connection lost: {e}")
+        # Здесь можно реализовать логику повторного подключения или перезапуска
 
-
-        # Здесь добавьте вашу логику обработки сообщения
-        # Например, сохранить в базу, отправить уведомление и т.д.
-        # После выхода из блока message.process() сообщение будет подтверждено и удалено из очереди
     except Exception as e:
         logger.error(e)
 
