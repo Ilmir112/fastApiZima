@@ -40,7 +40,7 @@ async def start_consumer():
         # Запуск потребителя
         await queue.consume(process_message)
 
-        logger.error("Начинаю слушать очередь 'repair_gis'...")
+        logger.info("Начинаю слушать очередь 'repair_gis'...")
         # Чтобы слушать бесконечно, используем asyncio.Event()
         await asyncio.Event().wait()
 
