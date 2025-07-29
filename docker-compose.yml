@@ -73,10 +73,8 @@ services:
   flower:
     image: zima_flower
     build:
-      context: . # flower это библиотека, у неё нет образа, берём из основного билда
+      context: .
     container_name: zima_flower
-    # Если не работает эта команда, используйте закомментированную
-    #    command: ["/docker/celery.sh", "flower"]
     command: sh -c "celery --app=zimaApp.tasks.celery_app:celery_app flower"
     env_file:
       - .env-non-dev
