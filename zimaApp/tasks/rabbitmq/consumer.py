@@ -12,7 +12,7 @@ from zimaApp.tasks.tasks import parse_telephonegram, add_telephonegram_to_db
 
 @router_broker.subscriber("repair_gis")
 async def process_message(message: aio_pika.IncomingMessage):
-    from zimaApp.main import bot_user
+    from zimaApp.main import bot
     try:
         async with message.process():  # автоматически подтверждает сообщение после блока
             body = message.body.decode()
@@ -24,7 +24,7 @@ async def process_message(message: aio_pika.IncomingMessage):
                 if parsed_data:
                     return await add_telephonegram_to_db(parsed_data)
                 else:
-                    await bot_user.send_message(
+                    await bot.send_message(
                         chat_id=settings.CHAT_ID,
                         text=body_text[:600])
     except json.JSONDecodeError as e:
