@@ -109,8 +109,13 @@ services:
     networks:
       - my_network
 
-
 volumes:
   postgresdata:
   grafanadata:
   prometheusdata:
+
+
+
+networks:
+  my_network:
+    driver: bridge
