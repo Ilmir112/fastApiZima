@@ -6,12 +6,13 @@ import asyncio
 import aio_pika
 
 from zimaApp.logger import logger
-from zimaApp.main import bot_user
+
 from zimaApp.tasks.tasks import parse_telephonegram, add_telephonegram_to_db
 
 
 @router_broker.subscriber("repair_gis")
 async def process_message(message: aio_pika.IncomingMessage):
+    from zimaApp.main import bot_user
     try:
         async with message.process():  # автоматически подтверждает сообщение после блока
             body = message.body.decode()
