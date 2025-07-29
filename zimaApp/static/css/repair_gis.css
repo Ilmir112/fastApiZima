@@ -1,32 +1,47 @@
-/* static/css/repair_gis.css */
+.tooltip {
+    cursor:pointer;
+}
 
-.content-container {
-    padding: 20px;
+.tooltiptext{
+    cursor: alias;
+
+}
+
+body {
     font-family: Arial, sans-serif;
+    margin: 20px;
 }
 
 h1 {
-    font-size: 24px;
+    text-align: center;
+}
+
+.filter-container {
     margin-bottom: 20px;
 }
 
-#loading {
-    font-size: 18px;
-    color: #555;
+#columnFilter, #valueFilter {
+    margin-right: 10px;
 }
 
-#repairs {
+button {
+    margin-right: 10px;
+}
+
+table {
     width: 100%;
     border-collapse: collapse;
 }
 
-#repairs th, #repairs td {
-    border: 1px solid black;
-    padding: 8px;
-    text-align: left;
-
-}
-
-#repairs th {
+thead {
     background-color: #f2f2f2;
 }
+
+th, td {
+    border: 1px solid #ddd;
+    padding: 8px;
+}
+
+tr:hover {background-color: #f1f1f1;}
+
+

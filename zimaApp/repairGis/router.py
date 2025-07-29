@@ -1,11 +1,12 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from datetime import date
 
 from sqlalchemy.exc import SQLAlchemyError
 
 from zimaApp.logger import logger
 from zimaApp.repairGis.dao import RepairsGisDAO
-from zimaApp.repairGis.schemas import SRepairsGis, RepairGisUpdate
+from zimaApp.repairGis.models import RepairsGis
+from zimaApp.repairGis.schemas import SRepairsGis, RepairGisUpdate, RepairGisResponse, ColumnEnum
 from zimaApp.tasks.telegram_bot_template import TelegramInfo
 
 from zimaApp.users.dependencies import get_current_user
@@ -18,22 +19,124 @@ from zimaApp.brigade.dao import BrigadeDAO
 from zimaApp.brigade.schemas import SWellsBrigade, SBrigadeSearch
 from fastapi_versioning import version
 
-
 router = APIRouter(
     prefix="/repair_gis",
     tags=["Данные по простоям ГИС"],
 )
+
+
+@router.get("")
+@version(1)
+async def repairs_gis():
+    return
+
+
 @router.get("/all")
 @version(1)
 async def get_repair_gis_all():
     try:
-        repair_all = await RepairsGisDAO.find_all()
-        return repair_all
+        repairs = await RepairsGisDAO.filter_for_filter(
+            model=RepairsGis,
+            join_related='well'
+        )
+        # Формируем список ответов, извлекая нужные поля
+        response_list = []
+        for repair in repairs:
+            response_list.append(
+                RepairGisResponse(
+                    id=repair.id,
+                    well_number=repair.well.well_number,  # предполагается, что есть поле number в WellsData
+                    well_area=repair.well.well_area,  # предполагается, что есть поле area в WellsData
+                    status=repair.status,
+                    contractor_gis=repair.contractor_gis,
+                    message_time=repair.message_time,
+                    downtime_start=repair.downtime_start,
+                    downtime_end=repair.downtime_end,
+                    downtime_duration=repair.downtime_duration,
+                    downtime_reason=repair.downtime_reason,
+                    work_goal=repair.work_goal,
+                    contractor_opinion=repair.contractor_opinion,
+                    downtime_duration_meeting_result=repair.downtime_duration_meeting_result,
+                    meeting_result=repair.meeting_result,
+                    image_pdf=repair.image_pdf
+                )
+            )
+        if len(response_list) != 0:
+            response_list = sorted([resp.model_dump() for resp in response_list],key=lambda x: x["downtime_start"], reverse=True)
+
+        return response_list
+
     except SQLAlchemyError as e:
         logger.error(e)
     except Exception as e:
         logger.error(e)
 
+
+@router.get("/get_find_data_column")
+@version(1)
+async def get_find_data_column(
+        column_name: ColumnEnum,
+        user: Users = Depends(get_current_user)):
+    try:
+        records = await RepairsGisDAO.filter_for_filter(
+            model=RepairsGis,
+            join_related='well'
+        )
+
+        result_list = {}
+
+        for record in records:
+            if column_name == 'well_number':
+                result_list.setdefault('well_number', []).append(record.well.well_number)
+            elif column_name == 'well_area':
+                result_list.setdefault('well_area', []).append(record.well.well_area)
+            elif column_name == 'downtime_start':
+                result_list.setdefault('downtime_start', []).append(record.downtime_start)
+            else:
+                result_list.setdefault(column_name, []).append(record.__dict__[column_name])
+
+        return result_list
+
+    except SQLAlchemyError as e:
+        logger.error(e)
+        return {"error": str(e)}
+    except Exception as e:
+        logger.error(e)
+        return {"error": str(e)}
+
+@router.get("/get_data_by_filter_column")
+@version(1)
+async def get_data_by_filter_column(
+    column_name: ColumnEnum,
+    filter_value: str,
+    user: Users = Depends(get_current_user)
+):
+    # Маппинг колонок на поля модели
+    valid_columns = {
+        "id": RepairsGis.id,
+        "well_number": RepairsGis.well.well_number,
+        "well_area": RepairsGis.well.well_area,
+        "status": RepairsGis.status,
+        "contractor_gis": RepairsGis.contractor_gis,
+        "downtime_start": RepairsGis.downtime_start,
+        # добавьте остальные поля по необходимости
+    }
+
+    # if column_name.value not in valid_columns:
+    #     raise HTTPException(status_code=400, detail="Invalid column name")
+    #
+    # filter_field = valid_columns[column_name.value]
+
+    # Формируем фильтр
+    filter_by = {column_name.name: filter_value}
+
+    repairs = await RepairsGisDAO.filter_for_filter(
+        model=RepairsGis,
+        filter_by=filter_by,
+        join_related='well'
+    )
+
+    return repairs
 
 
 @router.post("/add_data")
@@ -72,13 +175,15 @@ async def add_wells_data(
         msg = f'Unexpected error: {str(e)}'
         logger.error(msg, extra={"number_brigade": repair_info.well_id.well_number}, exc_info=True)
 
+
 @router.put("/update")
 @version(1)
 async def update_repair_gis_data(repair_info: RepairGisUpdate,
-                              user: Users = Depends(get_current_user)):
+                                 user: Users = Depends(get_current_user)):
     try:
+        repair_dict = repair_info.dict()
         if repair_info:
-            result = await RepairsGisDAO.update(id=repair_info.id, **repair_info.dict())
+            result = await RepairsGisDAO.update({"id": repair_info.id}, **repair_dict["fields"])
 
             # await TelegramInfo.send_message_update_brigade(user.login_user, repair_info.number_brigade,
             #                                                brigade.contractor)

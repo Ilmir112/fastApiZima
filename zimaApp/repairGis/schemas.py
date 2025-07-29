@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+from enum import Enum
 from typing import Dict, Any, Optional
 
 from pydantic import BaseModel
@@ -7,6 +8,12 @@ class RepairGisUpdate(BaseModel):
     id: int
     fields: Dict[str, Any]
 
+class ColumnEnum(str, Enum):
+    well_number="well_number"
+    well_area="well_area"
+    status="status"
+    contractor_gis="contractor_gis"
+    downtime_start="downtime_start"
 
 class SRepairsGis(BaseModel):
     well_id: int

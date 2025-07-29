@@ -39,7 +39,6 @@ async def get_repair_gis(
         request: Request,
         repairs = Depends(get_repair_gis_all)
         ):
-
     return templates.TemplateResponse(
         "repair_gis.html", context={
             "request": request,

@@ -1,7 +1,7 @@
 from typing import Literal
 
 from faststream.rabbit import RabbitBroker
-from pydantic import ValidationError, model_validator, ConfigDict
+from pydantic import ValidationError, ConfigDict
 from pydantic_settings import BaseSettings
 from urllib.parse import quote
 
@@ -66,11 +66,12 @@ class Settings(BaseSettings):
     ALGORITHM: str
 
     TOKEN: str
+    TOKEN_USERS: str
     CHAT_ID: str
     EMAIL_CHECK_LIST: list
 
-    # model_config = ConfigDict(env_file=".env")
-    model_config = ConfigDict(env_file='../.env')
+    model_config = ConfigDict(env_file=".env")
+    # model_config = ConfigDict(env_file='../.env')
 
 # В асинхронной функции
 async def init_broker():

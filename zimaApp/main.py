@@ -5,6 +5,7 @@ import telegram
 from contextlib import asynccontextmanager
 
 import uvicorn
+from celery.worker.consumer.consumer import debug
 from fastapi import FastAPI, Request, Response
 from fastapi.exceptions import RequestValidationError, HTTPException
 from fastapi_cache import FastAPICache
@@ -49,6 +50,7 @@ from zimaApp.pages.router import router as pages_router
 from zimaApp.logger import logger
 
 bot = telegram.Bot(token=settings.TOKEN)
+bot_user = telegram.Bot(token=settings.TOKEN_USERS)
 
 
 
@@ -235,4 +237,4 @@ async def add_process_time_header(request: Request, call_next):
 
 
 if __name__ == "__main__":
-    uvicorn.run("zimaApp.main:app", host="127.0.0.1", port=8000)
+    uvicorn.run("zimaApp.main:app", host="127.0.0.1", port=8000, reload=True)

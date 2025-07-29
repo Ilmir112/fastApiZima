@@ -9,11 +9,18 @@
     <h1 style="margin-top: 20px;">Простои по скважине</h1>
 
     <div class="loading" id="loading">Загрузка данных...</div>
-    <table id="repairs" style="display:none;">
+
+    <h1>Список простоев ГИС</h1>
+
+
+    <!-- Таблица -->
+    <table id="repairs">
         <thead>
         <tr>
-            <th>ID</th>
-            <th></th>
+
+            <th>номер скважины</th>
+            <th>площадь скважины</th>
+
             <th>Статус</th>
             <th>ГИС подрядчика</th>
             <th>Время сообщения</th>
@@ -25,62 +32,55 @@
             <th>Мнение подрядчика</th>
             <th>Результат совещания</th>
             <th>PDF изображение/документ</th>
+
         </tr>
+        <tr>
+            <th>
+                <select class="filter-select" data-column="well_number" title="Фильтр по номеру скважины">
+                    <option value="">Все</option>
+                    <!-- Опции добавятся динамически -->
+                </select>
+            </th>
+            <th>
+                <select class="filter-select" data-column="well_area" title="Фильтр по площади">
+                    <option value="">Все</option>
+                    <!-- Опции добавятся динамически -->
+                </select>
+            </th>
+            <th>
+                <select class="filter-select" data-column="status" title="Фильтр по статусу">
+                    <option value="">Все</option>
+                    <!-- Опции добавятся динамически -->
+                </select>
+            </th>
+            <th>
+                <select class="filter-select" data-column="contractor_gis" title="Фильтр по подрядчику">
+                    <option value="">Все</option>
+                    <!-- Опции добавятся динамически -->
+                </select>
+            </th>
+            <th>
+                <select class="filter-select" data-column="message_time" title="Фильтр по статусу">
+                    <option value="">Все</option>
+                    <!-- Опции добавятся динамически -->
+                </select>
+            </th>
+            <!-- Аналогично для других колонок -->
+        </tr>
+
         </thead>
         <tbody id="tableBody">
-        <!-- Данные будут вставлены сюда -->
+        <!-- Данные вставляются сюда -->
         </tbody>
     </table>
 </div>
 {% endblock %}
 
-{% block styles %}
-<!-- Подключение внешнего CSS файла -->
-<link rel="stylesheet" href="{{ url_for('static', path='css/repair_gis.css') }}">
-<style>
-/* Для подсказки при наведении на reason */
-.tooltip {
-    position: relative;
-    display: inline-block;
-    cursor: pointer;
-}
-.tooltip .tooltiptext {
-    visibility: hidden;
-    width: 300px;
-    background-color: #555;
-    color: #fff;
-    text-align: left;
-    border-radius: 6px;
-    padding: 5px;
-    position: absolute;
-    z-index: 1;
-    bottom: 125%; /* Расположение над текстом */
-    left: 50%;
-    margin-left: -150px; /* Центрирование */
-    opacity: 0;
-    transition: opacity 0.3s;
-}
-.tooltip:hover .tooltiptext {
-    visibility: visible;
-    opacity: 1;
-}
-</style>
-{% endblock %}
-
 {% block scripts %}
-<!-- Подключение внешних JS файлов -->
-<script src="{{ url_for('static', path='js/repair_gis.js') }}"></script>
-
-<!-- Передача API URL в глобальную переменную -->
 <script>
-const apiUrl = "{{ url_for('get_repair_gis_all') }}"; // Укажите правильный путь
+    const apiBaseUrl = "{{ url_for('repairs_gis') }}";
 </script>
+<!-- Подключение внешнего JS файла -->
+<script src="../static/js/repair_gis.js"></script>
 
-<!-- Вызов функции при загрузке страницы -->
-<script>
-// Используем addEventListener для безопасного вызова после загрузки DOM
-document.addEventListener('DOMContentLoaded', () => {
-    fetchAndDisplayData();
-});
-</script>
 {% endblock %}
