@@ -109,8 +109,8 @@ services:
 #    networks:
 #      - my_network
 
-#volumes:
-#  postgresdata:
+volumes:
+  postgresdata:
 #  grafanadata:
 #  prometheusdata:
 
