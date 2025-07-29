@@ -1,8 +1,7 @@
-# docker compose build - используем эту команду, если меняли что-то в Dockerfile
-# docker compose up - если изменили только docker-compose
-
+version: '3.8'
 
 services:
+  # Основные сервисы
   db:
     image: postgres:15
     container_name: zima_data
@@ -10,10 +9,10 @@ services:
       POSTGRES_PASSWORD: 195375AsD+
     volumes:
       - postgresdata:/var/lib/postgresql/data
-    env_file: # Файл с переменными окружения (Вместо environment)
+    env_file:
       - .env-non-dev
     ports:
-      - 5433:5432 # Порт нужен, только если нам нужен доступ к контейнеру напрямую
+      - 5433:5432
     networks:
       - my_network
 
@@ -31,91 +30,103 @@ services:
     container_name: zima_app
     env_file:
       - .env-non-dev
-    depends_on: # Запускаем только после запуска БД и Redis (depends on = зависит от)
+    depends_on:
       - db
       - redis
-    # Если не работает эта команда, используйте закомментированную
-    # command: ["/zimaApp/docker/zimaApp.sh"]
     command: sh -c "alembic upgrade head && gunicorn zimaApp.main:app --workers 2 --worker-class uvicorn.workers.UvicornWorker --bind=0.0.0.0:8000"
     ports:
       - 7777:8000
     networks:
       - my_network
 
-#  celery:
-#    image: zima_celery
-#    build:
-#      context: . # celery это библиотека, у неё нет образа, берём из основного билда
-#    container_name: zima_celery
-#    # Если не работает эта команда, используйте закомментированную
-#    #    command: ["/zimaApp/docker/celery.sh", "celery"] # Второй аргумен для if/elif в скрипте
-#    command: sh -c "celery --app=zimaApp.tasks.celery_app:celery_app worker -l INFO"
-#    env_file:
-#      - .env-non-dev
-#    depends_on:
-#      - redis
-#    networks:
-#      - my_network
-#
-#  celery-beat:
-#    image: zima_celery
-#    build:
-#      context: .
-#    container_name: zima_celery_beat
-#    command: sh -c "celery --app=zimaApp.tasks.celery_app:celery_app beat -l INFO"
-#    env_file:
-#      - .env-non-dev
-#    depends_on:
-#      - redis
-#    networks:
-#      - my_network
-#
-#  flower:
-#    image: zima_flower
-#    build:
-#      context: .
-#    container_name: zima_flower
-#    command: sh -c "celery --app=zimaApp.tasks.celery_app:celery_app flower"
-#    env_file:
-#      - .env-non-dev
-#    depends_on:
-#      - redis
-#      - celery
-#    ports:
-#      - 5555:5555
-#    networks:
-#      - my_network
-#
-#  prometheus:
-#    image: prom/prometheus:v2.43.0
-#    container_name: prometheus
-#    volumes:
-#      - ./prometheus.yml:/etc/prometheus/prometheus.yml
-#      - prometheusdata:/prometheus
-#    restart: unless-stopped
-#    ports:
-#      - 9090:9090
-#    networks:
-#      - my_network
-#
-#  grafana:
-#    image: grafana/grafana:9.4.7
-#    container_name: grafana
-#    volumes:
-#      - grafanadata:/var/lib/grafana
-#    restart: unless-stopped
-#    ports:
-#      - 3000:3000
-#    networks:
-#      - my_network
+  celery:
+    image: zima_celery
+    build:
+      context: .
+    container_name: zima_celery
+    command: sh -c "celery --app=zimaApp.tasks.celery_app:celery_app worker -l INFO"
+    env_file:
+      - .env-non-dev
+    depends_on:
+      - redis
+    networks:
+      - my_network
+
+  celery-beat:
+    image: zima_celery
+    build:
+      context: .
+    container_name: zima_celery_beat
+    command: sh -c "celery --app=zimaApp.tasks.celery_app:celery_app beat -l INFO"
+    env_file:
+      - .env-non-dev
+    depends_on:
+      - redis
+    networks:
+      - my_network
+
+  flower:
+    image: zima_flower
+    build:
+      context: .
+    container_name: zima_flower
+    command: sh -c "celery --app=zimaApp.tasks.celery_app:celery_app flower"
+    env_file:
+      - .env-non-dev
+    depends_on:
+      - redis
+      - celery-beat
+    ports:
+      - 5555:5555
+    networks:
+      - my_network
+
+  prometheus:
+    image: prom/prometheus:v2.43.0
+    container_name: prometheus
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheusdata:/prometheus
+    restart: unless-stopped
+    ports:
+      - 9090:9090
+   # Объединённый сервис для мониторинга
+
+  grafana:
+   image: grafana/grafana:9.4.7
+   container_name: grafana
+   volumes:
+     - grafanadata:/var/lib/grafana
+   restart: unless-stopped
+   ports:
+     - 3000:3000
+
+  # Новый сервис RabbitMQ (добавлен в общий файл)
+  rabbitmq:
+    image: rabbitmq:3.10.7-management
+    hostname: rabbitmq
+    # Можно убрать или оставить, если нужен отдельный хостнейм внутри сети.
+    # В случае необходимости, можно задать hostname.
+    # hostname можно убрать, если не нужен.
+    # hostname: rabbitmq
+    # Или оставить по желанию.
+
+    # Порты для управления и взаимодействия с RabbitMQ.
+    ports:
+      - 15672:15672   # Панель управления (Management UI)
+      - 5672:5672     # AMQP протокол
+
+    env_file:
+      - .env-non-dev
 
 volumes:
   postgresdata:
-#  grafanadata:
-#  prometheusdata:
 
+  grafanadata:
 
+  prometheusdata:
+
+  rabbitmq_data:
 
 networks:
   my_network:
-    driver: bridge
