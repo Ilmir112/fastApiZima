@@ -80,7 +80,7 @@ services:
       - .env-non-dev
     depends_on:
       - redis
-      - celery-beat
+      - celery
     ports:
       - 5555:5555
     networks:
