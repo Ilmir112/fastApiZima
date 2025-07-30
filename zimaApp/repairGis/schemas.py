@@ -21,7 +21,7 @@ class SRepairsGis(BaseModel):
     message_time: datetime
     downtime_start: datetime | None
     downtime_end: datetime | None
-    downtime_duration: float | None
+    downtime_duration: int | float | None
     downtime_reason: str
     work_goal: str
     contractor_opinion: str | None

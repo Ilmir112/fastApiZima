@@ -27,6 +27,7 @@ async function fetchAllData() {
         alert('Ошибка загрузки данных');
     }
 }
+
 function populateFilters() {
     document.querySelectorAll('.filter-select').forEach(select => {
         const column = select.dataset.column;
@@ -160,7 +161,10 @@ function renderTable(data) {
 
         // Создаем редактируемые поля для указанных колонок
         const workGoalInput = `<input type="text" value="${item.work_goal || ''}" onchange="updateField('${item.id}', 'work_goal', this.value)">`;
-        const contractorOpinionInput = `<input type="text" value="${item.contractor_opinion || ''}" onchange="updateField('${item.id}', 'contractor_opinion', this.value)">`;
+        const contractorOpinionInput = `
+          <textarea rows="5" cols="40" onchange="updateField('${item.id}', 'contractor_opinion', this.value)">
+            ${item.contractor_opinion || ''}
+          </textarea>`;
         const meetingResultInput = `<input type="text" value="${item.meeting_result || ''}" onchange="updateField('${item.id}', 'meeting_result', this.value)">`;
 
 
@@ -212,6 +216,7 @@ function renderTable(data) {
     // tableEl.style.display = '';
 
 }
+
 function formatDateTime(dateStr) {
     const date = new Date(dateStr);
     if (isNaN(date)) return dateStr; // если не удалось распарсить, оставить как есть
@@ -250,6 +255,9 @@ async function updateField(id, field, value) {
 
         // Можно добавить логику для обновления данных в таблице или отображения успеха
         console.log(`Обновлено поле ${field} для записи ${id}`, result);
+        // Перезагружаем страницу после успешного обновления
+        window.location.reload();
+
     } catch (error) {
         console.error('Ошибка при обновлении данных:', error);
         alert('Не удалось обновить данные. Попробуйте еще раз.');

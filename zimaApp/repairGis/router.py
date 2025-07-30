@@ -1,10 +1,11 @@
 from dns.asyncquery import https
 from fastapi import APIRouter, Depends, HTTPException
-from datetime import date
+from datetime import date, timedelta, datetime, timezone
 
 from sqlalchemy.exc import SQLAlchemyError
 
 from zimaApp.config import settings
+from zimaApp.exceptions import DowntimeDurationAlreadyExistsException
 from zimaApp.logger import logger
 from zimaApp.repairGis.dao import RepairsGisDAO
 from zimaApp.repairGis.models import RepairsGis
@@ -187,6 +188,19 @@ async def update_repair_gis_data(repair_info: RepairGisUpdate,
     try:
         repair_dict = repair_info.dict()
         if repair_info:
+            if "downtime_end" in repair_info.fields:
+                result = await RepairsGisDAO.find_one_or_none(id=repair_info.id)
+                time_finish = datetime.fromisoformat(repair_info.fields["downtime_end"]).astimezone(timezone.utc) + timedelta(hours=5)
+                time_run = result.downtime_start
+                downtime_duration = time_finish - time_run
+
+                # Проверяем, что длительность положительна
+                if downtime_duration <= timedelta(0):
+                    return DowntimeDurationAlreadyExistsException
+
+                repair_dict["fields"]["downtime_duration"] = float(downtime_duration.total_seconds() / 3600)
+            repair_dict["fields"]["downtime_end"] = time_finish
+
             result = await RepairsGisDAO.update({"id": repair_info.id}, **repair_dict["fields"])
 
             # await TelegramInfo.send_message_update_brigade(user.login_user, repair_info.number_brigade,
@@ -197,11 +211,13 @@ async def update_repair_gis_data(repair_info: RepairGisUpdate,
         msg = f'Database Exception Brigade {db_err}'
         logger.error(msg, extra={"number_brigade": repair_info.number_brigade,
                                  "contractor": repair_info.contractor}, exc_info=True)
+        return {"error": str(msg)}
 
     except Exception as e:
         msg = f'Unexpected error: {str(e)}'
         logger.error(msg, extra={"number_brigade": repair_info.number_brigade,
                                  "contractor": repair_info.contractor}, exc_info=True)
+        return {"error": str(e)}
 
 
 @router.delete("/delete_brigade")
