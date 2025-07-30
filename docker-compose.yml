@@ -83,8 +83,7 @@ services:
       - redis
     ports:
       - 5555:5555
-    networks:
-      - my_network
+
 
   prometheus:
     image: prom/prometheus:v2.43.0
