@@ -20,7 +20,7 @@ services:
   redis:
     image: redis:7
     container_name: zima_redis
-    doc
+
 
   zima:
     image: zima_image2
