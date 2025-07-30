@@ -71,8 +71,7 @@ services:
       - .env-non-dev
     depends_on:
       - redis
-      - zima_celery
-      - zima_cel_beat
+
     ports:
       - 5555:5555
 
