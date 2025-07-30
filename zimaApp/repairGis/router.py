@@ -1,3 +1,4 @@
+from dns.asyncquery import https
 from fastapi import APIRouter, Depends, HTTPException
 from datetime import date
 
@@ -23,13 +24,14 @@ from fastapi_versioning import version
 router = APIRouter(
     prefix="/repair_gis",
     tags=["Данные по простоям ГИС"],
+
 )
 
 
 @router.get("")
 @version(1)
 async def repairs_gis():
-    return
+    return {"status": "ok", "data": "пример данных"}
 
 
 @router.get("/all")
