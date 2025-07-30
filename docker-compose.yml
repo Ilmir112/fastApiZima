@@ -14,13 +14,10 @@ services:
       - .env-non-dev
     ports:
       - 5433:5432 # Порт нужен, только если нам нужен доступ к контейнеру напрямую
-    networks:
-      - my_network
 
   redis:
     image: redis:7
     container_name: zima_redis
-
 
   zima:
     image: zima_image2
@@ -38,8 +35,6 @@ services:
     command: sh -c "alembic upgrade head && gunicorn zimaApp.main:app --workers 2 --worker-class uvicorn.workers.UvicornWorker --bind=0.0.0.0:8000"
     ports:
       - 7777:8000
-    networks:
-      - my_network
 
   celery:
     image: zima_celery
@@ -53,9 +48,6 @@ services:
       - .env-non-dev
     depends_on:
       - redis
-    networks:
-      - my_network
-
   celery-beat:
     image: zima_cel_beat
     build:
@@ -66,8 +58,6 @@ services:
       - .env-non-dev
     depends_on:
       - redis
-    networks:
-      - my_network
 
   flower:
     image: zima_flower
@@ -81,9 +71,10 @@ services:
       - .env-non-dev
     depends_on:
       - redis
+      - zima_celery
+      - zima_cel_beat
     ports:
       - 5555:5555
-
 
   prometheus:
     image: prom/prometheus:v2.43.0
