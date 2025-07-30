@@ -56,7 +56,7 @@ services:
       - redis
     networks:
       - my_network
-      -
+
   celery-beat:
     image: zima_cel_beat
     build:
