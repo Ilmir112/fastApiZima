@@ -39,9 +39,11 @@ async def get_repair_gis(
         request: Request,
         repairs = Depends(get_repair_gis_all)
         ):
+    repair_url = request.url_for('repairs_gis')
     return templates.TemplateResponse(
         "repair_gis.html", context={
             "request": request,
+            "repair_url": repair_url,
             "repairs": repairs
         })
 

@@ -78,7 +78,7 @@
 
 {% block scripts %}
 <script>
-    const apiBaseUrl = "{{ url_for('repairs_gis') }}";
+    const apiBaseUrl = "{{ request.url_for('repairs_gis') }}";
 </script>
 <!-- Подключение внешнего JS файла -->
 <script src="../static/js/repair_gis.js"></script>
