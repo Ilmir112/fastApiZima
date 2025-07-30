@@ -8,6 +8,7 @@ celery_app = Celery(
     backend="rpc://",
     include=["zimaApp.tasks.tasks"],
 )
+# print(settings.rabbitmq_url)
 # celery_app = Celery(
 #     "tasks",
 #     broker=f"redis://{settings.REDIS_HOST}:{settings.REDIS_PORT}",

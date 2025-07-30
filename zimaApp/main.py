@@ -50,7 +50,7 @@ from zimaApp.pages.router import router as pages_router
 from zimaApp.logger import logger
 
 bot = telegram.Bot(token=settings.TOKEN)
-# bot_user = telegram.Bot(token=settings.TOKEN_USERS)
+bot_user = telegram.Bot(token=settings.TOKEN_USERS)
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
@@ -68,6 +68,7 @@ async def lifespan(_: FastAPI):
         if settings.MODE == "PROD":
             logger.info("Брокер стартовал")
             await bot.send_message(chat_id=settings.CHAT_ID, text="Приложение запущено")
+            await bot_user.send_message(chat_id=settings.CHAT_ID, text="Приложение запущено!!!")
             logger.info("Сообщение отправлено успешно")
 
     except Exception as e:

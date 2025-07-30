@@ -3,6 +3,7 @@ from datetime import date
 
 from sqlalchemy.exc import SQLAlchemyError
 
+from zimaApp.config import settings
 from zimaApp.logger import logger
 from zimaApp.repairGis.dao import RepairsGisDAO
 from zimaApp.repairGis.models import RepairsGis
@@ -144,6 +145,7 @@ async def get_data_by_filter_column(
 async def add_wells_data(
         repair_info: SRepairsGis
 ):
+    from zimaApp.main import bot_user
     try:
         if repair_info:
             # await delete_brigade(repair_info)
@@ -163,7 +165,7 @@ async def add_wells_data(
                 image_pdf=repair_info.image_pdf,
             )
 
-            await TelegramInfo.send_message_create_repair_gis(result)
+            await bot_user.send_message(chat_id=settings.CHAT_ID, text=result)
 
             return {"status": "success", "id": result}
 
