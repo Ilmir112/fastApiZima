@@ -54,18 +54,18 @@ services:
       - redis
     networks:
       - my_network
-#  celery-beat:
-#    image: zima_cel_beat
-#    build:
-#      context: .
-#    container_name: zima_celery_beat
-#    command: sh -c "celery --app=zimaApp.tasks.celery_app:celery_app beat -l INFO"
-#    env_file:
-#      - .env-non-dev
-#    depends_on:
-#      - redis
-#    networks:
-#      - my_network
+  celery-beat:
+    image: zima_cel_beat
+    build:
+      context: .
+    container_name: zima_celery_beat
+    command: sh -c "celery --app=zimaApp.tasks.celery_app:celery_app beat -l INFO"
+    env_file:
+      - .env-non-dev
+    depends_on:
+      - redis
+    networks:
+      - my_network
 
   flower:
     image: zima_flower
