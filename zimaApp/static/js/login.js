@@ -70,6 +70,9 @@ window.addEventListener('load', async () => {
     const loginContainer = document.getElementById('login-container');
     const contentContainer = document.getElementById('content');
 
+    showLogoutButton(true);
+                if (loginContainer) loginContainer.style.display = 'none';
+
     // Функция для проверки авторизации
     async function checkAuth() {
         if (!token) {
@@ -83,6 +86,7 @@ window.addEventListener('load', async () => {
     }
 
     if (path === '/pages/login') {
+
         // Страница логина
         if (token) {
             // Уже есть токен — редирект на домашнюю страницу
@@ -95,9 +99,10 @@ window.addEventListener('load', async () => {
 
         showLogoutButton(false);
 
-    } else if (path === '/pages/home') {
+    } else if (path === '/pages/home' ||
+                path.startsWith('/pages/')) {
         // Страница домашней страницы
-        if (!(await checkAuth())) return;
+        if ((await checkAuth())) return;
 
         try {
             const response = await fetch('/pages/home', {
@@ -124,8 +129,7 @@ window.addEventListener('load', async () => {
 
     } else if (
         path === '/pages/profile' ||
-        path === '/pages/settings' ||
-        path.startsWith('/pages/') // добавьте сюда нужные пути
+        path === '/pages/settings'  // добавьте сюда нужные пути
     ) {
         // Для других страниц с ограниченным доступом
         if (!(await checkAuth())) return;

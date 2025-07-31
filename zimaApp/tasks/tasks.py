@@ -6,7 +6,6 @@ import re
 import smtplib
 from datetime import datetime, timedelta
 from nntplib import decode_header
-
 from pydantic import EmailStr
 import email.utils
 
