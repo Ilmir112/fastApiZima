@@ -14,7 +14,8 @@ services:
       - .env-non-dev
     ports:
       - 5433:5432 # Порт нужен, только если нам нужен доступ к контейнеру напрямую
-
+    networks:
+      - my_network
   redis:
     image: redis:7
     container_name: zima_redis
