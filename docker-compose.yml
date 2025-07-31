@@ -18,6 +18,8 @@ services:
   redis:
     image: redis:7
     container_name: zima_redis
+    networks:
+      - my_network
 
   zima:
     image: zima_image2
