@@ -25,6 +25,7 @@ services:
     build:
       context: .
     container_name: zima_app
+
     env_file:
       - .env-non-dev
     depends_on: # Запускаем только после запуска БД и Redis (depends on = зависит от)
@@ -35,7 +36,8 @@ services:
     command: sh -c "alembic upgrade head && gunicorn zimaApp.main:app --workers 2 --worker-class uvicorn.workers.UvicornWorker --bind=0.0.0.0:8000"
     ports:
       - 7777:8000
-
+    networks:
+      - my_network
   celery:
     image: zima_celery
     build:
@@ -48,6 +50,8 @@ services:
       - .env-non-dev
     depends_on:
       - redis
+    networks:
+      - my_network
   celery-beat:
     image: zima_cel_beat
     build:
@@ -58,6 +62,8 @@ services:
       - .env-non-dev
     depends_on:
       - redis
+    networks:
+      - my_network
 
   flower:
     image: zima_flower
@@ -99,3 +105,8 @@ volumes:
   postgresdata:
   grafanadata:
   prometheusdata:
+
+networks:
+  my_network:
+    driver: bridge
+

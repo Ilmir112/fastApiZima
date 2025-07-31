@@ -196,7 +196,8 @@ async def update_repair_gis_data(repair_info: RepairGisUpdate,
 
                 # Проверяем, что длительность положительна
                 if downtime_duration <= timedelta(0):
-                    return DowntimeDurationAlreadyExistsException
+                    raise DowntimeDurationAlreadyExistsException
+                    return
 
                 repair_dict["fields"]["downtime_duration"] = float(downtime_duration.total_seconds() / 3600)
             repair_dict["fields"]["downtime_end"] = time_finish
