@@ -77,71 +77,16 @@ function applyFilters() {
     renderTable(filteredData);
 }
 
-async function showDropdown(values, column) {
-    let dropdown = document.getElementById('columnFilterDropdown');
-    if (!dropdown) {
-        dropdown = document.createElement('select');
-        dropdown.id = 'columnFilterDropdown';
-        document.body.appendChild(dropdown);
-    }
-    dropdown.innerHTML = '';
+function formatDateTime(dateStr) {
 
-    function getColumnIndex(columnName) {
-        const headers = document.querySelectorAll('#repairs thead th');
-        console.log('Найденные заголовки:', headers.length);
-        headers.forEach((header, index) => {
-            console.log(`Header ${index}:`, header.innerText.trim());
-        });
-        for (let i = 0; i < headers.length; i++) {
-            if (headers[i].innerText.trim() === columnName) return i;
-        }
-        return -1;
-    }
-
-    async function filterTableByColumn(column, value) {
-        const tbody = document.getElementById('tableBody');
-        if (!tbody) return;
-        const columnIndex = getColumnIndex(column);
-        if (columnIndex === -1) {
-            console.warn(`Колонка "${column}" не найдена`);
-            return;
-        }
-
-        Array.from(tbody.rows).forEach(row => {
-            const cells = row.cells;
-            if (cells.length > columnIndex) {
-                const cellText = cells[columnIndex].innerText.trim();
-                if (cellText === value || value === '') {
-                    row.style.display = '';
-                } else {
-                    row.style.display = 'none';
-                }
-            }
-        });
-    }
-
-    values.forEach(val => {
-        const option = document.createElement('option');
-        option.value = val;
-        option.textContent = val;
-        dropdown.appendChild(option);
-    });
-
-    // Позиционируем рядом с кнопкой
-    const btn = document.querySelector(`button[data-column="${column}"]`);
-    if (btn) {
-        const rect = btn.getBoundingClientRect();
-        dropdown.style.position = 'absolute';
-        dropdown.style.top = `${rect.bottom + window.scrollY}px`;
-        dropdown.style.left = `${rect.left + window.scrollX}px`;
-        dropdown.style.display = 'block';
-
-        // Обработчик выбора
-        dropdown.onchange = () => {
-            filterTableByColumn(column, dropdown.value);
-            dropdown.style.display = 'none';
-        };
-    }
+    const date = new Date(dateStr);
+    if (isNaN(date)) return dateStr; // если не удалось распарсить, оставить как есть
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    return `${year}.${month}.${day} ${hours}:${minutes}`;
 }
 
 function renderTable(data) {
@@ -167,7 +112,13 @@ function renderTable(data) {
           </textarea>`;
         const meetingResultInput = `<input type="text" value="${item.meeting_result || ''}" onchange="updateField('${item.id}', 'meeting_result', this.value)">`;
 
+        // HTML для файла или ссылки
+        const fileLinkHtml = item.image_pdf
+            ? `<a href="${item.image_pdf}" target="_blank">Открыть акт</a>
+                 <button class="delete-file-btn" data-id="${item.id}">Удалить</button>`
+            : `<input type="file" accept=".png,.jpeg,.jpg,.pdf" onchange="uploadFile('${item.id}', this.files)">`;
 
+        // Подсказка для причины
         const reasonHtml = `
             <div class="tooltiptext">
                 ${shortReason}
@@ -176,57 +127,143 @@ function renderTable(data) {
 
         // Создаем строку таблицы
         const rowHtml = `
+            <tr data-id="${item.id}">
+                <td>${item.well_number || ''}</td>
+                <td>${item.well_area || ''}</td>
+                <td>
+                    <select class="status-select" data-id="${item.id}">
+                        <option value="открыт" ${item.status === 'открыт' ? 'selected' : ''}>открыт</option>
+                        <option value="закрыт" ${item.status === 'закрыт' ? 'selected' : ''}>закрыт</option>
+                        <option value="без простоя" ${item.status === 'без простоя' ? 'selected' : ''}>без простоя</option>
+                    </select>
+                </td>
+                <td>${item.contractor_gis || ''}</td>                   
 
-                <tr>
-                    <td>${item.well_number || ''}</td>
-                    <td>${item.well_area || ''}</td>
-                    <td>
-                        <select class="status-select" data-id="${item.id}">
-                            <option value="открыт" ${item.status === 'открыт' ? 'selected' : ''}>открыт</option>
-                            <option value="закрыт" ${item.status === 'закрыт' ? 'selected' : ''}>закрыт</option>
-                            <option value="без простоя" ${item.status === 'без простоя' ? 'selected' : ''}>без простоя</option>
-                        </select>
-                    </td>
-                    <td>${item.contractor_gis || ''}</td>                   
+                <!-- Редактируемые поля -->
+                <td>${messageInput}</td>
+                <td>${downtimeStartInput}</td>
+                <td>${downtimeEndInput}</td>
+                <td>${downtimeDurationInput}</td>
 
-                    <!-- Редактируемые поля -->
-                    <td>${messageInput}</td>
-                    <td>${downtimeStartInput}</td>
-                    <td>${downtimeEndInput}</td>
-                    <td>${downtimeDurationInput}</td>
+                <!-- Причина с подсказкой -->
+                <td>${reasonHtml}</td>
 
-                    <!-- Причина с подсказкой -->
-                    <td>${reasonHtml}</td>
+                <!-- Сделать редактируемыми -->
+                <td>${workGoalInput}</td>
+                <td>${contractorOpinionInput}</td>
+                <td>${meetingResultInput}</td>
 
-                   <!-- Сделать редактируемыми -->
-                    <td>${workGoalInput}</td>
-                    <td>${contractorOpinionInput}</td>
-                    <td>${meetingResultInput}
-                    <td>
-
-                    <!-- PDF или изображение -->
-                    ${item.image_pdf ? `<a href="${item.image_pdf}" target="_blank">Открыть PDF/Изображение</a>` : ''}
-                    </td>
-                </tr>`;
+                <!-- Файл или ссылка -->
+                <td class="file-link">${fileLinkHtml}</td>
+            </tr>`;
 
         tbody.insertAdjacentHTML('beforeend', rowHtml);
     });
 
-    // loadingEl.style.display = 'none';
-    // tableEl.style.display = '';
-
+    // После вставки всех строк можно добавить обработчики для кнопок удаления файла
+    document.querySelectorAll('.delete-file-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const id = btn.dataset.id;
+            deleteFile(id);
+        });
+    });
 }
 
-function formatDateTime(dateStr) {
-    const date = new Date(dateStr);
-    if (isNaN(date)) return dateStr; // если не удалось распарсить, оставить как есть
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    const hours = String(date.getHours()).padStart(2, '0');
-    const minutes = String(date.getMinutes()).padStart(2, '0');
-    return `${year}.${month}.${day} ${hours}:${minutes}`;
+function updateFileLink(itemId, htmlContent) {
+    const row = document.querySelector(`tr[data-id="${itemId}"]`);
+    if (row) {
+        const linkCell = row.querySelector('.file-link');
+        if (linkCell) {
+            linkCell.innerHTML = htmlContent;
+        }
+    }
 }
+
+// Делегирование события клика по кнопкам "Удалить файл"
+document.getElementById('tableBody').addEventListener('click', function (e) {
+        if (e.target && e.target.classList.contains('delete-file-btn')) {
+            const itemId = e.target.getAttribute('data-id');
+            deleteFile(itemId);
+        }
+    }
+)
+
+
+async function deleteFile(itemId) {
+    const token = localStorage.getItem('access_token');
+
+    if (!confirm('Вы уверены, что хотите удалить файл?')) return;
+
+    try {
+        const response = await fetch('/files/delete', {
+            method: 'DELETE', // или 'DELETE', в зависимости от API
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({itemId})
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+            // Обновляем таблицу: удаляем ссылку и кнопку
+            const row = document.querySelector(`tr[data-id="${itemId}"]`);
+            if (row) {
+                const linkCell = row.querySelector('.file-link');
+                linkCell.innerHTML = `
+                    <input type="file" accept=".png,.jpeg,.jpg,.pdf" onchange="uploadFile('${itemId}', this.files)">
+                `;
+            }
+        } else {
+            alert('Ошибка: ' + result.message);
+        }
+    } catch (e) {
+        console.error(e);
+        alert('Ошибка при удалении файла');
+    }
+}
+
+async function uploadFile(itemId, files) {
+    if (!files || files.length === 0) return;
+    const token = localStorage.getItem('access_token');
+    const file = files[0];
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('itemId', itemId);
+
+    try {
+        const response = await fetch('/files/upload', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            },
+            body: formData,
+        });
+        const result = await response.json();
+
+        if (response.status === 200) {
+            // Обновляем ссылку в таблице
+            const row = document.querySelector(`tr[data-id="${itemId}"]`);
+            if (row) {
+                const linkCell = row.querySelector('.file-link');
+                if (linkCell) {
+                    linkCell.innerHTML = `
+                        <a href="${result.fileUrl}" target="_blank">Открыть акт</a>
+                        <button class="delete-file-btn" data-id="${itemId}">Удалить</button>
+                    `;
+
+                }
+            }
+        } else {
+            alert('Ошибка загрузки: ' + result.message);
+        }
+    } catch (e) {
+        console.error(e);
+        alert('Ошибка при отправке файла');
+    }
+}
+
 
 // Асинхронная функция для обновления поля записи
 async function updateField(id, field, value) {
@@ -237,18 +274,21 @@ async function updateField(id, field, value) {
             [field]: value
         }
     };
-
+    const token = localStorage.getItem('access_token');
     try {
         const response = await fetch(apiUrl, {
             method: 'PUT',
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
             },
             body: JSON.stringify(data)
         });
 
-        if (!response.ok) {
-            throw new Error(`Ошибка при обновлении: ${response.statusText}`);
+        if (response.status !== 200) {// Можно вывести статус и текст ошибки
+            const errorText = await response.text();
+            console.error(`Ошибка: ${response.status} - ${errorText}`);
+            throw new Error(`Ошибка при запросе: ${response.status}`);
         }
 
         const result = await response.json();

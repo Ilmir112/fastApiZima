@@ -1,3 +1,4 @@
+import urllib
 from typing import Literal
 
 from faststream.rabbit import RabbitBroker
@@ -14,6 +15,11 @@ class Settings(BaseSettings):
     DB_HOST: str
     DB_PORT: int
     DB_NAME: str
+    MONGO_DB_USER: str
+    MONGO_DB_PASSWORD: str
+    MONGO_DB_HOST: str
+    MONGO_DB_PORT: int
+    MONGO_DB_NAME: str
 
     # DATABASE_URL: str = None
 
@@ -21,6 +27,10 @@ class Settings(BaseSettings):
     def DATABASE_URL(self):
         return f"postgresql+asyncpg://{self.DB_USER}:{self.DB_PASSWORD}@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"
 
+    @property
+    def MONGO_DATABASE_URL(self):
+        return f"mongodb://{self.MONGO_DB_USER}:{urllib.parse.quote(self.MONGO_DB_PASSWORD)}@"\
+                f"{self.MONGO_DB_HOST}:{self.MONGO_DB_PORT}/{self.MONGO_DB_NAME}"
     TEST_DB_USER: str
     TEST_DB_PASSWORD: str
     TEST_DB_HOST: str

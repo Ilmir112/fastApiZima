@@ -182,11 +182,10 @@ async def add_wells_data(
 
 
 @router.put("/update")
-@version(1)
 async def update_repair_gis_data(repair_info: RepairGisUpdate,
                                  user: Users = Depends(get_current_user)):
     try:
-        repair_dict = repair_info.dict()
+        repair_dict = repair_info.model_dump()
         if repair_info:
             if "downtime_end" in repair_info.fields:
                 result = await RepairsGisDAO.find_one_or_none(id=repair_info.id)
@@ -200,7 +199,7 @@ async def update_repair_gis_data(repair_info: RepairGisUpdate,
                     return
 
                 repair_dict["fields"]["downtime_duration"] = float(downtime_duration.total_seconds() / 3600)
-            repair_dict["fields"]["downtime_end"] = time_finish
+                repair_dict["fields"]["downtime_end"] = time_finish
 
             result = await RepairsGisDAO.update({"id": repair_info.id}, **repair_dict["fields"])
 
@@ -231,3 +230,4 @@ async def delete_brigade(
         return await BrigadeDAO.delete_item_all_by_filter(
             number_brigade=brigade.number_brigade, contractor=brigade.contractor
         )
+

@@ -22,6 +22,7 @@ router = APIRouter(
 )
 
 templates = Jinja2Templates(directory="zimaApp/templates")
+# templates = Jinja2Templates(directory="templates")
 
 @router.get("/login")
 @version(1)
@@ -52,11 +53,16 @@ async def get_repair_gis(
 async def get_home_page(
         request: Request
 ):
-    return templates.TemplateResponse(
+    try:
+        template = templates.TemplateResponse(
         "home.html", context={
             "request": request,
             "title": "Главная страница"
         })
+        return template
+    except Exception as e:
+        logger.error(e)
+
 
 
 @router.get("/plan")
