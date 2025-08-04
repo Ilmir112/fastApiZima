@@ -44,6 +44,7 @@ async def init_mongo(client):
     try:
         # client = AsyncIOMotorClient(settings.MONGO_DATABASE_URL)
         await init_beanie(database=client["files"], document_models=[ImageMongoDB])
+        logger.info("Монго стартовал")
         #
         # # Создаем или ищем документ
         # images_pdf = await ImageMongoDB.find_one({"name": "zima_data"})

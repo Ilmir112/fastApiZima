@@ -60,19 +60,23 @@ client_mongo = MongoFile()
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
-    # Запускаем потребителя как фоновую задачу
-    consumer_task = asyncio.create_task(start_consumer())
+    # Получаем текущий активный цикл
+    loop = asyncio.get_running_loop()
 
+    # Запускаем потребителя как фоновую задачу в текущем цикле
+    consumer_task = loop.create_task(start_consumer())
+
+    # Инициализация MongoDB
     await init_mongo(client_mongo.client)
+
     try:
         print("Запуск приложения")
         redis = aioredis.from_url(
             f"redis://{settings.REDIS_HOST}:{settings.REDIS_PORT}", encoding="utf8"
         )
         FastAPICache.init(RedisBackend(redis), prefix="fastapi-cache")
-
     except Exception as e:
-        print(e)
+        print(f"Ошибка при инициализации: {e}")
 
     try:
         if settings.MODE == "PROD":
@@ -82,11 +86,10 @@ async def lifespan(_: FastAPI):
                 chat_id=settings.CHAT_ID, text="Приложение запущено!!!"
             )
             logger.info("Сообщение отправлено успешно")
-
     except Exception as e:
         print(f"Ошибка при отправке сообщения: {e}")
-    yield  # здесь приложение запустится, когда управление вернется после этого yield
-    logger.info("Брокер остановлен")
+
+    yield  # Передача управления приложению
 
     # При завершении работы отменяем задачу потребителя
     if consumer_task:
@@ -95,6 +98,7 @@ async def lifespan(_: FastAPI):
             await consumer_task
         except asyncio.CancelledError:
             print("Потребитель остановлен")
+
     print("Завершение работы приложения")
 
 
