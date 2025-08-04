@@ -5,6 +5,7 @@ import telegram
 from contextlib import asynccontextmanager
 
 import uvicorn
+from beanie import init_beanie
 from fastapi import FastAPI, Request, Response
 from fastapi.exceptions import RequestValidationError, HTTPException
 from fastapi_cache import FastAPICache
@@ -32,7 +33,7 @@ from zimaApp.admin.views import (
 )
 from zimaApp.config import settings, router_broker
 
-from zimaApp.database import engine, init_mongo
+from zimaApp.database import engine, init_mongo, ImageMongoDB
 from hawk_python_sdk.modules.fastapi import HawkFastapi
 
 from zimaApp.files.dao import MongoFile
@@ -65,9 +66,11 @@ async def lifespan(_: FastAPI):
 
     # Запускаем потребителя как фоновую задачу в текущем цикле
     consumer_task = loop.create_task(start_consumer())
-
+    logger.info("попытка старта")
+    await init_beanie(database=client_mongo.client["files"], document_models=[ImageMongoDB])
+    logger.info("Монго стартовал")
     # Инициализация MongoDB
-    await init_mongo(client_mongo.client)
+    # await init_mongo(client_mongo.client)
 
     try:
         print("Запуск приложения")

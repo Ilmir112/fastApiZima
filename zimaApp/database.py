@@ -43,6 +43,7 @@ class ImageMongoDB(Document):
 async def init_mongo(client):
     try:
         # client = AsyncIOMotorClient(settings.MONGO_DATABASE_URL)
+        logger.info("попытка старта")
         await init_beanie(database=client["files"], document_models=[ImageMongoDB])
         logger.info("Монго стартовал")
         #
@@ -58,4 +59,4 @@ async def init_mongo(client):
         #     await images_pdf.insert()
 
     except Exception as e:
-        logger.info(str(e))
+        logger.error(str(e))
