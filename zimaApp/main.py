@@ -10,6 +10,7 @@ from fastapi.exceptions import RequestValidationError, HTTPException
 from fastapi_cache import FastAPICache
 from fastapi_cache.backends.redis import RedisBackend
 from fastapi_versioning import VersionedFastAPI
+from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorGridFSBucket
 
 from prometheus_fastapi_instrumentator import Instrumentator
 from redis import asyncio as aioredis
@@ -56,7 +57,9 @@ from zimaApp.logger import logger
 bot = telegram.Bot(token=settings.TOKEN)
 bot_user = telegram.Bot(token=settings.TOKEN_USERS)
 
-client_mongo = MongoFile()
+# Глобальные переменные для клиента и базы данных
+client: AsyncIOMotorClient = None
+fs_bucket: AsyncIOMotorGridFSBucket = None
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):

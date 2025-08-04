@@ -4,6 +4,9 @@ import mimetypes
 from fastapi import APIRouter, Form, UploadFile, HTTPException, Depends, File
 
 from fastapi.responses import StreamingResponse
+from motor.motor_asyncio import AsyncIOMotorGridFSBucket
+
+from zimaApp.files.dao import MongoFile
 
 from zimaApp.repairGis.dao import RepairsGisDAO
 from zimaApp.repairGis.router import update_repair_gis_data
@@ -22,14 +25,19 @@ router = APIRouter(
 )
 
 
+def get_fs_bucket() -> AsyncIOMotorGridFSBucket:
+    from zimaApp.main import fs_bucket
+    return fs_bucket
+
 @router.post("/upload")
 async def upload_file_gis_akt(
         itemId: str = Form(...),
         file: UploadFile = File(...),
+        fs: AsyncIOMotorGridFSBucket = Depends(get_fs_bucket),
         user: Users = Depends(get_current_user),
 ):
-    from zimaApp.main import client_mongo
-    file_url, file_id, filename = await client_mongo.upload_file(itemId, file)
+
+    file_url, file_id, filename = await MongoFile.upload_file(itemId, file, fs)
 
     result_file = RepairGisUpdate(id=int(itemId), fields={"image_pdf": file_url}, )
     result_file = await update_repair_gis_data(result_file)
@@ -39,10 +47,12 @@ async def upload_file_gis_akt(
 
 
 @router.get("/{file_id}")
-async def get_file(file_id: str, user: Users = Depends(get_current_user)):
+async def get_file(file_id: str,
+                   fs: AsyncIOMotorGridFSBucket = Depends(get_fs_bucket),
+                   user: Users = Depends(get_current_user)):
     try:
-        from zimaApp.main import client_mongo
-        grid_out = await client_mongo.get_file_from_mongo(file_id)
+
+        grid_out = await MongoFile.get_file_from_mongo(file_id, fs)
         if grid_out:
 
             # Получаем метаданные
@@ -77,8 +87,10 @@ async def get_file(file_id: str, user: Users = Depends(get_current_user)):
 
 
 @router.delete("/delete_plan")
-async def delete_file(data: dict):
-    from zimaApp.main import client_mongo
+async def delete_file(data: dict,
+                      fs: AsyncIOMotorGridFSBucket = Depends(get_fs_bucket),
+                      user: Users = Depends(get_current_user)):
+
 
     item_id = data.get("itemId")
     plan_info = await WellsRepairsDAO.find_one_or_none(id=int(item_id))
@@ -86,7 +98,7 @@ async def delete_file(data: dict):
         file_id = plan_info["signed_work_plan_path"]
         if file_id:
 
-            result_mongo = await client_mongo.delete_file_from_mongo(file_id.replace("/files/", ""))
+            result_mongo = await MongoFile.delete_file_from_mongo(file_id.replace("/files/", ""), fs)
             if result_mongo:
                 new_status = WellsRepairFile(id=int(item_id),
                                              signed_work_plan_path=None,
@@ -98,8 +110,10 @@ async def delete_file(data: dict):
 
 
 @router.delete("/delete_act_gis")
-async def delete_file(data: dict):
-    from zimaApp.main import client_mongo
+async def delete_file(data: dict,
+                      fs: AsyncIOMotorGridFSBucket = Depends(get_fs_bucket),
+                      user: Users = Depends(get_current_user)):
+
 
     try:
         item_id = data.get("itemId")
@@ -109,7 +123,7 @@ async def delete_file(data: dict):
             file_id = repair_info["image_pdf"]
             if file_id:
                 result_file = RepairGisUpdate(id=int(item_id), fields={"image_pdf": None})
-                result_mongo = await client_mongo.delete_file_from_mongo(file_id.replace("/files/", ""))
+                result_mongo = await MongoFile.delete_file_from_mongo(file_id.replace("/files/", ""), fs)
                 if result_mongo:
                     result = await update_repair_gis_data(result_file)
 
@@ -126,10 +140,10 @@ async def upload_plan(
         status: str = Form(...),
         user: Users = Depends(get_current_user),
 ):
-    from zimaApp.main import client_mongo
+
 
     try:
-        file_url, file_id, filename = await client_mongo.upload_file(itemId, file)
+        file_url, file_id, filename = await MongoFile.upload_file(itemId, file)
         result_file = WellsRepairFile(id=int(itemId),
                                       signed_work_plan_path=file_url,
                                       status_work_plan=status)
