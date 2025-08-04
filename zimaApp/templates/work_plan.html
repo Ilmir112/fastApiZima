@@ -7,7 +7,7 @@
 <head>
     <meta charset="UTF-8"/>
     <title>план работ</title>
-    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="{{ url_for('static', path='css/style.css') }}">
 
 
 </head>
@@ -15,7 +15,7 @@
 <div class="content-container">
     <head>
         <meta charset="UTF-8"/>
-        <title> </title>
+        <title></title>
         <h1 style="margin-top: 20px;">Поиск ремонтных данных по скважине</h1>
     </head>
 
@@ -35,7 +35,11 @@
 
     <!-- Передача данных из Python в JS -->
     <script>
-        const tableData = {{wells_repair | tojson}}
+        const tableData = {
+        {
+            wells_repair | tojson
+        }
+        }
         // Инициализация таблицы после загрузки страницы
         document.addEventListener("DOMContentLoaded", () => {
             if (tableData && Array.isArray(tableData.row)) {
