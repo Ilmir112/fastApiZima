@@ -232,7 +232,7 @@ async function uploadFile(itemId, files) {
                 const linkCell = row.querySelector('.file-link');
                 if (linkCell) {
                     linkCell.innerHTML = `
-                        <a href="${result.fileUrl}" target="_blank">Открыть акт</a>
+                        <a href="${result.fileUrl}" target="_blank">Открыть план</a>
                         <button class="delete-file-btn" data-id="${itemId}">Удалить</button>
                     `;
 

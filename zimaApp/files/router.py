@@ -39,14 +39,11 @@ async def upload_file_gis_akt(request: Request,
     if result_file:
         return {"fileId": file_id, "fileUrl": file_url}
 
-
 @router.get("/{file_id}")
 async def get_file(request: Request, file_id: str, user: Users = Depends(get_current_user)):
     try:
-
         grid_out = await MongoFile.get_file_from_mongo(request, file_id)
         if grid_out:
-
             # Получаем метаданные
             metadata = getattr(grid_out, "metadata", {}) or {}
             extension = metadata.get("extension")
@@ -59,23 +56,28 @@ async def get_file(request: Request, file_id: str, user: Users = Depends(get_cur
             if mime_type_meta:
                 content_type = mime_type_meta
             elif extension:
-                content_type, _ = mimetypes.guess_type(f"file{extension}")
-                if content_type is None:
-                    content_type = "application/octet-stream"
+                guessed_type, _ = mimetypes.guess_type(f"file{extension}")
+                content_type = guessed_type or "application/octet-stream"
             else:
-                content_type = "application/octet-stream"
+                content_type = metadata.get('contentType')
 
             filename_attr = getattr(grid_out, "filename", None)
             filename_for_header = filename_attr or "file"
 
-            headers = {"Content-Disposition": f'inline; filename="{filename_for_header}"'}
 
             return StreamingResponse(
-                io.BytesIO(contents), media_type=content_type, headers=headers
+                io.BytesIO(contents),
+                media_type=content_type,
+                headers={
+                    "Content-Disposition": f'inline; filename="{filename_for_header}"'
+                }
             )
-
+        else:
+            return {"error": "File not found"}
     except Exception as e:
-        raise HTTPException(status_code=404, detail=f"Файл не найден: {e}")
+        # Логирование или обработка ошибок
+        return {"error": str(e)}
+
 
 
 @router.delete("/delete_plan")
