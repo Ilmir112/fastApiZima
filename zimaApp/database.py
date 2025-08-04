@@ -40,9 +40,9 @@ class ImageMongoDB(Document):
         indexes = [pymongo.IndexModel([("name", pymongo.TEXT)])]
 
 
-async def init_mongo(client):
+async def init_mongo():
     try:
-        # client = AsyncIOMotorClient(settings.MONGO_DATABASE_URL)
+        client = AsyncIOMotorClient(settings.MONGO_DATABASE_URL)
         logger.info("попытка старта")
         await init_beanie(database=client["files"], document_models=[ImageMongoDB])
         logger.info("Монго стартовал")
@@ -57,6 +57,6 @@ async def init_mongo(client):
         #         size=1024  # размер файла в байтах
         #     )
         #     await images_pdf.insert()
-
+        return client
     except Exception as e:
         logger.error(str(e))
