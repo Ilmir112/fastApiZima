@@ -1,55 +1,37 @@
 import io
+import mimetypes
 
-from fastapi import APIRouter, Form, UploadFile, HTTPException, Depends
-from fastapi.params import File
-from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorGridFSBucket
+from fastapi import APIRouter, Form, UploadFile, HTTPException, Depends, File
+
 from fastapi.responses import StreamingResponse
-from zimaApp.config import settings
+
 from zimaApp.repairGis.dao import RepairsGisDAO
 from zimaApp.repairGis.router import update_repair_gis_data
 from zimaApp.repairGis.schemas import RepairGisUpdate
 from zimaApp.users.dependencies import get_current_user
 from zimaApp.users.models import Users
-from bson import ObjectId
+
+from zimaApp.wells_repair_data.dao import WellsRepairsDAO
+from zimaApp.wells_repair_data.models import StatusWorkPlan
+from zimaApp.wells_repair_data.router import update_plan_status
+from zimaApp.wells_repair_data.schemas import WellsRepairFile
 
 router = APIRouter(
     prefix="/files",
     tags=["работа с файлами"],
 )
 
-import mimetypes
-
 
 @router.post("/upload")
-async def upload_file(itemId: str = Form(...), file: UploadFile = File(...), user: Users = Depends(get_current_user)):
-    client = AsyncIOMotorClient(settings.MONGO_DATABASE_URL)
-    db = client['zima_data']
-    fs_bucket = AsyncIOMotorGridFSBucket(db)
-    # Читаем содержимое файла
-    contents = await file.read()
-    filename = file.filename
+async def upload_file_gis_akt(
+        itemId: str = Form(...),
+        file: UploadFile = File(...),
+        user: Users = Depends(get_current_user),
+):
+    from zimaApp.main import client_mongo
+    file_url, file_id, filename = await client_mongo.upload_file(itemId, file)
 
-    # Определяем расширение
-    ext = '.' + filename.split('.')[-1] if '.' in filename else ''
-    # Или определяем MIME тип
-    mime_type, _ = mimetypes.guess_type(filename)
-
-    # Сохраняем файл с метаданными о формате
-    grid_out_id = await fs_bucket.upload_from_stream(
-        filename,
-        contents,
-        metadata={
-            "item_id": itemId,
-            "extension": ext,
-            "mime_type": mime_type
-        }
-    )
-
-    file_id = str(grid_out_id)
-    file_url = f"/files/{file_id}"
-
-    # Обновление базы данных (пример)
-    result_file = RepairGisUpdate(id=int(itemId), fields={"image_pdf": file_url})
+    result_file = RepairGisUpdate(id=int(itemId), fields={"image_pdf": file_url}, )
     result_file = await update_repair_gis_data(result_file)
 
     if result_file:
@@ -59,59 +41,100 @@ async def upload_file(itemId: str = Form(...), file: UploadFile = File(...), use
 @router.get("/{file_id}")
 async def get_file(file_id: str, user: Users = Depends(get_current_user)):
     try:
-        client = AsyncIOMotorClient(settings.MONGO_DATABASE_URL)
-        db = client['zima_data']
-        fs_bucket = AsyncIOMotorGridFSBucket(db)
+        from zimaApp.main import client_mongo
+        grid_out = await client_mongo.get_file_from_mongo(file_id)
+        if grid_out:
 
-        grid_out = await fs_bucket.open_download_stream(ObjectId(file_id))
+            # Получаем метаданные
+            metadata = getattr(grid_out, "metadata", {}) or {}
+            extension = metadata.get("extension")
+            mime_type_meta = metadata.get("mime_type")
 
-        # Получаем метаданные
-        metadata = getattr(grid_out, 'metadata', {}) or {}
-        extension = metadata.get('extension')
-        mime_type_meta = metadata.get('mime_type')
+            # Читаем содержимое файла
+            contents = await grid_out.read()
 
-        # Читаем содержимое файла
-        contents = await grid_out.read()
-
-        # Определяем тип контента
-        if mime_type_meta:
-            content_type = mime_type_meta
-        elif extension:
-            content_type, _ = mimetypes.guess_type(f"file{extension}")
-            if content_type is None:
+            # Определяем тип контента
+            if mime_type_meta:
+                content_type = mime_type_meta
+            elif extension:
+                content_type, _ = mimetypes.guess_type(f"file{extension}")
+                if content_type is None:
+                    content_type = "application/octet-stream"
+            else:
                 content_type = "application/octet-stream"
-        else:
-            content_type = "application/octet-stream"
 
-        filename_attr = getattr(grid_out, 'filename', None)
-        filename_for_header = filename_attr or "file"
+            filename_attr = getattr(grid_out, "filename", None)
+            filename_for_header = filename_attr or "file"
 
-        headers = {
-            "Content-Disposition": f'inline; filename="{filename_for_header}"'
-        }
+            headers = {"Content-Disposition": f'inline; filename="{filename_for_header}"'}
 
-        return StreamingResponse(io.BytesIO(contents), media_type=content_type, headers=headers)
+            return StreamingResponse(
+                io.BytesIO(contents), media_type=content_type, headers=headers
+            )
 
     except Exception as e:
         raise HTTPException(status_code=404, detail=f"Файл не найден: {e}")
 
-@router.delete("/delete")
+
+@router.delete("/delete_plan")
 async def delete_file(data: dict):
+    from zimaApp.main import client_mongo
+
+    item_id = data.get("itemId")
+    plan_info = await WellsRepairsDAO.find_one_or_none(id=int(item_id))
+    if plan_info:
+        file_id = plan_info["signed_work_plan_path"]
+        if file_id:
+
+            result_mongo = await client_mongo.delete_file_from_mongo(file_id.replace("/files/", ""))
+            if result_mongo:
+                new_status = WellsRepairFile(id=int(item_id),
+                                             signed_work_plan_path=None,
+                                             status_work_plan=StatusWorkPlan.NOT_SIGNED)
+                result = await update_plan_status(new_status)
+
+                # обновление базы данных
+                return {"message": "Файл успешно удален"}
+
+
+@router.delete("/delete_act_gis")
+async def delete_file(data: dict):
+    from zimaApp.main import client_mongo
+
     try:
         item_id = data.get("itemId")
-        # логика поиска файла по item_id и его удаления
-        # например:
-        client = AsyncIOMotorClient(settings.MONGO_DATABASE_URL)
-        db = client['zima_data']
-        fs_bucket = AsyncIOMotorGridFSBucket(db)
         repair_info = await RepairsGisDAO.find_one_or_none(id=int(item_id))
         if repair_info:
-            file_id = repair_info["image_pdf"].replace("/files/", "")
-            result_file = RepairGisUpdate(id=int(item_id), fields={"image_pdf": None})
-            result = await update_repair_gis_data(result_file)
-            await fs_bucket.delete(ObjectId(file_id))
 
-            # обновление базы данных
-            return {"message": "Файл успешно удален"}
+            file_id = repair_info["image_pdf"]
+            if file_id:
+                result_file = RepairGisUpdate(id=int(item_id), fields={"image_pdf": None})
+                result_mongo = await client_mongo.delete_file_from_mongo(file_id.replace("/files/", ""))
+                if result_mongo:
+                    result = await update_repair_gis_data(result_file)
+
+                    # обновление базы данных
+                    return {"message": "Файл успешно удален"}
+    except Exception as e:
+        raise HTTPException(status_code=404, detail=f"{e}")
+
+
+@router.post("/upload_plan")
+async def upload_plan(
+        itemId: str = Form(...),
+        file: UploadFile = File(...),
+        status: str = Form(...),
+        user: Users = Depends(get_current_user),
+):
+    from zimaApp.main import client_mongo
+
+    try:
+        file_url, file_id, filename = await client_mongo.upload_file(itemId, file)
+        result_file = WellsRepairFile(id=int(itemId),
+                                      signed_work_plan_path=file_url,
+                                      status_work_plan=status)
+        if result_file:
+            result = await update_plan_status(result_file)
+            return {"fileId": file_id, "fileUrl": file_url}
     except Exception as e:
         raise HTTPException(status_code=404, detail=f"{e}")

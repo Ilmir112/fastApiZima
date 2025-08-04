@@ -7,7 +7,6 @@ from zimaApp.config import settings, router_broker, init_broker
 from zimaApp.logger import logger
 
 
-
 async def send_message_to_queue(body: str, QUEUE_NAME: str):
     # Создаем новое подключение при каждом вызове
     connection = await aio_pika.connect_robust(settings.rabbitmq_url)
@@ -15,8 +14,7 @@ async def send_message_to_queue(body: str, QUEUE_NAME: str):
         async with connection:
             channel = await connection.channel()
             await channel.default_exchange.publish(
-                aio_pika.Message(body=body),
-                routing_key=QUEUE_NAME
+                aio_pika.Message(body=body), routing_key=QUEUE_NAME
             )
         return True
     except Exception as e:

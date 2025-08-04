@@ -13,7 +13,9 @@ class BaseDAO:
     model = None
 
     @classmethod
-    async def filter_for_filter(cls, model, filter_by: dict = None, join_related: str = None):
+    async def filter_for_filter(
+        cls, model, filter_by: dict = None, join_related: str = None
+    ):
         """
         Общий метод для фильтрации данных с опциональной загрузкой связанной модели.
 
@@ -96,8 +98,8 @@ class BaseDAO:
     @classmethod
     async def add_data(cls, **data):
         try:
-            if 'type_tkrs' in data and hasattr(data['type_tkrs'], 'value'):
-                data['type_tkrs'] = data['type_tkrs'].value
+            if "type_tkrs" in data and hasattr(data["type_tkrs"], "value"):
+                data["type_tkrs"] = data["type_tkrs"].value
                 logger.debug(f"Преобразовали type_tkrs в строку: {data['type_tkrs']}")
 
             query = (
@@ -109,7 +111,9 @@ class BaseDAO:
                     await session.commit()
                     return result.mappings().first()
                 except Exception as e:
-                    logger.error(f"Ошибка при выполнении запроса или коммите: {e}", exc_info=True)
+                    logger.error(
+                        f"Ошибка при выполнении запроса или коммите: {e}", exc_info=True
+                    )
                     await session.rollback()
                     raise
         except Exception as e:
@@ -167,11 +171,11 @@ class BaseDAO:
                     .values(**values)
                     .execution_options(synchronize_session="fetch")
                 )
-                result = await session.execute(query)
                 try:
+                    result = await session.execute(query)
+
                     await session.commit()
                 except SQLAlchemyError as e:
                     await session.rollback()
                     raise e
                 return result.rowcount
-

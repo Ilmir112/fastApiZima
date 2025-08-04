@@ -25,13 +25,17 @@ from zimaApp.admin.views import (
     ClassifierAdmin,
     RepairDataAdmin,
     SilencingAdmin,
-    UserAdmin, WellsDataAdmin, NormsAdmin, GnktAdmin,
+    UserAdmin,
+    WellsDataAdmin,
+    NormsAdmin,
+    GnktAdmin,
 )
 from zimaApp.config import settings, router_broker
 
 from zimaApp.database import engine, init_mongo
 from hawk_python_sdk.modules.fastapi import HawkFastapi
 
+from zimaApp.files.dao import MongoFile
 from zimaApp.tasks.rabbitmq.consumer import start_consumer
 from zimaApp.tasks.tasks import check_emails, check_emails_async
 from zimaApp.users.auth import authenticate_user
@@ -52,14 +56,19 @@ from zimaApp.logger import logger
 bot = telegram.Bot(token=settings.TOKEN)
 bot_user = telegram.Bot(token=settings.TOKEN_USERS)
 
+client_mongo = MongoFile()
+
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     # Запускаем потребителя как фоновую задачу
     consumer_task = asyncio.create_task(start_consumer())
-    await init_mongo()
+
+    await init_mongo(client_mongo.client)
     try:
         print("Запуск приложения")
-        redis = aioredis.from_url(f"redis://{settings.REDIS_HOST}:{settings.REDIS_PORT}", encoding="utf8")
+        redis = aioredis.from_url(
+            f"redis://{settings.REDIS_HOST}:{settings.REDIS_PORT}", encoding="utf8"
+        )
         FastAPICache.init(RedisBackend(redis), prefix="fastapi-cache")
 
     except Exception as e:
@@ -69,7 +78,9 @@ async def lifespan(_: FastAPI):
         if settings.MODE == "PROD":
             logger.info("Брокер стартовал")
             await bot.send_message(chat_id=settings.CHAT_ID, text="Приложение запущено")
-            await bot_user.send_message(chat_id=settings.CHAT_ID, text="Приложение запущено!!!")
+            await bot_user.send_message(
+                chat_id=settings.CHAT_ID, text="Приложение запущено!!!"
+            )
             logger.info("Сообщение отправлено успешно")
 
     except Exception as e:
@@ -90,12 +101,15 @@ async def lifespan(_: FastAPI):
 app = FastAPI(lifespan=lifespan, title="Zima", version="0.1.0", root_path="")
 
 # Подключение версионирования
-vapp = VersionedFastAPI(app,
-                       version_format='{major}',
-                       prefix_format='/v{major}',
-                       description="Zima API",
-                       middleware=[Middleware(SessionMiddleware, secret_key=settings.SESSION_COOKIE_SECRET)]
-                       )
+vapp = VersionedFastAPI(
+    app,
+    version_format="{major}",
+    prefix_format="/v{major}",
+    description="Zima API",
+    middleware=[
+        Middleware(SessionMiddleware, secret_key=settings.SESSION_COOKIE_SECRET)
+    ],
+)
 
 # Подключение статических файлов (JS, CSS)
 try:
@@ -104,11 +118,10 @@ except Exception as e:
     app.mount("/static", StaticFiles(directory="static"), name="static")
 
 if settings.MODE != "TEST":
-    hawk = HawkFastapi({
-        'app_instance': app,
-        'token': settings.HAWK_DSN,
-        'templates': templates
-    })
+    hawk = HawkFastapi(
+        {"app_instance": app, "token": settings.HAWK_DSN, "templates": templates}
+    )
+
 
 @app.get("/")
 async def root():
@@ -130,13 +143,13 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
     invalid_params = []
 
     for err in errors:
-        loc = err.get('loc', [])
-        msg = err.get('msg', '')
+        loc = err.get("loc", [])
+        msg = err.get("msg", "")
         # Обычно loc содержит ['body', 'parameter_name']
         if len(loc) > 1:
             param_name = loc[-1]
         else:
-            param_name = loc[0] if loc else 'unknown'
+            param_name = loc[0] if loc else "unknown"
         invalid_params.append({param_name: msg})
 
     logger.error(f"validation_exception: {errors}, body: {invalid_params}")
@@ -146,9 +159,10 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
             "detail": errors,
             "invalid_params": invalid_params,
             "body": exc.body,
-            "message": "validation exception"
+            "message": "validation exception",
         },
     )
+
 
 app.include_router(user_router)
 app.include_router(wells_data_router)
@@ -194,8 +208,11 @@ if settings.MODE == "TEST":
     # При тестировании через pytest, необходимо подключать Redis, чтобы кэширование работало.
     # Иначе декоратор @cache из библиотеки fastapi-cache ломает выполнение кэшируемых эндпоинтов.
     # Из этого следует вывод, что сторонние решения порой ломают наш код, и это бывает проблематично поправить.
-    redis = aioredis.from_url(f"redis://{settings.REDIS_HOST}:{settings.REDIS_PORT}", encoding="utf8",
-                              decode_responses=True)
+    redis = aioredis.from_url(
+        f"redis://{settings.REDIS_HOST}:{settings.REDIS_PORT}",
+        encoding="utf8",
+        decode_responses=True,
+    )
     FastAPICache.init(RedisBackend(redis), prefix="cache")
 
 admin = Admin(app, engine, authentication_backend=authentication_backend)
@@ -217,16 +234,17 @@ async def add_process_time_header(request: Request, call_next):
         response = await call_next(request)
         process_time = time.perf_counter() - start_time
         response.headers["X-Process-Time"] = str(process_time)
-        logger.info("request handling time",
-                    extra={
-                        "process_time": round(process_time, 4)
-                    })
+        logger.info(
+            "request handling time", extra={"process_time": round(process_time, 4)}
+        )
 
         return response
     except HTTPException as e:  # Обрабатываем исключения от endpoint
         process_time = time.time() - start_time
         response = e  # Или создайте новый Response
-        response.headers["X-Process-Time"] = str(process_time)  # Важно: добавляем заголовок даже при ошибке
+        response.headers["X-Process-Time"] = str(
+            process_time
+        )  # Важно: добавляем заголовок даже при ошибке
         return response
 
     except Exception as e:
@@ -234,7 +252,9 @@ async def add_process_time_header(request: Request, call_next):
         print(f"Unexpected error in middleware: {e}")
         process_time = time.time() - start_time
         response = Response(status_code=500, content=f"Internal Server Error: {e}")
-        response.headers["X-Process-Time"] = str(process_time)  # Важно: добавляем заголовок даже при ошибке
+        response.headers["X-Process-Time"] = str(
+            process_time
+        )  # Важно: добавляем заголовок даже при ошибке
         return response
 
 

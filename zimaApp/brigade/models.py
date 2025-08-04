@@ -6,7 +6,7 @@ from zimaApp.database import Base
 
 
 class Brigade(Base):
-    __tablename__ = 'brigade'
+    __tablename__ = "brigade"
 
     id = Column(Integer, primary_key=True)
     contractor = Column(String, nullable=False)

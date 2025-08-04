@@ -5,6 +5,7 @@ from sqlalchemy.orm import relationship
 from typing import Optional
 
 from zimaApp.database import Base
+from sqlalchemy import Enum as SqlEnum
 
 
 class StatusEnum(str, Enum):

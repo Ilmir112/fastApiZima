@@ -20,6 +20,7 @@ def verify_password(plain_password, hashed_password) -> bool:
 
 def create_access_token(data: dict) -> str:
     from zimaApp.config import settings
+
     to_encode = data.copy()
     expire = datetime.utcnow() + timedelta(minutes=1800)
     to_encode.update({"exp": expire})
@@ -35,6 +36,7 @@ async def authenticate_user(login_user: str, password: str):
             return None
 
     return user
+
 
 async def authenticate(request: Request) -> bool:
     token = request.session.get("token")

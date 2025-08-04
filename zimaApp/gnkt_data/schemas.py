@@ -10,7 +10,9 @@ class SGnktData(BaseModel):
     well_number: str
     well_area: str
     contractor: Optional[str]
-    length_gnkt: Optional[Union[confloat(ge=70, le=5000), conint(ge=70, le=5000)]] = None
+    length_gnkt: Optional[Union[confloat(ge=70, le=5000), conint(ge=70, le=5000)]] = (
+        None
+    )
     diameter_gnkt: Optional[Union[confloat(ge=30, le=50), conint(ge=30, le=50)]] = None
     wear_gnkt: Optional[Union[float, int]] = None
     mileage_gnkt: Optional[Union[float, int]]
@@ -22,13 +24,3 @@ class SGnktData(BaseModel):
     class Config:
         from_attributes = True
         arbitrary_types_allowed = True
-
-
-
-
-
-
-
-
-
-

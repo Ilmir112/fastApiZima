@@ -13,8 +13,11 @@ from zimaApp.tasks.tasks import parse_telephonegram, add_telephonegram_to_db
 @router_broker.subscriber("repair_gis")
 async def process_message(message: aio_pika.IncomingMessage):
     from zimaApp.main import bot_user
+
     try:
-        async with message.process():  # автоматически подтверждает сообщение после блока
+        async with (
+            message.process()
+        ):  # автоматически подтверждает сообщение после блока
             body = message.body.decode()
             if not body.strip():
                 logger.warning("Received empty message body")
@@ -25,8 +28,8 @@ async def process_message(message: aio_pika.IncomingMessage):
                     return await add_telephonegram_to_db(parsed_data)
                 else:
                     await bot_user.send_message(
-                        chat_id=settings.CHAT_ID,
-                        text=body_text[:600])
+                        chat_id=settings.CHAT_ID, text=body_text[:600]
+                    )
     except json.JSONDecodeError as e:
         print(f"Ошибка при парсинге JSON: {e}")
         print(f"Данные для парсинга: {body}")
@@ -34,9 +37,9 @@ async def process_message(message: aio_pika.IncomingMessage):
     except aio_pika.exceptions.AMQPConnectionError as e:
         logger.error(f"Connection lost: {e}")
 
-
     except Exception as e:
         logger.error(e)
+
 
 async def start_consumer():
     connection = await aio_pika.connect_robust(settings.rabbitmq_url)
@@ -52,7 +55,7 @@ async def start_consumer():
         await asyncio.Event().wait()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     asyncio.run(start_consumer())
 # Запуск потребителя в основном приложении или в отдельной задаче
 # Например, в вашем основном файле:

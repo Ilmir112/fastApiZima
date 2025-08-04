@@ -18,7 +18,7 @@ from zimaApp.users.models import Users
 async def get_token(request: Request, authorization: Optional[str] = Header(None)):
     # Попытка получить токен из заголовка Authorization
     if authorization and authorization.startswith("Bearer "):
-        return authorization[len("Bearer "):]
+        return authorization[len("Bearer ") :]
 
     # Если токена в заголовке нет, попробуем из cookies
     token = request.cookies.get("summary_information_access_token")

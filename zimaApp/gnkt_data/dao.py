@@ -7,4 +7,3 @@ from zimaApp.gnkt_data.models import GnktData
 
 class GnktDatasDAO(BaseDAO):
     model = GnktData
-

@@ -1,8 +1,19 @@
+from enum import Enum
+
+from pygments.lexer import default
 from sqlalchemy import JSON, Column, Date, Integer, String, ForeignKey, Float
 from sqlalchemy.orm import relationship
 from typing import Optional
+from sqlalchemy import Enum as SqlEnum
+
 
 from zimaApp.database import Base
+
+
+class StatusWorkPlan(str, Enum):
+    NOT_SIGNED = "не подписан"
+    PLAN_IS_SIGNED = "подписан"
+    FULLY_NOT_SIGNED = "подписан не полностью"
 
 
 class WellsRepair(Base):
@@ -17,7 +28,7 @@ class WellsRepair(Base):
     data_change_paragraph: dict = Column(JSON, nullable=False)
     norms_time: float = Column(Float, nullable=False)
     chemistry_need: dict = Column(JSON, nullable=False)
-    geolog_id = Column(Integer, ForeignKey('users.id'))
+    geolog_id = Column(Integer, ForeignKey("users.id"))
     date_create: Date = Column(Date, nullable=False)
     perforation_project: dict = Column(JSON)
     type_absorbent: str = Column(String)
@@ -27,6 +38,10 @@ class WellsRepair(Base):
     curator: str = Column(String, nullable=False)
     region: str = Column(String, nullable=False)
     contractor: str = Column(String, nullable=False)
+    signed_work_plan_path: str = Column(String, nullable=True)
+    status_work_plan: StatusWorkPlan = Column(
+        SqlEnum(StatusWorkPlan), default=StatusWorkPlan.NOT_SIGNED, nullable=True
+    )
 
     well_data = relationship("WellsData", back_populates="repairs")
     users = relationship("Users", back_populates="wells_repairs")

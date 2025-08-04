@@ -1,29 +1,99 @@
-<!-- templates/base.html -->
 {% extends "layout/base.html" %}
 
 {% block title %}План работы{% endblock %}
 
-
-<body>
 {% block content %}
 <div class="content-container">
-    <head>
-        <meta charset="UTF-8"/>
-        <title> </title>
-        <h1 style="margin-top: 20px;">Поиск ремонтных данных по скважине</h1>
-    </head>
-
+    <h1 style="margin-top: 20px;">Поиск ремонтных данных по скважине</h1>
     <!-- Поле ввода и кнопка -->
-    <label for="wellNumberInput"></label><input type="text" id="wellNumberInput" placeholder="Введите номер скважины"/>
+    <label for="wellNumberInput"></label>
+    <input type="text" id="wellNumberInput" placeholder="Введите номер скважины"/>
     <button id="loadDataBtn">Загрузить данные</button>
 </div>
 <!-- Контейнер для отображения таблицы -->
 <div id="tableContainer"></div>
 
+<!-- Модальное окно -->
+<div id="myModal" class="modal" style="display: none;">
+    <div class="modal-content">
+        <span class="close" id="closeModal">&times;</span>
+        <h2>Выберите статус</h2>
+        <select id="statusSelect">
+            <option value="">--Выберите--</option>
+            <option value="не подписан">не подписан</option>
+            <option value="подписан">подписан</option>
+            <option value="подписан не полностью">подписан не полностью</option>
+        </select>
+        <br><br>
+        <button id="confirmBtn">Подтвердить</button>
+        <button id="cancelBtn">Отмена</button>
+    </div>
+</div>
+
+{% endblock %}
+
 {% block scripts %}
 <!-- Подключение внешнего JS файла -->
 <script src="../static/js/plan.js"></script>
 
+<!-- Вставьте сюда скрипт для работы с модальным окном -->
+<script>
+// Получаем элементы модального окна
+const modal = document.getElementById('myModal');
+const closeBtn = document.getElementById('closeModal');
+const confirmBtn = document.getElementById('confirmBtn');
+const cancelBtn = document.getElementById('cancelBtn');
+
+// Функция для открытия модального окна
+function openModal() {
+    modal.style.display = 'block';
+}
+
+// Функция для закрытия модального окна
+function closeModal() {
+    modal.style.display = 'none';
+}
+
+// Обработчики закрытия
+closeBtn.onclick = closeModal;
+cancelBtn.onclick = closeModal;
+
+// Закрывать при клике вне окна
+window.onclick = function(event) {
+    if (event.target == modal) {
+        closeModal();
+    }
+};
+
+// Асинхронная функция для получения статуса
+function askStatus() {
+    return new Promise((resolve) => {
+        openModal();
+
+        // Обработчик подтверждения
+        confirmBtn.onclick = () => {
+            const selectedStatus = document.getElementById('statusSelect').value;
+            closeModal();
+            resolve(selectedStatus);
+        };
+
+        // Обработчик отмены
+        cancelBtn.onclick = () => {
+            closeModal();
+            resolve(null);
+        };
+    });
+}
+
+// Пример использования: при клике на кнопку "Загрузить данные"
+document.getElementById('loadDataBtn').addEventListener('click', async () => {
+    const status = await askStatus();
+    if (status) {
+        alert('Вы выбрали статус: ' + status);
+        // Тут можно вызвать вашу функцию загрузки данных с выбранным статусом
+    } else {
+        alert('Вы отменили выбор статуса.');
+    }
+});
+</script>
 {% endblock %}
-{% endblock %}
-</body>

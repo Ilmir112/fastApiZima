@@ -16,9 +16,9 @@ from zimaApp.users.dependencies import get_current_user
 from zimaApp.users.models import Users
 
 router = APIRouter(
-    prefix="/prometheus",
-    tags=["Тестирование Grafana + Prometheus + redis + logger"]
+    prefix="/prometheus", tags=["Тестирование Grafana + Prometheus + redis + logger"]
 )
+
 
 @router.get("/get_error")
 def get_error():
@@ -26,13 +26,15 @@ def get_error():
         # Ваш код, который может вызвать исключение
         1 / 0  # Пример деления на ноль
     except Exception as e:
-        logger.error(f'Произошла ошибка: {e}')
+        logger.error(f"Произошла ошибка: {e}")
 
 
 @router.get("/time_consumer")
 def time_consumer():
     time.sleep(random() * 5)
     return 1
+
+
 #
 @router.get("/run-check-emails")
 async def run_check_emails():
@@ -40,10 +42,12 @@ async def run_check_emails():
     result = await check_emails_async()
     return result
 
+
 @router.get("/memory_consumer")
 def memory_consumer():
     _ = [i for i in range(30_000_000)]
     return 1
+
 
 @router.post("/logger_send")
 async def logger_send(message: dict):
@@ -52,9 +56,12 @@ async def logger_send(message: dict):
     except Exception as e:
         logger.error(e)
 
+
 @router.get("/redis/ping")
 async def redis_ping():
-    redis = aioredis.from_url(f"redis://{settings.REDIS_HOST}:{settings.REDIS_PORT}", encoding="utf8")
+    redis = aioredis.from_url(
+        f"redis://{settings.REDIS_HOST}:{settings.REDIS_PORT}", encoding="utf8"
+    )
     try:
         # Проверка соединения с Redis
         pong = await redis.ping()
@@ -62,9 +69,12 @@ async def redis_ping():
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Redis error: {e}")
 
+
 @router.get("/redis/set")
 async def redis_set(key: str, value: str):
-    redis = aioredis.from_url(f"redis://{settings.REDIS_HOST}:{settings.REDIS_PORT}", encoding="utf8")
+    redis = aioredis.from_url(
+        f"redis://{settings.REDIS_HOST}:{settings.REDIS_PORT}", encoding="utf8"
+    )
     try:
         await redis.set(key, value)
         return {"status": "success", "message": f"Key '{key}' set to '{value}'"}
@@ -74,7 +84,9 @@ async def redis_set(key: str, value: str):
 
 @router.get("/redis/get")
 async def redis_get(key: str):
-    redis = aioredis.from_url(f"redis://{settings.REDIS_HOST}:{settings.REDIS_PORT}", encoding="utf8")
+    redis = aioredis.from_url(
+        f"redis://{settings.REDIS_HOST}:{settings.REDIS_PORT}", encoding="utf8"
+    )
     try:
         value = await redis.get(key)
         if value is None:

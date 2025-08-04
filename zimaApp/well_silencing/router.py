@@ -32,25 +32,31 @@ router = APIRouter(
 
 @router.post("/find_well_silencing_all/")
 @version(1)
-async def find_well_silencing_all(request: Request, response: Response, wells_data: SWellsSilencingRegion):
+async def find_well_silencing_all(
+    request: Request, response: Response, wells_data: SWellsSilencingRegion
+):
     results = await WellSilencingDAO.find_all(region=wells_data.region)
     data = []
     if results:
 
         for r in results:
-            data.append({
-                "well_number": r.well_number,
-                "well_area": r.well_area,
-                "region": r.region,
-                "today": r.today,
-            })
+            data.append(
+                {
+                    "well_number": r.well_number,
+                    "well_area": r.well_area,
+                    "region": r.region,
+                    "today": r.today,
+                }
+            )
 
     return data
 
 
 @cache(expire=1500)
 @router.post("/find_well_silencing_all_one/")
-async def find_well_silencing_all_one(request: Request, response: Response, wells_data: SWellsSilencingRegion):
+async def find_well_silencing_all_one(
+    request: Request, response: Response, wells_data: SWellsSilencingRegion
+):
     results = await WellSilencingDAO.find_first(region=wells_data.region)
     if results:
         return results

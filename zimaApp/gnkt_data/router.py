@@ -22,8 +22,7 @@ router = APIRouter(
 @version(1)
 async def find_gnkt_data_all():
     try:
-        result = await GnktDatasDAO.find_all(
-        )
+        result = await GnktDatasDAO.find_all()
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Internal Server Error {e}")
 
@@ -34,9 +33,7 @@ async def find_gnkt_data_all():
 @version(1)
 async def find_gnkt_data(gnkt_number):
     try:
-        result = await GnktDatasDAO.find_all(
-            gnkt_number=gnkt_number
-        )
+        result = await GnktDatasDAO.find_all(gnkt_number=gnkt_number)
         result = sorted(result, key=lambda k: k.date_repair, reverse=True)
 
     except Exception as e:
@@ -52,7 +49,7 @@ async def find_gnkt_data(well_number, well_area, date_repair):
         result = await GnktDatasDAO.find_one_or_none(
             well_number=well_number,
             well_area=well_area,
-            date_repair=datetime.strptime(date_repair, "%Y-%m-%d").date()
+            date_repair=datetime.strptime(date_repair, "%Y-%m-%d").date(),
         )
     except Exception as e:
         logger.critical(e)
@@ -63,14 +60,13 @@ async def find_gnkt_data(well_number, well_area, date_repair):
 
 @router.post("/add_data")
 @version(1)
-async def add_wells_data(gnkt_data: SGnktData,
-                         user: Users = Depends(get_current_user)):
+async def add_wells_data(gnkt_data: SGnktData, user: Users = Depends(get_current_user)):
     print(gnkt_data)
     data = await GnktDatasDAO.find_one_or_none(
         well_number=gnkt_data.well_number,
         well_area=gnkt_data.well_area,
         date_repair=gnkt_data.date_repair,
-        contractor=user.contractor
+        contractor=user.contractor,
     )
     print(data)
     if data:
@@ -78,7 +74,8 @@ async def add_wells_data(gnkt_data: SGnktData,
             gnkt_data.well_number,
             gnkt_data.well_area,
             gnkt_data.date_repair,
-            data.contractor)
+            data.contractor,
+        )
 
     try:
         result = await GnktDatasDAO.add_data(
@@ -93,35 +90,49 @@ async def add_wells_data(gnkt_data: SGnktData,
             tubing_fatigue=gnkt_data.tubing_fatigue,
             previous_well=gnkt_data.previous_well,
             date_repair=gnkt_data.date_repair,
-            pvo_number=gnkt_data.pvo_number
+            pvo_number=gnkt_data.pvo_number,
         )
-        await TelegramInfo.send_message_create_plan_gnkt(user.login_user, gnkt_data.well_number,
-                                                    gnkt_data.well_area)
+        await TelegramInfo.send_message_create_plan_gnkt(
+            user.login_user, gnkt_data.well_number, gnkt_data.well_area
+        )
 
         return {"status": "success", "id": result}
     except SQLAlchemyError as db_err:
-        msg = f'Database Exception Brigade {db_err}'
-        logger.error(msg, extra={"gnkt_brigade": gnkt_data.gnkt_number,
-                                  "well_number":gnkt_data.well_number}, exc_info=True)
+        msg = f"Database Exception Brigade {db_err}"
+        logger.error(
+            msg,
+            extra={
+                "gnkt_brigade": gnkt_data.gnkt_number,
+                "well_number": gnkt_data.well_number,
+            },
+            exc_info=True,
+        )
 
     except Exception as e:
-        msg = f'Unexpected error: {str(e)}'
-        logger.error(msg, extra={"gnkt_brigade": gnkt_data.gnkt_number,
-                                 "well_number": gnkt_data.well_number}, exc_info=True)
+        msg = f"Unexpected error: {str(e)}"
+        logger.error(
+            msg,
+            extra={
+                "gnkt_brigade": gnkt_data.gnkt_number,
+                "well_number": gnkt_data.well_number,
+            },
+            exc_info=True,
+        )
 
 
 @router.delete("/delete_well")
 @version(1)
 async def delete_well_by_type_kr_and_date_create(
-        well_number: str,
-        well_area: str,
-        date_repair: date,
-        contractor: str,
-        user: Users = Depends(get_current_user)):
+    well_number: str,
+    well_area: str,
+    date_repair: date,
+    contractor: str,
+    user: Users = Depends(get_current_user),
+):
 
     return await GnktDatasDAO.delete_item_all_by_filter(
         well_number=well_number,
         well_area=well_area,
         date_repair=date_repair,
-        contractor=contractor
+        contractor=contractor,
     )

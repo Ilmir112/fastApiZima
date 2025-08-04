@@ -37,7 +37,7 @@ def send_message(chat_id, text, token=settings.TOKEN):
     asyncio.run(bot.send_message(chat_id, text=text))
 
 
-@celery_app.task(name='tasks.check_emails_async')
+@celery_app.task(name="tasks.check_emails_async")
 def check_emails_async():
     result = None
     try:
@@ -80,7 +80,6 @@ def check_emails():
                         dt = datetime.fromtimestamp(email.utils.mktime_tz(date_tuple))
                         received_date = dt.strftime("%Y-%m-%d %H:%M")
 
-
                     # Обработка заголовка Subject
                     raw_subject = msg["Subject"]
                     if raw_subject:
@@ -108,27 +107,33 @@ def check_emails():
                         for part in msg.walk():
                             if part.get_content_type() == "text/plain":
                                 body_bytes = part.get_payload(decode=True)
-                                body_text += body_bytes.decode(part.get_content_charset() or "utf-8")
+                                body_text += body_bytes.decode(
+                                    part.get_content_charset() or "utf-8"
+                                )
                     else:
                         body_bytes = msg.get_payload(decode=True)
-                        body_text = body_bytes.decode(msg.get_content_charset() or "utf-8")
+                        body_text = body_bytes.decode(
+                            msg.get_content_charset() or "utf-8"
+                        )
 
-
-                    if from_address in settings.EMAIL_CHECK_LIST and 'просто' in body_text:
+                    if (
+                        from_address in settings.EMAIL_CHECK_LIST
+                        and "просто" in body_text
+                    ):
                         message_list.append((from_address, subject, body_text, dt))
         return message_list
-                    #     try:
-                    #        result = await send_message_to_queue(msg_bytes, "repair_gis")
-                    #
-                    #        return result
-                    #     except Exception as e:
-                    #         print(e)
+        #     try:
+        #        result = await send_message_to_queue(msg_bytes, "repair_gis")
+        #
+        #        return result
+        #     except Exception as e:
+        #         print(e)
 
-                    # # Проверка содержания письма
-                    # if "просто" in body_text:
-                    #     parsed_data = parse_telephonegram(body_text, from_address, dt)
-                    #     if parsed_data:
-                    #         return add_telephonegram_to_db(parsed_data)
+        # # Проверка содержания письма
+        # if "просто" in body_text:
+        #     parsed_data = parse_telephonegram(body_text, from_address, dt)
+        #     if parsed_data:
+        #         return add_telephonegram_to_db(parsed_data)
 
         mail.logout()
     except Exception as e:
@@ -152,9 +157,10 @@ def find_best_match(name: str, text: str):
 # Функция для парсинга тела письма и извлечения нужных данных
 async def parse_telephonegram(body_text: str, from_address: email, dt: datetime):
     from zimaApp.well_classifier.router import get_unique_well_data
+
     # Пример парсинга: ищем дату и описание (подстроить под конкретный формат)
     # Для примера ищем строку с датой и текст сообщения
-    date_match = re.search(r'(\d{2}\.\d{2}\.\d{4}г\.)', body_text)
+    date_match = re.search(r"(\d{2}\.\d{2}\.\d{4}г\.)", body_text)
     if from_address == "teh-BNPT@bn.rosneft.ru":
         contractor_gis = "ООО «Башнефть-ПЕТРОТЕСТ»"
     elif from_address == "alert@bngf.ru":
@@ -164,19 +170,19 @@ async def parse_telephonegram(body_text: str, from_address: email, dt: datetime)
 
     body_text = body_text[:600]
     # Ваши шаблоны
-    date_pattern = r'(\d{1,2}\.\d{1,2}\.\d{2,4})'
-    time_pattern = r'(\d{1,2}:\d{2})'
+    date_pattern = r"(\d{1,2}\.\d{1,2}\.\d{2,4})"
+    time_pattern = r"(\d{1,2}:\d{2})"
     # Регулярное выражение для номера скважины
-    well_number_pattern = r'скв\.?\s*(\d+)'
+    well_number_pattern = r"скв\.?\s*(\d+)"
     # Регулярное выражение для площади месторождения
-    field_pattern = r'скв\.?\s*\d+\s+([^,]+),'
+    field_pattern = r"скв\.?\s*\d+\s+([^,]+),"
 
     # Поиск даты
     date_match = re.search(date_pattern, body_text)
     date_str = date_match.group(1) if date_match else None
 
     # Поиск времени
-    time_match = re.search(r'с\s*' + time_pattern, body_text)
+    time_match = re.search(r"с\s*" + time_pattern, body_text)
     time_str = time_match.group(1) if time_match else None
 
     if date_str and time_str:
@@ -184,7 +190,7 @@ async def parse_telephonegram(body_text: str, from_address: email, dt: datetime)
         datetime_str = f"{date_str} {time_str}"
         # Определяем формат для strptime
         # В зависимости от года (двух- или четырехзначный)
-        if len(date_str.split('.')[-1]) == 2:
+        if len(date_str.split(".")[-1]) == 2:
             dt_format = "%d.%m.%y %H:%M"
         else:
             dt_format = "%d.%m.%Y %H:%M"
@@ -196,7 +202,11 @@ async def parse_telephonegram(body_text: str, from_address: email, dt: datetime)
     # Поиск номера скважины
     well_match = re.search(well_number_pattern, body_text)
     well_number_found = well_match.group(1) if well_match else None
-    wells_area_list = [result for result in await WellClassifierDAO.get_unique_well_area() if len(result) > 4]
+    wells_area_list = [
+        result
+        for result in await WellClassifierDAO.get_unique_well_area()
+        if len(result) > 4
+    ]
 
     # Для каждого элемента ищем лучшее совпадение
     results = []
@@ -209,7 +219,9 @@ async def parse_telephonegram(body_text: str, from_address: email, dt: datetime)
 
     well_area = max(results, key=lambda x: x[1])[0]
 
-    find_wells = await WellsDatasDAO.find_one_or_none(well_area=well_area, well_number=well_number_found)
+    find_wells = await WellsDatasDAO.find_one_or_none(
+        well_area=well_area, well_number=well_number_found
+    )
     if find_wells:
         return {
             "wells_id": find_wells.id,
@@ -217,7 +229,7 @@ async def parse_telephonegram(body_text: str, from_address: email, dt: datetime)
             "message_time": dt,
             "work_goal": "dff",
             "downtime_start": dt_object,
-            "downtime_reason": body_text
+            "downtime_reason": body_text,
             # добавьте другие поля по необходимости
         }
     return None
@@ -241,7 +253,7 @@ async def add_telephonegram_to_db(parsed_data: dict):
         downtime_duration_meeting_result=None,
         meeting_result=None,
         image_pdf=None,
-        well_id=parsed_data["wells_id"]
+        well_id=parsed_data["wells_id"],
     )
 
     # Вызов вашего роутера или функции добавления данных

@@ -169,15 +169,6 @@ function renderTable(data) {
     });
 }
 
-function updateFileLink(itemId, htmlContent) {
-    const row = document.querySelector(`tr[data-id="${itemId}"]`);
-    if (row) {
-        const linkCell = row.querySelector('.file-link');
-        if (linkCell) {
-            linkCell.innerHTML = htmlContent;
-        }
-    }
-}
 
 // Делегирование события клика по кнопкам "Удалить файл"
 document.getElementById('tableBody').addEventListener('click', function (e) {
@@ -195,7 +186,7 @@ async function deleteFile(itemId) {
     if (!confirm('Вы уверены, что хотите удалить файл?')) return;
 
     try {
-        const response = await fetch('/files/delete', {
+        const response = await fetch('/files/delete_act_gis', {
             method: 'DELETE', // или 'DELETE', в зависимости от API
             headers: {
                 'Content-Type': 'application/json',

@@ -1,7 +1,6 @@
 import json
 
 
-
 class ChangeExcelToHtml:
     def __init__(self, excel):
         self.excel = json.loads(excel)["excel"]
@@ -28,18 +27,25 @@ class ChangeExcelToHtml:
 
         excel = json.loads(excel["excel"])
         merged_cells = excel["merged_cells"]
-        rowHeights = excel['rowHeights']
+        rowHeights = excel["rowHeights"]
         excel_data = {}
         cell_positions = []
         numeration = 1
 
         for row_idx_str, row in excel["data"].items():
-            if row_idx_str != 'image':
+            if row_idx_str != "image":
                 row_idx = int(row_idx_str)
                 rows_dict = {}
 
-                height = 30 if (rowHeights is None or len(rowHeights) < row_idx or rowHeights[row_idx - 1] is None) else \
-                rowHeights[row_idx - 1]
+                height = (
+                    30
+                    if (
+                        rowHeights is None
+                        or len(rowHeights) < row_idx
+                        or rowHeights[row_idx - 1] is None
+                    )
+                    else rowHeights[row_idx - 1]
+                )
                 rows_dict["height"] = height
 
                 cells = []
@@ -56,7 +62,9 @@ class ChangeExcelToHtml:
                         merge_end_row = merge[3]
 
                         # Объединение по колонке
-                        if merge_start_row == row_idx and (merge_start_col) == (col_idx + 1):
+                        if merge_start_row == row_idx and (merge_start_col) == (
+                            col_idx + 1
+                        ):
                             row_span = merge_end_row - merge_start_row
                             col_span = merge_end_col - merge_start_col
 
@@ -69,13 +77,13 @@ class ChangeExcelToHtml:
                     # (если есть дополнительные условия или уточнения, их можно добавить)
 
                     # Получение стилей границ
-                    border_left = cell['borders']["left"]["style"]
-                    border_right = cell['borders']["right"]["style"]
-                    border_top = cell['borders']["top"]["style"]
-                    border_bottom = cell['borders']["bottom"]["style"]
+                    border_left = cell["borders"]["left"]["style"]
+                    border_right = cell["borders"]["right"]["style"]
+                    border_top = cell["borders"]["top"]["style"]
+                    border_bottom = cell["borders"]["bottom"]["style"]
 
                     # Получение выравнивания
-                    alignment = cell['alignment']['horizontal']
+                    alignment = cell["alignment"]["horizontal"]
 
                     # Обработка формулы COUNTA
                     cell_value = cell["value"]
@@ -95,8 +103,8 @@ class ChangeExcelToHtml:
                             "left": border_left,
                             "right": border_right,
                             "top": border_top,
-                            "bottom": border_bottom
-                        }
+                            "bottom": border_bottom,
+                        },
                     }
 
                     cells.append(cell_dict)

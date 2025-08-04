@@ -23,7 +23,9 @@ router = APIRouter(
 
 @router.post("/find_well_classifier_all/")
 @version(1)
-async def find_well_classifier_all(request: Request, response: Response, wells_data: SWellsClassifierRegion):
+async def find_well_classifier_all(
+    request: Request, response: Response, wells_data: SWellsClassifierRegion
+):
     data = []
     try:
         results = await WellClassifierDAO.find_all(region=wells_data.region)
@@ -46,6 +48,7 @@ async def get_unique_well_data(request: Request):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+
 @router.post("/add_data_well_classifier")
 # @cache(expire=1500)
 @version(1)
@@ -61,31 +64,71 @@ async def add_data_well_classifier(wells_data: SWellsClassifierBatch):
 
             except SQLAlchemyError as db_err:
                 results.append({"status": "error", "error": str(db_err), "item": item})
-                logger.error(f'Database error while processing item {item}: {str(db_err)}', exc_info=True)
+                logger.error(
+                    f"Database error while processing item {item}: {str(db_err)}",
+                    exc_info=True,
+                )
             except ValueError as val_err:
-                results.append({"status": "error", "error": f'Value error: {str(val_err)}', "item": item})
-                logger.error(f'Value error in item {item}: {str(val_err)}', exc_info=True)
+                results.append(
+                    {
+                        "status": "error",
+                        "error": f"Value error: {str(val_err)}",
+                        "item": item,
+                    }
+                )
+                logger.error(
+                    f"Value error in item {item}: {str(val_err)}", exc_info=True
+                )
             except TypeError as type_err:
-                results.append({"status": "error", "error": f'Type error: {str(type_err)}', "item": item})
-                logger.error(f'Type error in item {item}: {str(type_err)}', exc_info=True)
+                results.append(
+                    {
+                        "status": "error",
+                        "error": f"Type error: {str(type_err)}",
+                        "item": item,
+                    }
+                )
+                logger.error(
+                    f"Type error in item {item}: {str(type_err)}", exc_info=True
+                )
             except KeyError as key_err:
-                results.append({"status": "error", "error": f'Key error: {str(key_err)}', "item": item})
-                logger.error(f'Key error in item {item}: {str(key_err)}', exc_info=True)
+                results.append(
+                    {
+                        "status": "error",
+                        "error": f"Key error: {str(key_err)}",
+                        "item": item,
+                    }
+                )
+                logger.error(f"Key error in item {item}: {str(key_err)}", exc_info=True)
             except Exception as e:
                 results.append({"status": "error", "error": str(e), "item": item})
-                logger.error(f'Unexpected error in item {item}: {str(e)}', exc_info=True)
+                logger.error(
+                    f"Unexpected error in item {item}: {str(e)}", exc_info=True
+                )
 
-        logger.info(f'Добавлено {len(results)} скважин', exc_info=True)
+        logger.info(f"Добавлено {len(results)} скважин", exc_info=True)
 
     except SQLAlchemyError as db_err:
-        msg = f'Database Exception {db_err}'
-        logger.error(msg, extra={"well_number": wells_data.well_number, "well_area": wells_data.well_area}, exc_info=True)
+        msg = f"Database Exception {db_err}"
+        logger.error(
+            msg,
+            extra={
+                "well_number": wells_data.well_number,
+                "well_area": wells_data.well_area,
+            },
+            exc_info=True,
+        )
     except Exception as e:
-        msg = f'Unexpected error: {str(e)}'
-        logger.error(msg, extra={"well_number": wells_data.well_number, "well_area": wells_data.well_area}, exc_info=True)
+        msg = f"Unexpected error: {str(e)}"
+        logger.error(
+            msg,
+            extra={
+                "well_number": wells_data.well_number,
+                "well_area": wells_data.well_area,
+            },
+            exc_info=True,
+        )
 
     return results
-
 
 
 @router.post("/delete_well_classifier")

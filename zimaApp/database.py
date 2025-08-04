@@ -1,8 +1,9 @@
+from datetime import datetime
+
 from sqlalchemy import NullPool
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import DeclarativeBase, sessionmaker
 from motor.motor_asyncio import AsyncIOMotorClient
-
 
 
 from zimaApp.config import settings
@@ -28,27 +29,32 @@ from beanie import Document, init_beanie
 from pydantic import Field
 import pymongo
 
+
 class ImageMongoDB(Document):
     name: str = Field(..., unique=True)
-    field_id: str = Field(default="")  # или None, если нужно
+    file_id: str = Field(default="")
+
 
     class Settings:
-        name = "images_pdf"
-        indexes = [
-            pymongo.IndexModel([("name", pymongo.TEXT)])
-        ]
+        name = "files"
+        indexes = [pymongo.IndexModel([("name", pymongo.TEXT)])]
 
 
-async def init_mongo():
+async def init_mongo(client):
     try:
-        client = AsyncIOMotorClient(settings.MONGO_DATABASE_URL)
-        await init_beanie(database=client['images_pdf'], document_models=[ImageMongoDB])
-
-        # Создаем или ищем документ
-        images_pdf = await ImageMongoDB.find_one({"name": "zima_data"})
-        if not images_pdf:
-            images_pdf = ImageMongoDB(name="zima_data")
-            await images_pdf.insert()
+        # client = AsyncIOMotorClient(settings.MONGO_DATABASE_URL)
+        await init_beanie(database=client["files"], document_models=[ImageMongoDB])
+        #
+        # # Создаем или ищем документ
+        # images_pdf = await ImageMongoDB.find_one({"name": "zima_data"})
+        # if not images_pdf:
+        #     new_image = ImageMongoDB(
+        #         name='zima_data',
+        #         file_data=b'...',  # байты файла
+        #         content_type='image/jpeg',  # например
+        #         size=1024  # размер файла в байтах
+        #     )
+        #     await images_pdf.insert()
 
     except Exception as e:
         logger.info(str(e))

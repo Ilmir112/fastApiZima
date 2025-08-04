@@ -36,9 +36,11 @@ async def register_user(user_data: SUsersRegister):
             password=hashed_password,
             access_level=user_data.access_level,
         )
-        logger.info("Users adding", extra={"well_number": user_data.login_user}, exc_info=True)
+        logger.info(
+            "Users adding", extra={"well_number": user_data.login_user}, exc_info=True
+        )
     except Exception as e:
-        logger.error('Critical error', extra=e, exc_info=True)
+        logger.error("Critical error", extra=e, exc_info=True)
 
 
 @router.post("/login")
@@ -49,20 +51,25 @@ async def login_user(response: Response, user_data: SUsersAuth):
         if not user:
             raise IncorectLoginOrPassword
         access_token = create_access_token({"sub": str(user.id)})
-        response.set_cookie("summary_information_access_token", access_token, httponly=True)
+        response.set_cookie(
+            "summary_information_access_token", access_token, httponly=True
+        )
         # Отправка сообщения о входе пользователя
+        if settings.MODE == "PROD":
+            await TelegramInfo.send_message_users(user.login_user)
 
-        await TelegramInfo.send_message_users(user.login_user)
-
-
-        logger.info("Users insert", extra={"users": user_data.login_user}, exc_info=True)
-        return {"login_user": user.login_user,
-                "position_id": user.position_id,
-                "ctcrs": user.ctcrs,
-                "contractor": user.contractor,
-                "access_token": access_token}
+        logger.info(
+            "Users insert", extra={"users": user_data.login_user}, exc_info=True
+        )
+        return {
+            "login_user": user.login_user,
+            "position_id": user.position_id,
+            "ctcrs": user.ctcrs,
+            "contractor": user.contractor,
+            "access_token": access_token,
+        }
     except Exception as e:
-        logger.error('Critical error', extra=e, exc_info=True)
+        logger.error("Critical error", extra=e, exc_info=True)
 
 
 @router.post("/logout")

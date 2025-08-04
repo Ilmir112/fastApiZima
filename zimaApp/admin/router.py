@@ -11,12 +11,12 @@ from sqlalchemy.orm import Session
 @app.get("/admin/norms/{norm_id}/view", response_class=HTMLResponse)
 async def view_norm(norm_id: int):
 
-        norm = NormDAO.find_one_or_none(id=norm_id)
-        if not norm:
-            raise HTTPException(status_code=404, detail="Запись не найдена")
+    norm = NormDAO.find_one_or_none(id=norm_id)
+    if not norm:
+        raise HTTPException(status_code=404, detail="Запись не найдена")
 
-        # Создайте HTML-шаблон прямо здесь или используйте шаблонизатор (например, Jinja2)
-        html_content = f"""
+    # Создайте HTML-шаблон прямо здесь или используйте шаблонизатор (например, Jinja2)
+    html_content = f"""
         <html>
             <head>
                 <title>Подробнее о NormsWork {norm_id}</title>
@@ -32,4 +32,4 @@ async def view_norm(norm_id: int):
             </body>
         </html>
         """
-        return HTMLResponse(content=html_content)
+    return HTMLResponse(content=html_content)

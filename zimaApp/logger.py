@@ -5,6 +5,7 @@ from queue import Queue
 import logging
 from telegram import Bot
 
+
 # Класс для отправки сообщений в Telegram
 class TelegramSender:
     def __init__(self, token):
@@ -31,6 +32,7 @@ class TelegramSender:
     def send(self, chat_id, text):
         self.queue.put((chat_id, text))
 
+
 # Класс обработчика логов для Telegram
 class TelegramHandler(logging.Handler):
     def __init__(self, sender: TelegramSender, chat_id):
@@ -44,6 +46,7 @@ class TelegramHandler(logging.Handler):
         if record.levelno >= logging.ERROR:
             self.sender.send(self.chat_id, log_entry)
 
+
 # Инициализация отправителя и логгера
 sender = TelegramSender(settings.TOKEN)
 
@@ -54,7 +57,7 @@ logger.setLevel(logging.DEBUG)  # Уровень глобально — DEBUG
 telegram_handler = TelegramHandler(sender, settings.CHAT_ID)
 telegram_handler.setLevel(logging.ERROR)  # Только ERROR и выше
 
-formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
 telegram_handler.setFormatter(formatter)
 
 # Обработчик для вывода всех сообщений в консоль

@@ -8,7 +8,7 @@ from urllib.parse import quote
 
 
 class Settings(BaseSettings):
-    MODE: Literal["DEV", "TEST", "PROD"]
+    MODE: Literal["DEV", "TEST", ""]
     LOG_LEVEL: Literal["DEV", "TEST", "PROD", "INFO"]
     DB_USER: str
     DB_PASSWORD: str
@@ -29,8 +29,11 @@ class Settings(BaseSettings):
 
     @property
     def MONGO_DATABASE_URL(self):
-        return f"mongodb://{self.MONGO_DB_USER}:{urllib.parse.quote(self.MONGO_DB_PASSWORD)}@"\
-                f"{self.MONGO_DB_HOST}:{self.MONGO_DB_PORT}/{self.MONGO_DB_NAME}"
+        return (
+            f"mongodb://{self.MONGO_DB_USER}:{urllib.parse.quote(self.MONGO_DB_PASSWORD)}@"
+            f"{self.MONGO_DB_HOST}:{self.MONGO_DB_PORT}/{self.MONGO_DB_NAME}"
+        )
+
     TEST_DB_USER: str
     TEST_DB_PASSWORD: str
     TEST_DB_HOST: str
@@ -83,9 +86,11 @@ class Settings(BaseSettings):
     model_config = ConfigDict(env_file=".env")
     # model_config = ConfigDict(env_file='../.env')
 
+
 # В асинхронной функции
 async def init_broker():
     await router_broker.connect()
+
 
 try:
     # Создайте экземпляр класса Settings

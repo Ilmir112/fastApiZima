@@ -13,6 +13,7 @@ class UserAlreadyExistsException(ZimaException):
     status_code = status.HTTP_409_CONFLICT
     detail = "Пользователь уже существует"
 
+
 class DowntimeDurationAlreadyExistsException(ZimaException):
     status_code = status.HTTP_409_CONFLICT
     detail = "Время простоя не может быть отрицательным"
