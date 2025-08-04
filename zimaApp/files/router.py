@@ -1,5 +1,6 @@
 import io
 import mimetypes
+import urllib
 
 from fastapi import APIRouter, Form, UploadFile, HTTPException, Depends, File, Request
 
@@ -63,13 +64,13 @@ async def get_file(request: Request, file_id: str, user: Users = Depends(get_cur
 
             filename_attr = getattr(grid_out, "filename", None)
             filename_for_header = filename_attr or "file"
-
+            filename_encoded = urllib.parse.quote(filename_for_header)
 
             return StreamingResponse(
                 io.BytesIO(contents),
                 media_type=content_type,
                 headers={
-                    "Content-Disposition": f'inline; filename="{filename_for_header}"'
+                    "Content-Disposition": f"inline; filename*=UTF-8''{filename_encoded}"
                 }
             )
         else:

@@ -4,6 +4,7 @@ import time
 import telegram
 from contextlib import asynccontextmanager
 
+from starlette.middleware.base import BaseHTTPMiddleware
 import uvicorn
 from beanie import init_beanie
 from fastapi import FastAPI, Request, Response
@@ -218,6 +219,19 @@ app.add_middleware(
         "Authorization",
     ],
 )
+
+
+class LimitUploadSizeMiddleware(BaseHTTPMiddleware):
+    def __init__(self, app, max_upload_size: int):
+        super().__init__(app)
+        self.max_upload_size = max_upload_size
+
+    async def dispatch(self, request, call_next):
+        if int(request.headers.get('content-length', 0)) > self.max_upload_size:
+            return JSONResponse({"error": "Payload too large"}, status_code=413)
+        return await call_next(request)
+
+app.add_middleware(LimitUploadSizeMiddleware, max_upload_size=20 * 1024 * 1024)  # 10 МБ
 
 if settings.MODE == "TEST":
     # При тестировании через pytest, необходимо подключать Redis, чтобы кэширование работало.
