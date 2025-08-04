@@ -1,23 +1,22 @@
 
 import mimetypes
 from datetime import datetime
-from bson import ObjectId
-from fastapi import UploadFile
 
-from motor.motor_asyncio import AsyncIOMotorGridFSBucket, AsyncIOMotorClient
-from zimaApp.config import settings
+
+from bson import ObjectId
+from fastapi import UploadFile, Request
+
+from motor.motor_asyncio import AsyncIOMotorGridFSBucket
 from zimaApp.database import ImageMongoDB  # предполагаю, что это модель/схема
 from zimaApp.logger import logger
 
 
 class MongoFile:
-    def __init__(self):
-        self.client = AsyncIOMotorClient(settings.MONGO_DATABASE_URL)
-        self.db = self.client["files"]
-        self.fs_bucket = AsyncIOMotorGridFSBucket(self.db)
-
-    async def upload_file(self, itemId: str, file: UploadFile):
+    @classmethod
+    async def upload_file(cls, request: Request, itemId: str, file: UploadFile):
         try:
+            db = request.app.state.mongo_client["files"]
+            fs_bucket = AsyncIOMotorGridFSBucket(db)
             filename = file.filename
             contents = await file.read()
 
@@ -26,7 +25,7 @@ class MongoFile:
             content_type = mime_type or "application/octet-stream"
 
             # Загружаем содержимое в GridFS
-            gridfs_id = await self.fs_bucket.upload_from_stream(
+            gridfs_id = await fs_bucket.upload_from_stream(
                 filename,
                 contents,
                 metadata={
@@ -54,8 +53,11 @@ class MongoFile:
         except Exception as e:
             logger.error(e)
 
-    async def get_file_from_mongo(self, file_id: str):
+    @classmethod
+    async def get_file_from_mongo(cls, request: Request, file_id: str):
         try:
+            db = request.app.state.mongo_client["files"]
+            fs_bucket = AsyncIOMotorGridFSBucket(db)
             # Получаем документ по ID
             doc = await ImageMongoDB.find_one({"_id": ObjectId(file_id)})
             if not doc:
@@ -71,11 +73,14 @@ class MongoFile:
                 gridfs_id = ObjectId(gridfs_id)
 
             # Открываем поток для скачивания
-            stream = await self.fs_bucket.open_download_stream(gridfs_id)
+            stream = await fs_bucket.open_download_stream(gridfs_id)
             return stream  # Можно вернуть поток или прочитать полностью
         except Exception as e:
             logger.error(e)
 
-    async def delete_file_from_mongo(self, file_id: str):
-        self.fs_bucket.delete(ObjectId(file_id))
+    @classmethod
+    async def delete_file_from_mongo(cls, request: Request, file_id: str):
+        db = request.app.state.mongo_client["files"]
+        fs_bucket = AsyncIOMotorGridFSBucket(db)
+        fs_bucket.delete(ObjectId(file_id))
         return True

@@ -1,10 +1,12 @@
 import io
 import mimetypes
 
-from fastapi import APIRouter, Form, UploadFile, HTTPException, Depends, File
+from fastapi import APIRouter, Form, UploadFile, HTTPException, Depends, File, Request
 
 from fastapi.responses import StreamingResponse
 
+from zimaApp.files.dao import MongoFile
+from zimaApp.logger import logger
 from zimaApp.repairGis.dao import RepairsGisDAO
 from zimaApp.repairGis.router import update_repair_gis_data
 from zimaApp.repairGis.schemas import RepairGisUpdate
@@ -23,13 +25,13 @@ router = APIRouter(
 
 
 @router.post("/upload")
-async def upload_file_gis_akt(
+async def upload_file_gis_akt(request: Request,
         itemId: str = Form(...),
         file: UploadFile = File(...),
         user: Users = Depends(get_current_user),
 ):
-    from zimaApp.main import client_mongo
-    file_url, file_id, filename = await client_mongo.upload_file(itemId, file)
+
+    file_url, file_id, filename = await MongoFile.upload_file(request, itemId, file)
 
     result_file = RepairGisUpdate(id=int(itemId), fields={"image_pdf": file_url}, )
     result_file = await update_repair_gis_data(result_file)
@@ -39,10 +41,10 @@ async def upload_file_gis_akt(
 
 
 @router.get("/{file_id}")
-async def get_file(file_id: str, user: Users = Depends(get_current_user)):
+async def get_file(request: Request, file_id: str, user: Users = Depends(get_current_user)):
     try:
-        from zimaApp.main import client_mongo
-        grid_out = await client_mongo.get_file_from_mongo(file_id)
+
+        grid_out = await MongoFile.get_file_from_mongo(request, file_id)
         if grid_out:
 
             # Получаем метаданные
@@ -77,8 +79,8 @@ async def get_file(file_id: str, user: Users = Depends(get_current_user)):
 
 
 @router.delete("/delete_plan")
-async def delete_file(data: dict):
-    from zimaApp.main import client_mongo
+async def delete_file(request: Request,
+                      data: dict):
 
     item_id = data.get("itemId")
     plan_info = await WellsRepairsDAO.find_one_or_none(id=int(item_id))
@@ -86,7 +88,7 @@ async def delete_file(data: dict):
         file_id = plan_info["signed_work_plan_path"]
         if file_id:
 
-            result_mongo = await client_mongo.delete_file_from_mongo(file_id.replace("/files/", ""))
+            result_mongo = await MongoFile.delete_file_from_mongo(request, file_id.replace("/files/", ""))
             if result_mongo:
                 new_status = WellsRepairFile(id=int(item_id),
                                              signed_work_plan_path=None,
@@ -98,8 +100,7 @@ async def delete_file(data: dict):
 
 
 @router.delete("/delete_act_gis")
-async def delete_file(data: dict):
-    from zimaApp.main import client_mongo
+async def delete_file(request: Request, data: dict):
 
     try:
         item_id = data.get("itemId")
@@ -109,7 +110,7 @@ async def delete_file(data: dict):
             file_id = repair_info["image_pdf"]
             if file_id:
                 result_file = RepairGisUpdate(id=int(item_id), fields={"image_pdf": None})
-                result_mongo = await client_mongo.delete_file_from_mongo(file_id.replace("/files/", ""))
+                result_mongo = await MongoFile.delete_file_from_mongo(request, file_id.replace("/files/", ""))
                 if result_mongo:
                     result = await update_repair_gis_data(result_file)
 
@@ -120,16 +121,15 @@ async def delete_file(data: dict):
 
 
 @router.post("/upload_plan")
-async def upload_plan(
+async def upload_plan(request: Request,
         itemId: str = Form(...),
         file: UploadFile = File(...),
         status: str = Form(...),
         user: Users = Depends(get_current_user),
 ):
-    from zimaApp.main import client_mongo
 
     try:
-        file_url, file_id, filename = await client_mongo.upload_file(itemId, file)
+        file_url, file_id, filename = await MongoFile.upload_file(request, itemId, file)
         result_file = WellsRepairFile(id=int(itemId),
                                       signed_work_plan_path=file_url,
                                       status_work_plan=status)
@@ -137,4 +137,4 @@ async def upload_plan(
             result = await update_plan_status(result_file)
             return {"fileId": file_id, "fileUrl": file_url}
     except Exception as e:
-        raise HTTPException(status_code=404, detail=f"{e}")
+        logger.error(e)

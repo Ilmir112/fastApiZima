@@ -5,11 +5,13 @@ import telegram
 from contextlib import asynccontextmanager
 
 import uvicorn
+from beanie import init_beanie
 from fastapi import FastAPI, Request, Response
 from fastapi.exceptions import RequestValidationError, HTTPException
 from fastapi_cache import FastAPICache
 from fastapi_cache.backends.redis import RedisBackend
 from fastapi_versioning import VersionedFastAPI
+from motor.motor_asyncio import AsyncIOMotorClient
 
 from prometheus_fastapi_instrumentator import Instrumentator
 from redis import asyncio as aioredis
@@ -32,10 +34,10 @@ from zimaApp.admin.views import (
 )
 from zimaApp.config import settings, router_broker
 
-from zimaApp.database import engine, init_mongo
+from zimaApp.database import engine, init_mongo, ImageMongoDB
 from hawk_python_sdk.modules.fastapi import HawkFastapi
 
-from zimaApp.files.dao import MongoFile
+
 from zimaApp.tasks.rabbitmq.consumer import start_consumer
 from zimaApp.tasks.tasks import check_emails, check_emails_async
 from zimaApp.users.auth import authenticate_user
@@ -56,15 +58,18 @@ from zimaApp.logger import logger
 bot = telegram.Bot(token=settings.TOKEN)
 bot_user = telegram.Bot(token=settings.TOKEN_USERS)
 
-client_mongo = MongoFile()
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     # Запускаем потребителя как фоновую задачу
     consumer_task = asyncio.create_task(start_consumer())
 
-    await init_mongo(client_mongo.client)
     try:
+
+        from motor.motor_asyncio import AsyncIOMotorClient
+
+
+
         print("Запуск приложения")
         redis = aioredis.from_url(
             f"redis://{settings.REDIS_HOST}:{settings.REDIS_PORT}", encoding="utf8"
@@ -85,8 +90,18 @@ async def lifespan(_: FastAPI):
 
     except Exception as e:
         print(f"Ошибка при отправке сообщения: {e}")
+
+    mongo_client = AsyncIOMotorClient(settings.MONGO_DATABASE_URL)
+    app.state.mongo_client = mongo_client
+
+    # Инициализация базы данных
+    await init_beanie(database=mongo_client["files"], document_models=[ImageMongoDB])
+
     yield  # здесь приложение запустится, когда управление вернется после этого yield
     logger.info("Брокер остановлен")
+
+    # Закрываем Mongo клиент при завершении работы приложения
+    mongo_client.close()
 
     # При завершении работы отменяем задачу потребителя
     if consumer_task:

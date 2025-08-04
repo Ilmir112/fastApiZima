@@ -27,7 +27,6 @@ router = APIRouter(
 templates = Jinja2Templates(directory="zimaApp/templates")
 # templates = Jinja2Templates(directory="templates")
 
-
 @router.get("/login")
 @version(1)
 async def get_home_page(request: Request):
