@@ -40,12 +40,10 @@ class ImageMongoDB(Document):
         indexes = [pymongo.IndexModel([("name", pymongo.TEXT)])]
 
 
-async def init_mongo():
+async def init_mongo(client):
     try:
-        client = AsyncIOMotorClient(settings.MONGO_DATABASE_URL)
-        logger.info("попытка старта")
+        # client = AsyncIOMotorClient(settings.MONGO_DATABASE_URL)
         await init_beanie(database=client["files"], document_models=[ImageMongoDB])
-        logger.info("Монго стартовал")
         #
         # # Создаем или ищем документ
         # images_pdf = await ImageMongoDB.find_one({"name": "zima_data"})
@@ -57,6 +55,6 @@ async def init_mongo():
         #         size=1024  # размер файла в байтах
         #     )
         #     await images_pdf.insert()
-        return client
+
     except Exception as e:
-        logger.error(str(e))
+        logger.info(str(e))

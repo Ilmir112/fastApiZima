@@ -10,7 +10,6 @@ from fastapi.exceptions import RequestValidationError, HTTPException
 from fastapi_cache import FastAPICache
 from fastapi_cache.backends.redis import RedisBackend
 from fastapi_versioning import VersionedFastAPI
-from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorGridFSBucket
 
 from prometheus_fastapi_instrumentator import Instrumentator
 from redis import asyncio as aioredis
@@ -57,29 +56,23 @@ from zimaApp.logger import logger
 bot = telegram.Bot(token=settings.TOKEN)
 bot_user = telegram.Bot(token=settings.TOKEN_USERS)
 
-# Глобальные переменные для клиента и базы данных
-client: AsyncIOMotorClient = None
-fs_bucket: AsyncIOMotorGridFSBucket = None
+client_mongo = MongoFile()
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
-    # Получаем текущий активный цикл
-    loop = asyncio.get_running_loop()
+    # Запускаем потребителя как фоновую задачу
+    consumer_task = asyncio.create_task(start_consumer())
 
-    # Запускаем потребителя как фоновую задачу в текущем цикле
-    consumer_task = loop.create_task(start_consumer())
-
-    # Инициализация MongoDB
-    await init_mongo()
-
+    await init_mongo(client_mongo.client)
     try:
         print("Запуск приложения")
         redis = aioredis.from_url(
             f"redis://{settings.REDIS_HOST}:{settings.REDIS_PORT}", encoding="utf8"
         )
         FastAPICache.init(RedisBackend(redis), prefix="fastapi-cache")
+
     except Exception as e:
-        print(f"Ошибка при инициализации: {e}")
+        print(e)
 
     try:
         if settings.MODE == "PROD":
@@ -89,10 +82,11 @@ async def lifespan(_: FastAPI):
                 chat_id=settings.CHAT_ID, text="Приложение запущено!!!"
             )
             logger.info("Сообщение отправлено успешно")
+
     except Exception as e:
         print(f"Ошибка при отправке сообщения: {e}")
-
-    yield  # Передача управления приложению
+    yield  # здесь приложение запустится, когда управление вернется после этого yield
+    logger.info("Брокер остановлен")
 
     # При завершении работы отменяем задачу потребителя
     if consumer_task:
@@ -101,7 +95,6 @@ async def lifespan(_: FastAPI):
             await consumer_task
         except asyncio.CancelledError:
             print("Потребитель остановлен")
-
     print("Завершение работы приложения")
 
 
