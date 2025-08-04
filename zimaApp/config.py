@@ -8,7 +8,7 @@ from urllib.parse import quote
 
 
 class Settings(BaseSettings):
-    MODE: Literal["DEV", "TEST", ""]
+    MODE: Literal["DEV", "TEST", "PROD"]
     LOG_LEVEL: Literal["DEV", "TEST", "PROD", "INFO"]
     DB_USER: str
     DB_PASSWORD: str
