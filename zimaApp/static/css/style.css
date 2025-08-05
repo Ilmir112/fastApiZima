@@ -31,7 +31,7 @@ body {
 }
 
 .modal {
-  position: fixed;
+  /*position: fixed;*/
   z-index: 9999;
   left: 0;
   top: 0;
@@ -47,7 +47,7 @@ body {
   margin: 15% auto; /* Центр по вертикали и горизонтали */
   padding: 20px;
   border-radius: 5px;
-  width: 300px; /* ширина окна */
+  width: 400px; /* ширина окна */
 }
 
 /* Кнопка закрытия (крестик) */
@@ -72,8 +72,8 @@ body {
   top: 50%; /* по вертикали по центру */
   left: 50%; /* по горизонтали по центру */
   transform: translate(-50%, -50%); /* смещение для центрирования */
-  width: 400px; /* четкая ширина */
-  height: 300px; /* четкая высота */
+  width: 500px; /* четкая ширина */
+  height: 500px; /* четкая высота */
   background-color: #fff; /* фон окна */
   box-shadow: 0 5px 15px rgba(0,0,0,0.3); /* тень для выделения */
   padding: 20px; /* внутренние отступы */
@@ -93,27 +93,7 @@ body {
   z-index:999;
 }
 
-/* Основные стили для модального окна */
-  .modal {
-    display: none; /* по умолчанию скрыто */
-    position: fixed;
-    z-index: 999;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    overflow: auto; /* прокрутка при необходимости */
-    background-color: rgba(0,0,0,0.5); /* полупрозрачный фон */
-  }
 
-  .modal-content {
-    background-color: #fff;
-    margin: 10% auto; /* центрирование по вертикали и горизонтали */
-    padding: 20px;
-    border-radius: 8px;
-    width: 500px;
-    max-width: 90%;
-  }
 
   /* Заголовок */
   .modal-header {
