@@ -6,7 +6,7 @@ from fastapi import APIRouter, Form, UploadFile, HTTPException, Depends, File, R
 
 from fastapi.responses import StreamingResponse
 
-from zimaApp.files.dao import MongoFile
+from zimaApp.files.dao import MongoFile, ExcelRead
 from zimaApp.logger import logger
 from zimaApp.repairGis.dao import RepairsGisDAO
 from zimaApp.repairGis.router import update_repair_gis_data
@@ -16,7 +16,7 @@ from zimaApp.users.models import Users
 
 from zimaApp.wells_repair_data.dao import WellsRepairsDAO
 from zimaApp.wells_repair_data.models import StatusWorkPlan
-from zimaApp.wells_repair_data.router import update_plan_status
+from zimaApp.wells_repair_data.router import update_plan_status, find_well_by_number, find_repair_filter_by_number
 from zimaApp.wells_repair_data.schemas import WellsRepairFile
 
 router = APIRouter(
@@ -24,14 +24,59 @@ router = APIRouter(
     tags=["работа с файлами"],
 )
 
+from fastapi import FastAPI, File, UploadFile, HTTPException
+from typing import List
+import pandas as pd
+import io
+
+app = FastAPI()
+
+
+@router.post("/upload_multiple_excel/")
+async def upload_multiple_excel(
+        files: List[UploadFile] = File(...),
+        user: Users = Depends(get_current_user)):
+    results = []
+
+    for file in files:
+        # Проверка типа файла
+        if not file.filename.endswith(('.xlsx', '.xls')):
+            return {
+                "error": f"Некорректный тип файла: {file.filename}. Загрузите Excel файл."
+            }
+
+        try:
+            contents = await file.read()
+            excel_data = io.BytesIO(contents)
+            df = pd.read_excel(excel_data)
+            excel_xlrd = ExcelRead(df)
+            excel_result = excel_xlrd.find_pars()
+
+            if excel_result:
+                wells_repair = await find_repair_filter_by_number(excel_result[0], user)
+                # Обработка данных по необходимости
+                data_list = df.to_dict(orient='records')
+
+                results.append({
+                    "filename": file.filename,
+                    "rows": len(data_list),
+                    "data": data_list  # или только часть данных
+                })
+
+        except Exception as e:
+            return {
+                "error": f"Ошибка при обработке файла {file.filename}: {str(e)}"
+            }
+
+    return {"files_processed": results}
+
 
 @router.post("/upload")
 async def upload_file_gis_akt(request: Request,
-        itemId: str = Form(...),
-        file: UploadFile = File(...),
-        user: Users = Depends(get_current_user),
-):
-
+                              itemId: str = Form(...),
+                              file: UploadFile = File(...),
+                              user: Users = Depends(get_current_user),
+                              ):
     file_url, file_id, filename = await MongoFile.upload_file(request, itemId, file)
 
     result_file = RepairGisUpdate(id=int(itemId), fields={"image_pdf": file_url}, )
@@ -39,6 +84,7 @@ async def upload_file_gis_akt(request: Request,
 
     if result_file:
         return {"fileId": file_id, "fileUrl": file_url}
+
 
 @router.get("/{file_id}")
 async def get_file(request: Request, file_id: str, user: Users = Depends(get_current_user)):
@@ -80,11 +126,9 @@ async def get_file(request: Request, file_id: str, user: Users = Depends(get_cur
         return {"error": str(e)}
 
 
-
 @router.delete("/delete_plan")
 async def delete_file(request: Request,
                       data: dict):
-
     item_id = data.get("itemId")
     plan_info = await WellsRepairsDAO.find_one_or_none(id=int(item_id))
     if plan_info:
@@ -104,7 +148,6 @@ async def delete_file(request: Request,
 
 @router.delete("/delete_act_gis")
 async def delete_file(request: Request, data: dict):
-
     try:
         item_id = data.get("itemId")
         repair_info = await RepairsGisDAO.find_one_or_none(id=int(item_id))
@@ -125,12 +168,11 @@ async def delete_file(request: Request, data: dict):
 
 @router.post("/upload_plan")
 async def upload_plan(request: Request,
-        itemId: str = Form(...),
-        file: UploadFile = File(...),
-        status: str = Form(...),
-        user: Users = Depends(get_current_user),
-):
-
+                      itemId: str = Form(...),
+                      file: UploadFile = File(...),
+                      status: str = Form(...),
+                      user: Users = Depends(get_current_user),
+                      ):
     try:
         file_url, file_id, filename = await MongoFile.upload_file(request, itemId, file)
         result_file = WellsRepairFile(id=int(itemId),

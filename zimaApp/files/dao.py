@@ -1,7 +1,7 @@
 
 import mimetypes
 from datetime import datetime
-
+import re
 
 from bson import ObjectId
 from fastapi import UploadFile, Request
@@ -84,3 +84,48 @@ class MongoFile:
         fs_bucket = AsyncIOMotorGridFSBucket(db)
         fs_bucket.delete(ObjectId(file_id))
         return True
+
+
+class ExcelRead:
+    def __init__(self, df):
+        self.df = df
+
+    def find_pars(self):
+        # Проверка наличия колонок
+        required_columns = ['Дата', 'Работы', 'Примечание']
+        for col in required_columns:
+            if col not in self.df.columns:
+                print(f"Отсутствует обязательная колонка: {col}")
+                return None  # Или выбросить исключение
+
+        # Проверка, что есть хотя бы одна строка
+        if self.df.empty:
+            print("Данных нет.")
+            return None
+
+        # Проверка, что есть хотя бы одна строка
+        if self.df.empty:
+            print("Данных нет.")
+            return None
+
+        for row in self.df.itertuples():
+            # Объединение всех ячеек первой строки в одну строку для поиска
+            row_text = ' '.join(str(cell) for cell in row)
+            if 'переезд' in row_text:
+                break
+
+        # Попытка найти фразу "на скв 217 Алкинского" или подобное
+        # Например, ищем номера скважин и месторождения
+        skv_numbers = re.findall(r'на скв №(\d+)', row_text, re.IGNORECASE)[0]
+
+        mesto_matches = re.findall(r'на скв\s*№\d+\s*([\w\-]+)\s*м-я', row_text, re.IGNORECASE)[0]
+
+        if skv_numbers is None or mesto_matches is None:
+            return
+
+        return skv_numbers, mesto_matches
+
+    # Пример использования:
+    # df = pd.read_excel('ваш_файл.xls', engine='xlrd')
+    # ремонты = проверить_и_найти(df)
+    # если нужны только ремонты с этой фразой — они будут в списке ремонты

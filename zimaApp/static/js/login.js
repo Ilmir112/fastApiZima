@@ -385,9 +385,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
 document.addEventListener('DOMContentLoaded', () => {
     // Получение элементов
-    const modal = document.getElementById('registerModal');
-    modal.style.position = 'fixed'; // или 'absolute', если нужно
-    modal.style.zIndex = '9999';
+    const modalRegistration = document.getElementById('registerModal');
+    modalRegistration.style.position = 'fixed'; // или 'absolute', если нужно
+    modalRegistration.style.zIndex = '9999';
     const openBtn = document.getElementById('openRegisterBtn');
     const closeBtn = document.getElementById('closeModal');
     const organizationSelect = document.getElementById('organization');
@@ -401,18 +401,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Открытие модального окна
     openBtn.onclick = () => {
-        modal.style.display = 'block';
+        modalRegistration.style.display = 'block';
     };
 
     // Закрытие модального окна
     closeBtn.onclick = () => {
-        modal.style.display = 'none';
+        modalRegistration.style.display = 'none';
     };
 
     // Закрытие при клике вне окна
     window.onclick = (event) => {
-        if (event.target == modal) {
-            modal.style.display = 'none';
+        if (event.target == modalRegistration) {
+            modalRegistration.style.display = 'none';
         }
     };
 
@@ -497,7 +497,7 @@ document.addEventListener('DOMContentLoaded', () => {
             .then(data => {
                 if (data.status === 'success') {
                     alert(data.message);
-                    // modal.style.display = 'none'; // закрыть окно
+                    // modalRegistration.style.display = 'none'; // закрыть окно
                     // Можно добавить очистку формы или других действий
                 } else if (data.status === 409) {
                     alert("Данный пользователь уже существует");
