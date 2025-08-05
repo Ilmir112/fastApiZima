@@ -238,7 +238,6 @@ async function uploadFile(itemId, files) {
 
                 }
             }
-            window.location.reload()
         } else {
             alert('Ошибка загрузки: ' + result.message);
         }
@@ -283,48 +282,3 @@ async function deleteFile(itemId) {
     }
 }
 
-// Получаем элементы
-const modal = document.getElementById('myModal');
-const closeBtn = document.getElementById('closeModal');
-const confirmBtn = document.getElementById('confirmBtn');
-const cancelBtn = document.getElementById('cancelBtn');
-
-// Функция для открытия окна
-function openModal() {
-    modal.style.display = 'block';
-}
-
-// Функция для закрытия окна
-function closeModal() {
-    modal.style.display = 'none';
-}
-
-// Обработчики
-closeBtn.onclick = closeModal;
-cancelBtn.onclick = closeModal;
-
-// Можно закрывать окно при клике вне содержимого
-window.onclick = function(event) {
-    if (event.target == modal) {
-        closeModal();
-    }
-};
-
-async function askStatus() {
-    return new Promise((resolve) => {
-        openModal();
-
-        // Обработчик подтверждения
-        confirmBtn.onclick = () => {
-            const selectedStatus = document.getElementById('statusSelect').value;
-            closeModal();
-            resolve(selectedStatus);
-        };
-
-        // Обработчик отмены
-        cancelBtn.onclick = () => {
-            closeModal();
-            resolve(null);
-        };
-    });
-}
