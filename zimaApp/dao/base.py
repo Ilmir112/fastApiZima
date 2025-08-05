@@ -178,4 +178,4 @@ class BaseDAO:
                 except SQLAlchemyError as e:
                     await session.rollback()
                     raise e
-                return result.rowcount
+                return result

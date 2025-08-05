@@ -11,7 +11,7 @@ from fastapi_versioning import version
 from zimaApp.users.dao import UsersDAO
 from zimaApp.users.dependencies import get_current_admin_user, get_current_user
 from zimaApp.users.models import Users
-from zimaApp.users.schemas import SUsersAuth, SUsersRegister
+from zimaApp.users.schemas import SUsersAuth, SUsersRegister, SUserUpdate
 
 router = APIRouter(prefix="/auth", tags=["Auth & пользователи"])
 
@@ -24,6 +24,8 @@ async def register_user(user_data: SUsersRegister):
         if existing_user:
             raise UserAlreadyExistsException
         hashed_password = get_password_hash(user_data.password)
+        if user_data.position_id in ["Главный геолог", "Начальник ПТО","Заместитель начальника ПТО"]:
+            user_data.ctcrs = ""
         await UsersDAO.add_data(
             login_user=user_data.login_user,
             name_user=user_data.name_user,
@@ -34,13 +36,23 @@ async def register_user(user_data: SUsersRegister):
             contractor=user_data.contractor,
             ctcrs=user_data.ctcrs,
             password=hashed_password,
-            access_level=user_data.access_level,
+            access_level='user',
         )
+        if settings.MODE == "PROD":
+            await TelegramInfo.send_message_registration_users(user_data)
         logger.info(
-            "Users adding", extra={"well_number": user_data.login_user}, exc_info=True
+            "Users adding", extra={"new_user": user_data.login_user}, exc_info=True
         )
+        return {
+            "status": "success",
+            "message": "Пользователь успешно зарегистрирован",
+            "user": {
+                "login": user_data.login_user
+            }
+        }
     except Exception as e:
         logger.error("Critical error", extra=e, exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.post("/login")
@@ -68,14 +80,47 @@ async def login_user(response: Response, user_data: SUsersAuth):
             "contractor": user.contractor,
             "access_token": access_token,
         }
+    except IncorectLoginOrPassword:
+        raise IncorectLoginOrPassword
     except Exception as e:
         logger.error("Critical error", extra=e, exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.post("/logout")
 @version(1)
 async def logout_user(response: Response):
     response.delete_cookie("summary_information_access_token")
+
+
+@router.post("/update")
+@version(1)
+async def update_user(
+        response: Response,
+        user_update: SUserUpdate,
+        current_user: Users = Depends(get_current_user)
+):
+    try:
+        hashed_password = get_password_hash(user_update.password)
+        user_update.password = hashed_password
+        user_obj = await UsersDAO.update(filter_by={"id": current_user.id}, **user_update.dict(exclude_unset=True))
+
+        return {
+            "status": "success",
+            "message": "Данные успешно обновлены",
+            "user": {
+                "login": user_update.login_user,
+                "name": user_update.name_user,
+                "surname": user_update.surname_user,
+                "second_name": user_update.second_name,
+                "position": user_update.position_id,
+                "customer": user_update.costumer,
+                "contractor": user_update.contractor,
+                "ctcrs": user_update.ctcrs,
+            }
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.get("/me")

@@ -8,7 +8,7 @@ class Users(Base):
     __tablename__ = "users"
 
     id = Column(Integer, primary_key=True, nullable=False)
-    login_user = Column(String, nullable=False)
+    login_user = Column(String, nullable=False, unique=True)
     name_user = Column(String, nullable=False)
     surname_user = Column(String, nullable=False)
     second_name = Column(String, nullable=False)

@@ -214,7 +214,7 @@ const dataToSend = {
 };
 
 // Пример отправки данных (замените URL на ваш API)
-fetch('/api/register', {
+fetch('/auth/register', {
  method:'POST',
  headers:{'Content-Type':'application/json'},
  body : JSON.stringify(dataToSend)

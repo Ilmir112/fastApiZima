@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, Request, HTTPException
 from fastapi.templating import Jinja2Templates
 
 from zimaApp.logger import logger
@@ -26,6 +26,15 @@ router = APIRouter(
 
 templates = Jinja2Templates(directory="zimaApp/templates")
 # templates = Jinja2Templates(directory="templates")
+
+
+@router.get("/registration")
+@version(1)
+async def registration_new_user(request: Request):
+    try:
+        return templates.TemplateResponse("layout/registration.html", context={"request": request})
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/login")
 @version(1)

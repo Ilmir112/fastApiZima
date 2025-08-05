@@ -45,7 +45,7 @@ function generateTableHTML(tableData) {
                     if (side === 'border') side = 'border';
 
                     if (borderStyle === 'thin' || borderStyle === 'medium') {
-                        td.style['border-' + side] = '1px solid #000';
+                        td.style['border-' + side] = '2px solid #000';
 
                     }
                 }
@@ -206,7 +206,7 @@ async function uploadFile(itemId, files) {
     const statusWorkPlan = await askStatus();
 
     // Проверка, если пользователь отменил выбор (statusWorkPlan === null)
-    if (statusWorkPlan === null) {
+    if (statusWorkPlan === "") {
         alert('Загрузка отменена: не выбран статус.');
         return;
     }

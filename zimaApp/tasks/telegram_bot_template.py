@@ -9,6 +9,7 @@ from zimaApp.config import settings
 
 import httpx
 
+from zimaApp.users.schemas import SUsersRegister
 from zimaApp.wells_data.dao import WellsDatasDAO
 from zimaApp.wells_data.schemas import SWellsData
 from zimaApp.wells_repair_data.schemas import SWellsRepair
@@ -21,6 +22,16 @@ class TelegramInfo:
     @classmethod
     async def send_message_users(cls, username: str):
         message = f"Пользователь {username} вошел в систему."
+        payload = {"chat_id": settings.CHAT_ID, "text": message}
+        # await send_message(message, settings.CHAT_ID)
+        async with httpx.AsyncClient() as client:
+            response = await client.post(TelegramInfo.URL, json=payload)
+            response.raise_for_status()
+
+    @classmethod
+    async def send_message_registration_users(cls, username: SUsersRegister):
+        message = (f"Пользователь {username.position_id} "
+                   f"{username.surname_user} {username.name_user} зарегистрировался.")
         payload = {"chat_id": settings.CHAT_ID, "text": message}
         # await send_message(message, settings.CHAT_ID)
         async with httpx.AsyncClient() as client:

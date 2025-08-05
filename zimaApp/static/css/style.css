@@ -63,3 +63,87 @@ body {
   color: black;
   cursor: pointer;
 }
+
+
+/* Общие стили для модального окна */
+#myModal {
+  display: none; /* по умолчанию скрыто */
+  position: fixed; /* фиксированное позиционирование */
+  top: 50%; /* по вертикали по центру */
+  left: 50%; /* по горизонтали по центру */
+  transform: translate(-50%, -50%); /* смещение для центрирования */
+  width: 400px; /* четкая ширина */
+  height: 300px; /* четкая высота */
+  background-color: #fff; /* фон окна */
+  box-shadow: 0 5px 15px rgba(0,0,0,0.3); /* тень для выделения */
+  padding: 20px; /* внутренние отступы */
+  box-sizing: border-box; /* чтобы padding не влиял на размеры */
+  z-index: 1000; /* чтобы было поверх других элементов */
+}
+
+/* Можно добавить стили для затемнения фона при открытом окне (опционально) */
+#modalOverlay {
+  display: none;
+  position: fixed;
+  top:0;
+  left:0;
+  width:100%;
+  height:100%;
+  background-color: rgba(0,0,0,0.5);
+  z-index:999;
+}
+
+/* Основные стили для модального окна */
+  .modal {
+    display: none; /* по умолчанию скрыто */
+    position: fixed;
+    z-index: 999;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto; /* прокрутка при необходимости */
+    background-color: rgba(0,0,0,0.5); /* полупрозрачный фон */
+  }
+
+  .modal-content {
+    background-color: #fff;
+    margin: 10% auto; /* центрирование по вертикали и горизонтали */
+    padding: 20px;
+    border-radius: 8px;
+    width: 500px;
+    max-width: 90%;
+  }
+
+  /* Заголовок */
+  .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  /* Кнопка закрытия */
+  .close {
+    font-size: 24px;
+    font-weight: bold;
+    cursor: pointer;
+  }
+
+  /* Формы и элементы */
+  label {
+    display: block;
+    margin-top: 10px;
+  }
+
+  input[type="text"], input[type="password"], select {
+    width: 100%;
+    padding: 8px;
+    margin-top:4px;
+    box-sizing: border-box;
+  }
+
+  button {
+    margin-top:20px;
+    padding:10px 20px;
+    cursor:pointer;
+  }

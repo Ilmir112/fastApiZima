@@ -10,97 +10,339 @@
     {% block head %}
     {% endblock %}
 </head>
+
 <body>
 <header>
-    <!-- Навигационная панель -->
-    <nav class="navbar navbar-dark bg-dark fixed-top">
-        <div class="container">
-            <img src="/static/image/zima_ico.ico" alt="Zima" style="width:50px; height:auto;"/>
-            <a class="navbar-brand" href="/pages/home">ZIMA</a>
+<h3>Войти в систему</h3>
+</header>
 
-            <button class="navbar-toggler" type="button" data-bs-toggle="offcanvas"
-                    data-bs-target="#offcanvasDarkNavbar" aria-controls="offcanvasDarkNavbar"
-                    aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
+<!-- Навигационная панель -->
+<nav class="navbar navbar-dark bg-dark fixed-top">
+    <div class="container">
+        <img src="/static/image/zima_ico.ico" alt="Zima" style="width:50px; height:auto;"/>
+        <a class="navbar-brand" href="/pages/home">ZIMA</a>
 
-            <div class="offcanvas offcanvas-end text-bg-dark" tabindex="-1" id="offcanvasDarkNavbar"
-                 aria-labelledby="offcanvasDarkNavbarLabel">
-                <div class="offcanvas-header">
-                    <h5 class="offcanvas-title" id="offcanvasDarkNavbarLabel">Навигационная панель</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas"
-                            aria-label="Close"></button>
-                </div>
-                <div class="offcanvas-body">
-                    <ul class="navbar-nav justify-content-end flex-grow-1 pe-3">
-                        <li class="nav-item">
-                            <a class="nav-link" href="#">Мой аккаунт</a>
-                        </li>
-                        <!-- Можно добавлять динамически -->
-                        <li class="nav-item d-none" id="logoutItem">
-                            <button class="btn btn-outline-secondary" id="logoutBtn">Выйти</button>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="/pages/plan">План работ</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="#">АВР</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="#">Сводка с ЦДС</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="#">Данные по скважине</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="/pages/repair_gis">Простои ГИС</a>
-                        </li>
-                        <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown"
-                               aria-expanded="false">
-                                Dropdown
-                            </a>
-                            <ul class="dropdown-menu dropdown-menu-dark">
-                                <li><a class='dropdown-item' href='#'>Action</a></li>
-                                <li><a class='dropdown-item' href='#'>Another action</a></li>
-                                <li>
-                                    <hr class='dropdown-divider'>
-                                </li>
-                                <li><a class='dropdown-item' href='#'>Something else here</a></li>
-                            </ul>
-                        </li>
-                    </ul>
-                    <!-- Форма поиска -->
-                    <form class='d-flex mt-3' role='search'>
-                        <input class='form-control me-2' type='search' placeholder='Search' aria-label='Search'/>
-                        <button class='btn btn-success' type='submit'>Search</button>
-                    </form>
-                </div>
+        <button class="navbar-toggler" type="button" data-bs-toggle="offcanvas"
+                data-bs-target="#offcanvasDarkNavbar" aria-controls="offcanvasDarkNavbar"
+                aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="offcanvas offcanvas-end text-bg-dark" tabindex="-1" id="offcanvasDarkNavbar"
+             aria-labelledby="offcanvasDarkNavbarLabel">
+            <div class="offcanvas-header">
+                <h5 class="offcanvas-title" id="offcanvasDarkNavbarLabel">Навигационная панель</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas"
+                        aria-label="Close"></button>
+            </div>
+            <div class="offcanvas-body">
+                <ul class="navbar-nav justify-content-end flex-grow-1 pe-3">
+                    <li class="nav-item">
+                        <button class="btn btn-outline-secondary" id="showAccountInfo">Мой аккаунт</button>
+                        <!-- Можно оставить так или заменить на ссылку -->
+                        <!-- <a class="nav-link" href="#">Мой аккаунт</a> -->
+                    </li>
+                    <!-- Можно добавлять динамически -->
+                    <li class="nav-item d-none" id="logoutItem">
+                        <button class="btn btn-outline-secondary" id="logoutBtn">Выйти</button>
+                    </li>
+                    <li class="nav-item">
+                        <a class='nav-link' href="/pages/plan">План работ</a>
+                    </li>
+                    <li class='nav-item'>
+                        <a class='nav-link' href='#'>АВР</a>
+                    </li>
+                    <li class='nav-item'>
+                        <a class='nav-link' href='#'>Сводка с ЦДС</a>
+                    </li>
+                    <li class='nav-item'>
+                        <a class='nav-link' href='#'>Данные по скважине</a>
+                    </li>
+                    <li class='nav-item'>
+                        <a class='nav-link' href='/pages/repair_gis'>Простои ГИС</a>
+                    </li>
+                    <li class='nav-item dropdown'>
+                        <a class='nav-link dropdown-toggle' href='#' role='button' data-bs-toggle='dropdown'
+                           aria-expanded='false'>
+                            Dropdown
+                        </a>
+                        <ul class='dropdown-menu dropdown-menu-dark'>
+                            <li><a class='dropdown-item' href='#'>Action</a></li>
+                            <li><a class='dropdown-item' href='#'>Another action</a></li>
+                            <li>
+                                <hr class='dropdown-divider'>
+                            </li>
+                            <li><a class='dropdown-item' href='#'>Something else here</a></li>
+                        </ul>
+                    </li>
+                </ul>
+                <!-- Форма поиска -->
+                <form class='d-flex mt-3' role='search'>
+                    <input class='form-control me-2' type='search' placeholder='Search' aria-label='Search'/>
+                    <button class='btn btn-success' type='submit'>Search</button>
+                </form>
             </div>
         </div>
-    </nav>
-
+    </div>
+</nav>
+<div>
     <!-- Форма входа -->
-    <!-- Можно оставить внутри контейнера или вынести по необходимости -->
-    <!-- В данном случае оставляем внутри header, если это так задумано -->
     {% block login_form %}
-    <div id="login-container" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
-     background-color: white; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.5); z-index: 9999;">
-        <h3>Войти в систему</h3>
+    <!-- Контейнер для формы входа -->
+    <div id="login-container"
+         style="
+                display: none;
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                background-color: white;
+                padding: 20px;
+                border-radius: 8px;
+                box-shadow: 0 0 10px rgba(0,0,0,0.5);
+                z-index: 9999;">
+
+
         <form id="loginForm">
             <div class="mb-3">
                 <label for="login_user" class="form-label">Логин</label>
-                <input type="text" class="form-control" id="login_user" required>
+                <input type="text" class="form-control" id="login_user" required/>
             </div>
             <div class="mb-3">
                 <label for="password" class="form-label">Пароль</label>
-                <input type="password" class="form-control" id="password" required>
+                <input type="password" class="form-control" id="password" required/>
             </div>
-            <button type="submit" class="btn btn-primary">Войти</button>
+            <!-- Кнопка входа -->
+            <button type='submit' class='btn btn-primary'>Войти</button>
+            <!-- Кнопка регистрации (тип button, чтобы не отправляла форму) -->
+            <button type='button' id='openRegisterBtn' class='btn btn-secondary mt-2'>Регистрация</button>
+            <!-- <a class="nav-link" href="#">Мой аккаунт</a> -->
         </form>
     </div>
-    {% endblock %}
-</header>
+</div>
+
+<!-- Модальное окно -->
+<div id="registerModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Окно регистрация</h2>
+            <span class="close" id="closeModal">&times;</span>
+        </div>
+
+        <form id="registerForm">
+            <label for="loginUser">Логин:</label>
+            <input type="text" id="loginUser" name="loginUser" required/>
+
+            <label for="lastName">Фамилия:</label>
+            <input type="text" id="lastName" name="lastName" required/>
+
+            <label for="firstName">Имя:</label>
+            <input type="text" id="firstName" name="firstName" required/>
+
+            <label for="secondName">Отчество:</label>
+            <input type="text" id="secondName" name="secondName" required/>
+
+            <label for="position">Должность:</label>
+            <select id="position" name="position">
+                <option>Главный геолог</option>
+                <option>Ведущий геолог</option>
+                <option>Геолог</option>
+                <option>Начальник ПТО</option>
+                <option>Ведущий технолог</option>
+                <option>Нормировщик</option>
+                <option>Заместитель начальника ПТО</option>
+                <option>мастер</option>
+            </select>
+
+            <label for="organization">Организация:</label>
+            <select id="organization" name="organization">
+                <option value="">--Выберите--</option>
+                <option>ООО Ойл-сервис</option>
+                <!--                    <option>ООО РН-Сервис</option>-->
+            </select>
+
+            <label for="consumer">Заказчик:</label>
+            <select id="consumer" name="organization">
+                <option value="">--Выберите--</option>
+                <option>ООО Башнефть-Добыча</option>
+                <!--                    <option>ООО РН-Сервис</option>-->
+            </select>
+
+            <!-- В зависимости от организации, меняется название региона/экспедиции -->
+            <label for="regionOrExpedition" id="regionLabel">ЦЕХ:</label>
+            <select id="regionOrExpedition" name="regionOrExpedition">
+                <!-- Опции будут динамически добавляться -->
+            </select>
+
+            <label for="password_1">Пароль:</label>
+            <input type="password" id="password_1" name="password_1" required/>
+
+            <label for="password2">Повторить Пароль:</label>
+            <input type="password" id="password2" name="password2" required/>
+
+            <button type='submit'>Регистрация</button>
+        </form>
+
+    </div>
+</div>
+
+{% endblock %}
+
+<!-- Оверлей для затемнения фона -->
+<div id="accountModalOverlay"
+     style="
+             display:none;
+             position:fixed;
+             top:0;
+             left:0;
+             width:100%;
+             height:100%;
+             background-color:rgba(0,0,0,0.5);
+             z-index:999;">
+</div>
+
+<!-- Модальное окно -->
+<div id="accountModal"
+     style="
+             display:none;
+             position:fixed;
+             top:50%;
+             left:50%;
+             transform:translate(-50%, -50%);
+             width:500px;
+             max-width:90%;
+             background:#fff;
+             padding:20px;
+             box-shadow:0 4px 8px rgba(0,0,0,0.2);
+             border-radius:8px;
+             z-index:1000;">
+    <!-- Заголовок модального окна -->
+    <h2>Информация об аккаунте</h2>
+
+    <!-- Информация о пользователе -->
+
+    <div id="userInfo" style="
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 20px;
+    flex-direction: column;
+    gap: 10px;
+    font-family: Arial, sans-serif;
+">
+
+        <!-- Каждое поле в виде горизонтальной строки -->
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <strong>Логин:</strong>
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <span id="userLoginDisplay"></span>
+                <input type="text" id="userLoginInput" style="display:none;">
+            </div>
+        </div>
+
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <strong>Фамилия:</strong>
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <span id="userSurnameDisplay"></span>
+                <input type="text" id="userSurnameInput" style="display:none;">
+            </div>
+        </div>
+
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <strong>Имя:</strong>
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <span id="userNameDisplay"></span>
+                <input type="text" id="userNameInput" style="display:none;">
+            </div>
+        </div>
+
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <strong>Отчество:</strong>
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <span id="userSecondNameDisplay"></span>
+                <input type="text" id="userSecondNameInput" style="display:none;">
+            </div>
+        </div>
+
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <strong>Должность:</strong>
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <span id="userPositionDisplay"></span>
+                <input type="text" id="userPositionInput" style="display:none;">
+            </div>
+        </div>
+
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <strong>Заказчик:</strong>
+            <div style='display:flex; align-items:center; gap:10px'>
+                <span id='userCustomerDisplay'></span>
+                <input type='text' id='userCustomerInput' style='display:none;'/>
+            </div>
+        </div>
+
+        <!-- Контрагент -->
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <strong>Подрядчик:</strong>
+            <div style='display:flex; align-items:center; gap:10px'>
+                <span id='userContractorDisplay'></span>
+                <input type='text' id='userContractorInput' style='display:none;'/>
+            </div>
+        </div>
+
+        <!-- ЦТКРС -->
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <strong>ЦТКРС:</strong>
+            <div style='display:flex; align-items:center; gap:10px'>
+                <span id='userCtcrsDisplay'></span>
+                <!-- Заменяем input на select -->
+                <select id='userCtcrsSelect' style='display:none;'>
+                    <option value="ЦТКРС №1">ЦТКРС №1</option>
+                    <option value="ЦТКРС №2">ЦТКРС №2</option>
+                    <option value="ЦТКРС №3">ЦТКРС №3</option>
+                    <option value="ЦТКРС №4">ЦТКРС №4</option>
+                    <option value="ЦТКРС №5">ЦТКРС №5</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Поле для ввода пароля (по умолчанию скрыто) -->
+        <!-- Для режима просмотра -->
+
+        <div id="passwordSection" style="display:none; flex-direction: column; gap:10px; margin-top:10px;">
+            <!--                <span id="passwordDisplay"></span>-->
+
+            <!--                &lt;!&ndash; Для режима редактирования &ndash;&gt;-->
+            <!--                <input type="password" id="confirmPasswordInput" style="display:none;">-->
+            <label>
+                Введите пароль:
+                <!--                    <span id='passwordDisplay'></span>-->
+                <input type="password" id="passwordInput"/>
+            </label>
+            <label>
+                Повторите пароль:
+                <input type="password" id="confirmPasswordInput"/>
+            </label>
+        </div>
+
+        <!-- Кнопки -->
+        <div style="
+        display:flex;
+        justify-content:flex-start;
+        gap:10px;
+        margin-top:auto;
+        margin-bottom:auto;
+">
+            <button id='editBtn'>Редактировать</button>
+            <button id='saveBtn' style='display:none;'>Сохранить</button>
+        </div>
+
+    </div>
+
+    <!-- Кнопка закрытия модального окна -->
+    <button id='closeAccountModal'>Закрыть</button>
+    <!-- Место для уведомлений -->
+    <div id="notification" style="color:red; margin-top:10px;"></div>
+    `
+</div>
 
 <!-- Основной контент -->
 <div id='content' style='margin-top: 80px;'> <!-- добавил отступ для учета фиксированной навигации -->
@@ -110,19 +352,24 @@
 
 <!-- Подвал сайта -->
 <div class='content-container' style='margin-top: 20px;'>
-    <footer>
-        <p>&copy; 2025 Все права защищены. Интелектуальная собственность Зуфарова И.М.</p>
-        <!-- Добавьте информацию об авторских правах, контактные данные или другую информацию -->
+    `
+    <footer>`
+        `<p>&copy; 2025 Все права защищены. По всем вопросом обращаться к Зуфарову И.М.</p>`
+        `<!-- Можно добавить другую информацию --> `
+        `
     </footer>
+    `
+    `
 </div>
+`
 
-<!-- Скрипты -->
+<!-- Скрипты Bootstrap JS Bundle (включает Popper) -->
 <script src='https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js'
         integrity='sha384-ndDqU0Gzau9qJ1lfW4pNLlhNTkCfHzAVBReH9diLvGRem5+R9g2FzA8ZGN954O5Q'
         crossorigin='anonymous'></script>
 
-<!-- Внешний JS файл -->
-<script src='../static/js/login.js'></script>
+<!-- Внешний JS файл для логина и других скриптов -->
+<script src='/static/js/login.js'></script>
 
 {% block scripts %}
 {% endblock %}

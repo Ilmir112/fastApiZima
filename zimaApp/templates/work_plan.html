@@ -35,11 +35,7 @@
 
     <!-- Передача данных из Python в JS -->
     <script>
-        const tableData = {
-        {
-            wells_repair | tojson
-        }
-        }
+        const tableData = {{ wells_repair | tojson }};
         // Инициализация таблицы после загрузки страницы
         document.addEventListener("DOMContentLoaded", () => {
             if (tableData && Array.isArray(tableData.row)) {
