@@ -238,6 +238,7 @@ async function uploadFile(itemId, files) {
 
                 }
             }
+            window.location.reload()
         } else {
             alert('Ошибка загрузки: ' + result.message);
         }
