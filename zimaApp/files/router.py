@@ -16,7 +16,7 @@ from zimaApp.users.models import Users
 
 from zimaApp.wells_repair_data.dao import WellsRepairsDAO
 from zimaApp.wells_repair_data.models import StatusWorkPlan
-from zimaApp.wells_repair_data.router import update_plan_status, find_well_by_number, find_repair_filter_by_number
+from zimaApp.wells_repair_data.router import update_plan_status, find_repair_filter_by_number
 from zimaApp.wells_repair_data.schemas import WellsRepairFile
 
 router = APIRouter(
