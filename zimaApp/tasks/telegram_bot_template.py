@@ -50,6 +50,17 @@ class TelegramInfo:
             response.raise_for_status()
 
     @classmethod
+    async def send_message_add_plan_pdf(
+            cls, username: str, well_number: str, well_area: str
+    ):
+        message = f"Пользователь {username} добавил план работ в PDF {well_number} {well_area}"
+
+        payload = {"chat_id": settings.CHAT_ID, "text": message}
+        async with httpx.AsyncClient() as client:
+            response = await client.post(TelegramInfo.URL, json=payload)
+            response.raise_for_status()
+
+    @classmethod
     async def send_message_create_plan_gnkt(
         cls, username: str, well_number: str, well_area: str
     ):

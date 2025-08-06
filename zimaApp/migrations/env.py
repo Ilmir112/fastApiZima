@@ -17,7 +17,7 @@ from zimaApp.well_silencing.models import WellSilencing  # noga
 from zimaApp.norms.models import NormsWork  # noga
 from zimaApp.brigade.models import Brigade  # noga
 from zimaApp.repairGis.models import RepairsGis  # noga
-
+from zimaApp.repairtime.models import RepairTime # noga
 from zimaApp.gnkt_data.models import GnktData  # noga
 
 

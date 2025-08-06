@@ -9,6 +9,12 @@ class ZimaException(HTTPException):
         super().__init__(status_code=self.status_code, detail=self.detail)
 
 
+class ExceptionError(ZimaException):
+    status_code = 500
+
+    def __init__(self, detail):
+        super().__init__(status_code=self.status_code, detail=detail)
+
 class UserAlreadyExistsException(ZimaException):
     status_code = status.HTTP_409_CONFLICT
     detail = "Пользователь уже существует"

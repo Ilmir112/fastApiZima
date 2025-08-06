@@ -11,6 +11,7 @@ from zimaApp.logger import logger
 from zimaApp.repairGis.dao import RepairsGisDAO
 from zimaApp.repairGis.router import update_repair_gis_data
 from zimaApp.repairGis.schemas import RepairGisUpdate
+from zimaApp.tasks.telegram_bot_template import TelegramInfo
 from zimaApp.users.dependencies import get_current_user
 from zimaApp.users.models import Users
 
@@ -180,6 +181,10 @@ async def upload_plan(request: Request,
                                       status_work_plan=status)
         if result_file:
             result = await update_plan_status(result_file)
+            if result:
+                await TelegramInfo.send_message_add_plan_pdf(
+                    user.login_user, result_file.id, result_file.status_work_plan
+                )
             return {"fileId": file_id, "fileUrl": file_url}
     except Exception as e:
         logger.error(e)

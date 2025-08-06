@@ -51,6 +51,7 @@ from zimaApp.norms.router import router as norms_router
 from zimaApp.gnkt_data.router import router as gnkt_router
 from zimaApp.files.router import router as files_router
 from zimaApp.wells_data.router import router as wells_data_router
+from zimaApp.repairtime.router import router as repair_time_router
 from zimaApp.repairGis.router import router as repair_gis_router
 from zimaApp.prometheus.router import router as prometheus_router
 from zimaApp.pages.router import router as pages_router, templates
@@ -183,6 +184,7 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
 app.include_router(user_router)
 app.include_router(wells_data_router)
 app.include_router(wells_repair_router)
+app.include_router(repair_time_router)
 app.include_router(repair_gis_router)
 app.include_router(brigade_router)
 app.include_router(norms_router)
