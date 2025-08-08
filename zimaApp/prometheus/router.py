@@ -1,22 +1,34 @@
 import time
 from random import random
 
+from starlette.responses import PlainTextResponse
+
 # from zimaApp.tasks.rabbitmq.consumer import start_consumer
 from zimaApp.tasks.tasks import check_emails, check_emails_async
-
+from prometheus_client import Counter, generate_latest
 from fastapi import APIRouter, HTTPException, Depends
-from fastapi_cache import FastAPICache
+
 
 from zimaApp.config import settings
 from redis import asyncio as aioredis
 
 from zimaApp.logger import logger
 from zimaApp.tasks.telegram_bot_template import TelegramInfo
-from zimaApp.users.dependencies import get_current_user
-from zimaApp.users.models import Users
+
 
 router = APIRouter(
     prefix="/prometheus", tags=["Тестирование Grafana + Prometheus + redis + logger"]
+)
+
+
+# Метрика для подсчета успешных вызовов
+logger_send_success_counter = Counter(
+    'logger_send_success_total', 'Total successful calls to /logger_send'
+)
+
+# Метрика для подсчета ошибок
+logger_send_error_counter = Counter(
+    'logger_send_error_total', 'Total errors in /logger_send'
 )
 
 
@@ -49,11 +61,19 @@ def memory_consumer():
     return 1
 
 
+@router.get("/metrics")
+def metrics():
+    return PlainTextResponse(generate_latest())
+
 @router.post("/logger_send")
 async def logger_send(message: dict):
     try:
         await TelegramInfo.send_message_logger(message)
+        # Увеличиваем счетчик успешных вызовов
+        logger_send_success_counter.inc()
     except Exception as e:
+        # Увеличиваем счетчик ошибок
+        logger_send_error_counter.inc()
         logger.error(e)
 
 

@@ -3,130 +3,78 @@ from datetime import date
 
 from sqlalchemy.exc import SQLAlchemyError
 
+from zimaApp.brigade.models import Brigade
+from zimaApp.brigade.router import find_brigade_by_id
+from zimaApp.brigade.schemas import SBrigadeSearch
+from zimaApp.exceptions import ExceptionError, WellsAlreadyExistsException, BrigadeAlreadyExistsException
 from zimaApp.logger import logger
+from zimaApp.repairtime.dao import RepairTimeDAO
+from zimaApp.repairtime.models import StatusSummary
+from zimaApp.repairtime.schemas import SRepairTime
+from zimaApp.summary.dao import BrigadeSummaryDAO
+from zimaApp.summary.models import BrigadeSummary, TimeWorkEnum
+from zimaApp.summary.schemas import SBrigadeSummary, SUpdateSummary
 from zimaApp.tasks.telegram_bot_template import TelegramInfo
 
 from zimaApp.users.dependencies import get_current_user
 from zimaApp.users.models import Users
-from zimaApp.well_silencing.router import WellsSearchArgs
-from zimaApp.wells_data.dao import WellsDatasDAO
-from zimaApp.wells_data.router import find_wells_data
-from zimaApp.wells_data.schemas import SWellsData
+
 from zimaApp.brigade.dao import BrigadeDAO
-from zimaApp.brigade.schemas import SWellsBrigade, SBrigadeSearch
 from fastapi_versioning import version
 
+from zimaApp.wells_data.models import WellsData
+from zimaApp.wells_data.router import find_wells_data_by_id
+from zimaApp.wells_repair_data.models import StatusWorkPlan
+
 router = APIRouter(
-    prefix="/brigade_router",
-    tags=["Данные бригадам"],
+    prefix="/summary",
+    tags=["Данные по работам бригад"],
 )
 
 
-class BrigadeSearch:
-    def __init__(self, number_brigade: int, contractor: str):
-        self.number_brigade = number_brigade
-        self.contractor = contractor
 
 
-@router.get("/find_well_repairs_brigade_by_filter/")
+@router.get("/find_by_id_repair")
 @version(1)
-async def find_brigade_one(brigade: BrigadeSearch = Depends()):
-    result = await BrigadeDAO.find_one_or_none(
-        number_brigade=brigade.number_brigade, contractor=brigade.contractor
-    )
-    return result
-
-
-@router.post("/add_wells_data")
-@version(1)
-async def add_wells_data(
-    brigade_info: SWellsBrigade, user: Users = Depends(get_current_user)
-):
+async def find_by_id_repair(summary_id: int, user: Users = Depends(get_current_user)):
     try:
-        if brigade_info:
-            await delete_brigade(brigade_info)
-            result = await BrigadeDAO.add_data(
-                id=brigade_info.id,
-                contractor=brigade_info.contractor,
-                costumer=brigade_info.costumer,
-                expedition=brigade_info.expedition,
-                number_brigade=brigade_info.number_brigade,
-                brigade_master=brigade_info.brigade_master,
-                phone_number_brigade=brigade_info.phone_number_brigade,
-                lifting_unit=brigade_info.lifting_unit,
-                hydraulic_wrench=brigade_info.hydraulic_wrench,
-                weight_indicator=brigade_info.weight_indicator,
-                brigade_composition=brigade_info.brigade_composition,
-                pvo_type=brigade_info.pvo_type,
-                number_pvo=brigade_info.number_pvo,
-            )
-
-            await TelegramInfo.send_message_create_brigade(
-                user.login_user, brigade_info.number_brigade, brigade_info.contractor
-            )
-
-            return {"status": "success", "id": result}
-
+        result =  await BrigadeSummaryDAO.find_by_id_repair(summary_id)
+        if result:
+            return result
     except SQLAlchemyError as db_err:
-        msg = f"Database Exception Brigade {db_err}"
-        logger.error(
-            msg,
-            extra={
-                "number_brigade": brigade_info.number_brigade,
-                "contractor": brigade_info.contractor,
-            },
-            exc_info=True,
-        )
+        msg = f"Database Exception Summary {db_err}"
+        logger.error(msg, extra={"summary": summary_id})
+        raise ExceptionError(msg)
 
     except Exception as e:
         msg = f"Unexpected error: {str(e)}"
-        logger.error(
-            msg,
-            extra={
-                "number_brigade": brigade_info.number_brigade,
-                "contractor": brigade_info.contractor,
-            },
-            exc_info=True,
-        )
+        logger.error(msg, extra={"summary": summary_id})
+        raise ExceptionError(msg)
 
 
-@router.put("/update")
+@router.put("/update_summary")
 @version(1)
-async def update_brigade_data(
-    brigade: SWellsBrigade, user: Users = Depends(get_current_user)
+async def update_summary_data(
+        date_work: date,
+        time_interval: TimeWorkEnum,
+        summary_info: BrigadeSummary = Depends(find_by_id_repair),
+        user: Users = Depends(get_current_user)
 ):
     try:
-        data = await find_brigade_one(brigade)
-        if data:
-            result = await WellsDatasDAO.update_data(
-                data.id,
-                id=brigade.id,
-                contractor=brigade.contractor,
-                costumer=brigade.costumer,
-                expedition=brigade.expedition,
-                number_brigade=brigade.number_brigade,
-                brigade_master=brigade.brigade_master,
-                phone_number_brigade=brigade.phone_number_brigade,
-                lifting_unit=brigade.lifting_unit,
-                hydraulic_wrench=brigade.hydraulic_wrench,
-                weight_indicator=brigade.weight_indicator,
-                brigade_composition=brigade.brigade_composition,
-                pvo_type=brigade.pvo_type,
-                number_pvo=brigade.number_pvo,
-            )
-
-            await TelegramInfo.send_message_update_brigade(
-                user.login_user, brigade.number_brigade, brigade.contractor
-            )
-
+        result = await BrigadeSummaryDAO.update_data(
+                summary_info.id,
+                date=data.date,
+                time_interval=time_interval,
+                work_details=data.time_interval)
+        if result:
+            logger.info(f"Добавлены данные в базу {summary_info.id} ")
             return result
     except SQLAlchemyError as db_err:
         msg = f"Database Exception Brigade {db_err}"
         logger.error(
             msg,
             extra={
-                "number_brigade": brigade.number_brigade,
-                "contractor": brigade.contractor,
+                "id": result.id
             },
             exc_info=True,
         )
@@ -136,20 +84,26 @@ async def update_brigade_data(
         logger.error(
             msg,
             extra={
-                "number_brigade": brigade.number_brigade,
-                "contractor": brigade.contractor,
+                "id": result.id
             },
             exc_info=True,
         )
 
 
-@router.delete("/delete_brigade")
+@router.delete("/delete")
 @version(1)
 async def delete_brigade(
-    brigade: SWellsBrigade = Depends(), user: Users = Depends(get_current_user)
+    brigade_id: int, user: Users = Depends(get_current_user)
 ):
-    data = await find_brigade_one(brigade)
-    if data:
-        return await BrigadeDAO.delete_item_all_by_filter(
-            number_brigade=brigade.number_brigade, contractor=brigade.contractor
+    try:
+        return await BrigadeSummaryDAO.delete_item_all_by_filter(
+            id=brigade_id
         )
+    except SQLAlchemyError as db_err:
+        msg = f"Database Exception Brigade {db_err}"
+        logger.error(msg, extra={"id": brigade_id})
+        raise ExceptionError(msg)
+    except Exception as e:
+        msg = f"Unexpected error: {str(e)}"
+        logger.error(msg, extra={"id": brigade_id})
+        raise ExceptionError(msg)

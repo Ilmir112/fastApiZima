@@ -1,26 +1,38 @@
+from typing import Optional, List
+
+from fastapi.params import Depends
 from pydantic import BaseModel
 
+from zimaApp.repairtime.schemas import SRepairTime
+from zimaApp.summary.models import TimeWorkEnum
+from zimaApp.wells_repair_data.models import StatusWorkPlan
+from datetime import date, datetime
 
-class SWellsBrigade(BaseModel):
-    id: int
-    contractor: str
-    costumer: str
-    expedition: str
-    number_brigade: int
-    brigade_master: dict
-    phone_number_brigade: str
-    lifting_unit: str
-    hydraulic_wrench: str
-    weight_indicator: str
-    brigade_composition: dict
-    pvo_type: str
-    number_pvo: int
+
+class SBrigadeSummary(BaseModel):
+    date_summary: date
+    time_interval: TimeWorkEnum
+    work_details: str
+    notes: str | None
+    act_path: str | None
+    status_act: StatusWorkPlan
+    photo_path: list | None
+    video_path: list | None
+
+    repair_times: SRepairTime
+
 
     class Config:
         from_attributes = True
         arbitrary_types_allowed = True
 
 
-class SBrigadeSearch(BaseModel):
-    number_brigade: int
-    contractor: str
+class SUpdateSummary(BaseModel):
+    date_summary: datetime
+    work_details: str
+
+    class Config:
+        # Включить поддержку timezone-aware datetime
+        json_encoders = {
+            datetime: lambda v: v.isoformat()
+        }

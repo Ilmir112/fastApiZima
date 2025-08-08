@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends
 from datetime import date
 
+from pygments.lexer import default
 from sqlalchemy.exc import SQLAlchemyError
 
 from zimaApp.logger import logger
@@ -26,6 +27,19 @@ class BrigadeSearch:
     def __init__(self, number_brigade: int, contractor: str):
         self.number_brigade = number_brigade
         self.contractor = contractor
+
+@router.get("/find_all")
+@version(1)
+async def find_all(user: Users = Depends(get_current_user)):
+    return await BrigadeDAO.find_all()
+
+@router.get("/find_brigade_by_id")
+@version(1)
+async def find_brigade_by_id(brigade_id: int, user: Users = Depends(get_current_user)):
+    result =  await BrigadeDAO.find_by_id(model_id=brigade_id)
+    if result:
+        if result.contractor == user.contractor:
+            return result
 
 
 @router.get("/find_well_repairs_brigade_by_filter/")

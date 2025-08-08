@@ -18,6 +18,7 @@ from zimaApp.norms.models import NormsWork  # noga
 from zimaApp.brigade.models import Brigade  # noga
 from zimaApp.repairGis.models import RepairsGis  # noga
 from zimaApp.repairtime.models import RepairTime # noga
+from zimaApp.summary.models import BrigadeSummary # noga
 from zimaApp.gnkt_data.models import GnktData  # noga
 
 

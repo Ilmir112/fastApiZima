@@ -2,7 +2,7 @@ from pydantic import BaseModel
 
 
 class SWellsBrigade(BaseModel):
-    id: int
+
     contractor: str
     costumer: str
     expedition: str

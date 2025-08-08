@@ -1,3 +1,5 @@
+from datetime import datetime, timedelta
+
 from sqlalchemy import and_, delete, insert, update
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -7,6 +9,7 @@ from sqlalchemy.orm import joinedload
 
 from zimaApp.logger import logger
 from zimaApp.database import async_session_maker
+from zimaApp.summary.models import TimeWorkEnum
 
 
 class BaseDAO:
@@ -14,7 +17,7 @@ class BaseDAO:
 
     @classmethod
     async def filter_for_filter(
-        cls, model, filter_by: dict = None, join_related: str = None
+            cls, model, filter_by: dict = None, join_related: str = None
     ):
         """
         Общий метод для фильтрации данных с опциональной загрузкой связанной модели.
@@ -179,3 +182,39 @@ class BaseDAO:
                     await session.rollback()
                     raise e
                 return result
+
+    @classmethod
+    async def get_date_and_interval(cls, dt: datetime):
+        time_only = dt.time()
+        # Определяем интервал
+        if (time_only >= datetime.strptime("02:00", "%H:%M").time()
+                and time_only < datetime.strptime("06:00","%H:%M").time()):
+            interval = TimeWorkEnum.EARLY_MORNING
+            result_date = dt.date()
+        elif (time_only >= datetime.strptime("06:00", "%H:%M").time()
+              and time_only < datetime.strptime("10:00","%H:%M").time()):
+            interval = TimeWorkEnum.MORNING
+            result_date = dt.date()
+        elif (time_only >= datetime.strptime("10:00", "%H:%M").time()
+              and time_only < datetime.strptime("14:00","%H:%M").time()):
+            interval = TimeWorkEnum.LATE_MORNING
+            result_date = dt.date()
+        elif (datetime.strptime("14:00", "%H:%M").time() <= time_only < datetime.strptime("18:00", "%H:%M").time()):
+            interval = TimeWorkEnum.AFTERNOON
+            result_date = dt.date()
+        elif time_only >= datetime.strptime("18:00", "%H:%M").time() and time_only < datetime.strptime("22:00",
+                                                                                                       "%H:%M").time():
+            interval = TimeWorkEnum.EVENING
+            result_date = dt.date()
+        else:
+            # Время с 22:00 до 02:00 следующего дня или с 00 до 02 утра
+            # Для интервала NIGHT (22:00-02:00)
+            interval = TimeWorkEnum.NIGHT
+            # Если время с 22:00 до конца дня, дата остаётся той же
+            if time_only >= datetime.strptime("22:00", "%H:%M").time():
+                result_date = dt.date()
+            else:
+                # Время с 00 до 02 утра — дата предыдущего дня
+                result_date = (dt - timedelta(days=1)).date()
+
+        return result_date, time_only, interval

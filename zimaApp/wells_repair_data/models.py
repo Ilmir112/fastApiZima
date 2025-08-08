@@ -6,7 +6,6 @@ from sqlalchemy.orm import relationship
 from typing import Optional
 from sqlalchemy import Enum as SqlEnum
 
-
 from zimaApp.database import Base
 
 
@@ -40,7 +39,8 @@ class WellsRepair(Base):
     contractor: str = Column(String, nullable=False)
     signed_work_plan_path: str = Column(String, nullable=True)
     status_work_plan: StatusWorkPlan = Column(
-        SqlEnum(StatusWorkPlan), default=StatusWorkPlan.NOT_SIGNED, nullable=True
+        SqlEnum(StatusWorkPlan, native_enum=True,
+                create_type=False), default=StatusWorkPlan.NOT_SIGNED, nullable=True
     )
 
     well_data = relationship("WellsData", back_populates="repairs")

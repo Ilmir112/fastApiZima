@@ -1,34 +1,51 @@
-from enum import Enum
+from enum import Enum as enum
 
-from sqlalchemy import JSON, Column, Date, Integer, String, ForeignKey, Float, Text, DateTime
+from sqlalchemy import JSON, Column, Date, Integer, String, ForeignKey, Float, Text, DateTime, Enum as SqlEnum, ARRAY, \
+    UniqueConstraint
 from sqlalchemy.orm import relationship
-from typing import Optional
+from typing import Optional, List
 
 from zimaApp.database import Base
 from zimaApp.wells_repair_data.models import StatusWorkPlan
 
 
-class TimeWorkEnum(str, Enum):
-    ONE = "02:00-06:00"
-    TWO = "06:00-14:00"
-    THREE = "14:00-18:00"
-    FOUR = "18:00-22:00"
-    FIVE = "22:00-02:00"
+class TimeWorkEnum(str, enum):
+    EARLY_MORNING = "02:00-06:00"
+    MORNING = "06:00-10:00"
+    LATE_MORNING = "10:00-14:00"
+    AFTERNOON = "14:00-18:00"
+    EVENING = "18:00-22:00"
+    NIGHT = "22:00-02:00"
 
-
+status_enum = SqlEnum(
+    StatusWorkPlan,
+    name='statusworkplan2',
+    native_enum=True,
+    create_type=False  # или True, если хотите создать автоматически
+)
 
 
 class BrigadeSummary(Base):
     __tablename__ = 'brigade_summary'
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    date = Column(Date, nullable=False)
-    time_interval = Column(TimeWorkEnum, nullable=False)
+    date_summary = Column(Date, nullable=False)
+    time_interval = Column(SqlEnum(TimeWorkEnum), nullable=False)
     work_details = Column(Text, nullable=False)
+    repair_time_id = Column(Integer, ForeignKey('repair_times.id'), nullable=False)
     notes = Column(Text, nullable=True)
     act_path = Column(Text, default=None, nullable=True)
-    status_act = Column(Enum(StatusWorkPlan), default=StatusWorkPlan.NOT_SIGNED, nullable=True)
-    foto_path = Column(Text, default=None, nullable=True)
-    video_path = Column(Text, default=None, nullable=True)
+    status_act = Column(status_enum, default=StatusWorkPlan.NOT_SIGNED, nullable=True)
+    photo_path = Column(ARRAY(String), default=None, nullable=True)
+    video_path = Column(ARRAY(String), default=None, nullable=True)
 
-    repair_times = relationship("RepairTime", backref="brigade_summary")
+    repair_times = relationship(
+        "RepairTime",
+        back_populates="brigade_summary",
+        cascade="all, delete-orphan",
+        single_parent=True
+    )
+
+    __table_args__ = (
+        UniqueConstraint('date_summary', 'time_interval', name='uix_date_time'),
+    )
