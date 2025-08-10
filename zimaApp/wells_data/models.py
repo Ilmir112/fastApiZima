@@ -46,9 +46,14 @@ class WellsData(Base):
     date_create: date = Column(Date)
     contractor: str = Column(String)
 
+
+
     repairs = relationship(
         "WellsRepair", back_populates="well_data", cascade="all, delete"
     )
     repairs_gis = relationship(
         "RepairsGis", back_populates="well", cascade="all, delete"
     )
+    repair_times = relationship("RepairTime", back_populates="well")
+
+

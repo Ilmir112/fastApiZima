@@ -9,6 +9,8 @@ from zimaApp.pages.dao import ChangeExcelToHtml
 from fastapi.responses import HTMLResponse
 
 from zimaApp.repairGis.router import get_repair_gis_all
+from zimaApp.repairtime.router import find_all_by_filter_status
+from zimaApp.summary.router import find_all_works_by_id_summary
 from zimaApp.users.auth import authenticate_user
 from zimaApp.users.dependencies import get_current_user, get_current_admin_user
 from zimaApp.users.models import Users
@@ -24,8 +26,8 @@ router = APIRouter(
     tags=["Фронтенд"],
 )
 
-templates = Jinja2Templates(directory="zimaApp/templates")
-# templates = Jinja2Templates(directory="templates")
+# templates = Jinja2Templates(directory="zimaApp/templates")
+templates = Jinja2Templates(directory="templates")
 
 
 @router.get("/registration")
@@ -81,6 +83,37 @@ async def get_repair_list(
         "plan.html", context={"request": request, "wells_repair": wells_repair}
     )
 
+@router.get("/summary")
+@version(1)
+async def get_summary(request: Request,
+                      summary_data=Depends(find_all_by_filter_status),
+                      user: Users = Depends(get_current_user)):
+    try:
+        return templates.TemplateResponse("summary.html",
+            context={
+                "request": request,
+                "summary_data": summary_data,
+                "error_message": "Произошла ошибка при отображении страницы."
+            }
+            )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/get_summary_by_id")
+@version(1)
+async def get_summary_by_id(request: Request,
+                      summary_data=Depends(find_all_works_by_id_summary),
+                      user: Users = Depends(get_current_user)):
+    try:
+        return templates.TemplateResponse("summary_by_id.html",
+            context={
+                "request": request,
+                "summary_data": summary_data,
+                "error_message": "Произошла ошибка при отображении страницы."
+            }
+            )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/plan_work")
 @version(1)
@@ -98,9 +131,6 @@ async def get_plan_page(
     except Exception as e:
         # Обработка ошибок при рендеринге шаблона
         logger.error(f"Ошибка при рендеринге шаблона: {e}")
-
-        print(f"Ошибка при рендеринге шаблона: {e}")
-        # Можно вернуть ошибку или fallback страницу
         return templates.TemplateResponse(
             "error.html",
             context={

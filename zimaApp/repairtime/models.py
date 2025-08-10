@@ -26,3 +26,6 @@ class RepairTime(Base):
 
     brigade_summary = relationship("BrigadeSummary", back_populates="repair_times")
 
+    # Предполагается наличие отношений
+    brigade = relationship("Brigade", back_populates="repair_times")
+    well = relationship("WellsData", back_populates="repair_times")

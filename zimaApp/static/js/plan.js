@@ -1,11 +1,18 @@
 
 
 
+// Функция для генерации таблицы с цветами
 function generateTableHTML(tableData) {
     const table = document.createElement('table');
     table.style.borderCollapse = 'collapse';
+    table.style.width = '100%';
+    table.style.fontFamily = 'Arial, sans-serif';
+    table.style.boxShadow = '0 4px 8px rgba(0,0,0,0.2)';
+    table.style.borderRadius = '2px';
+    table.style.overflow = 'hidden';
 
     const occupied = {};
+
 
     tableData.row.forEach((rowData, rowIndex) => {
         const tr = document.createElement('tr');
@@ -23,12 +30,15 @@ function generateTableHTML(tableData) {
                 border = {}
             } = cell;
 
+            // Пропускаем первую колонку (col === 0)
+            if (col === 0) return;
+
             if (occupied[`${r},${col}`]) return;
 
             const td = document.createElement('td');
             td.innerHTML = content;
 
-            // Применяем стили
+            // Применяем стили с яркими цветами
             for (const [key, value] of Object.entries(style)) {
                 td.style[key] = value;
             }
@@ -38,6 +48,9 @@ function generateTableHTML(tableData) {
                 td.style.textAlign = alignment;
             }
 
+            // Внутренние отступы
+            td.style.padding = '10px';
+
             // Обработка границ снизу
             if (border && typeof border === 'object') {
                 for (const [borderSide, borderStyle] of Object.entries(border)) {
@@ -45,8 +58,7 @@ function generateTableHTML(tableData) {
                     if (side === 'border') side = 'border';
 
                     if (borderStyle === 'thin' || borderStyle === 'medium') {
-                        td.style['border-' + side] = '2px solid #000';
-
+                        td.style['border-' + side] = '1px solid #000000';
                     }
                 }
             }
@@ -54,6 +66,9 @@ function generateTableHTML(tableData) {
             // Объединения ячеек
             if (colSpan > 1) td.colSpan = colSpan;
             if (rowSpan > 1) td.rowSpan = rowSpan;
+
+            // Фоновый цвет
+            td.style.backgroundColor = '#faf7f7';
 
             tr.appendChild(td);
 
@@ -69,11 +84,111 @@ function generateTableHTML(tableData) {
         table.appendChild(tr);
     });
 
-    // Вставляем таблицу в контейнер
+    // Вставляем таблицу в контейнер с ярким фоном
     const container = document.getElementById('tableContainer');
     container.innerHTML = '';
+    container.style.backgroundColor = '#f0f8ff'; // светло-голубой фон контейнера
+    container.style.padding = '10px 15px 20px 25px'; // top right bottom left
     container.appendChild(table);
 }
+
+// Остальной код без изменений, добавим стили для кнопок и модального окна
+
+// Стиль для кнопок загрузки файла и удаления файла
+const styleSheet = document.createElement('style');
+styleSheet.innerText = `
+/* Общие стили для кнопок */
+button {
+    background-color: #4CAF50; /* зеленый */
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    margin: 4px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+}
+button:hover {
+    background-color: #45a049;
+}
+
+/* Стиль для кнопки удаления */
+button.delete-file-btn {
+    background-color: #e74c3c; /* красный */
+}
+button.delete-file-btn:hover {
+    background-color: #c0392b;
+}
+
+/* Стиль для ссылок "Открыть план" */
+a {
+    color: #2980b9; /* синий */
+    text-decoration: none;
+}
+a:hover {
+    text-decoration: underline;
+}
+
+/* Модальное окно */
+#myModal {
+    display: none; 
+    position: fixed; 
+    z-index: 999; 
+    padding-top: 100px; 
+    left: 0;
+    top: 0;
+    width: 100%; 
+    height: 100%; 
+    overflow: auto; 
+    background-color: rgba(0,0,0,0.6); /* полупрозрачный черный фон */
+}
+
+#modalContent {
+    background-color: #fff8dc; /* светло-желтый фон */
+    margin: auto;
+    padding: 20px;
+    border-radius: 10px;
+    width: 40%;
+}
+
+#closeModal, #cancelBtn {
+   background-color: #ff7f50; /* коралловый */
+   color: white;
+   border: none;
+   padding: 10px 20px;
+   margin-top: 10px;
+   border-radius: 5px;
+   cursor: pointer;
+}
+#closeModal:hover, #cancelBtn:hover {
+   background-color: #ff6347; /* томатный */
+}
+
+/* Стиль для таблицы данных */
+#dataTable {
+   width: 100%;
+   border-collapse: collapse;
+   margin-top:20px;
+   font-family:'Arial Rounded MT Bold', cursive, sans-serif ;
+}
+#dataTable th, #dataTable td {
+   padding:10px ;
+   border-bottom :2 px solid #ddd ;
+}
+#dataTable th{
+   background-color:#ffe4b5 ; /* светло-оранжевый */
+   color:#333 ;
+}
+#dataTable tr:nth-child(even){
+   background-color:#f9f9f9 ;
+}
+`;
+document.head.appendChild(styleSheet);
+
+// Остальные функции остаются без изменений
+
+// Вызов функции для генерации таблицы с примером данных или при необходимости
+// generateTableHTML(yourData);
 
 // static/js/scripts.js
 

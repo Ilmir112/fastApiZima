@@ -1,0 +1,54 @@
+{% extends "layout/base.html" %}
+
+{% block title %}План работы{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="/static/css/mytable.css"/>
+<div id="summary-container">
+    <h2>Сводная информация работ бригад</h2>
+    <div id="loading" style="display:none;">Загрузка...</div>
+    <div id="error-message" style="display:none; color:red;"></div>
+
+    <!-- Таблица -->
+    <table id="summary-list">
+        <thead>
+        <tr>
+
+            <th>номер бригады</th>
+            <th>номер скважины</th>
+            <th>площадь скважины</th>
+            <th>месторождение</th>
+            <th>Статус ремонта</th>
+            <th>Начало ремонта</th>
+            <th>Окончание ремонта</th>
+            <th>Длительность ремонта</th>
+        </tr>
+        <!-- Фильтры -->
+        <tr>
+
+            <th><select class="filter-select" data-column="Номер Бригады" title="Фильтр по номеру бригады"><option value="">Все</option></select></th>
+            <th><select class="filter-select" data-column="Номер скважины" title="Фильтр по номеру скважины"><option value="">Все</option></select></th>
+            <th><select class="filter-select" data-column="площадь" title="Фильтр по площади"><option value="">Все</option></select></th>
+            <th><select class="filter-select" data-column="Месторождение" title="Фильтр по площади"><option value="">Все</option></select></th>
+            <th><select class="filter-select" data-column="Статус ремонта" title="Фильтр по статусу"><option value="">Все</option></select></th>
+
+            <!-- Можно добавить фильтры для других колонок при необходимости -->
+        </tr>
+
+        </thead>
+        <tbody id="tableBody">
+        <!-- Данные вставляются сюда через JS -->
+        </tbody>
+    </table>
+
+    <!-- Передача данных из Python в JS -->
+    {% if summary_data %}
+    <script type="application/json" id="initial-data">{{ summary_data | tojson }}</script>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<!-- Подключение внешнего JS файла -->
+<script src="/static/js/summary.js"></script>
+{% endblock %}

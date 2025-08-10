@@ -3,30 +3,79 @@
 {% block title %}План работы{% endblock %}
 
 {% block content %}
-<div class="content-container">
-    <h1 style="margin-top: 20px;">Поиск ремонтных данных по скважине</h1>
+<h1 style="color: #2E8B57; text-align: center; margin-top: 20px;">Поиск планов работ</h1>
+<div style="margin: 20px;">
     <!-- Поле ввода и кнопка -->
-    <label for="wellNumberInput"></label>
-    <input type="text" id="wellNumberInput" placeholder="Введите номер скважины"/>
-    <button id="loadDataBtn">Загрузить данные</button>
+    <label for="wellNumberInput" style="font-weight: bold; font-size: 16px;">Введите номер скважины:</label>
+    <input type="text" id="wellNumberInput" placeholder="Введите номер скважины" style="padding: 8px; margin-left: 10px; border-radius: 5px; border: 2px solid #4CAF50;">
+    <button id="loadDataBtn" style="background-color: #4CAF50; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; margin-left: 10px;">
+        Загрузить данные
+    </button>
 </div>
+
 <!-- Контейнер для отображения таблицы -->
-<div id="tableContainer"></div>
+<div id="tableContainer" style="margin: 20px;"></div>
 
 <!-- Модальное окно -->
-<div id="myModal" class="modal" style="display: none;">
-    <div class="modal-content">
-        <span class="close" id="closeModal">&times;</span>
-        <h2>Выберите статус</h2>
-        <select id="statusSelect">
+<div id="myModal" class="modal" style="
+    display: none;
+    position: fixed;
+    z-index: 9999;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0,0,0,0.6);
+">
+    <div class="modal-content" style="
+        background-color: #fff;
+        margin: 15% auto;
+        padding: 20px;
+        border-radius: 10px;
+        width: 300px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        text-align:center;
+    ">
+        <span class="close" id="closeModal" style="
+            color:#aaa;
+            float:right;
+            font-size:28px;
+            font-weight:bold;
+            cursor:pointer;"
+        >&times;</span>
+        <h2 style="color:#333;">Выберите статус</h2>
+        <select id="statusSelect" style="
+            width:100%;
+            padding:8px;
+            border-radius:5px;
+            border:2px solid #4CAF50;
+            font-size:16px;"
+        >
             <option value="">--Выберите--</option>
             <option value="не подписан">не подписан</option>
             <option value="подписан">подписан</option>
             <option value="подписан не полностью">подписан не полностью</option>
         </select>
         <br><br>
-        <button id="confirmBtn">Подтвердить</button>
-        <button id="cancelBtn">Отмена</button>
+        <button id="confirmBtn" style="
+            background-color:#4CAF50;
+            color:white;
+            padding:10px 20px;
+            border:none;
+            border-radius:5px;
+            cursor:pointer;
+            font-size:16px;"
+        >Подтвердить</button>
+        <button id="cancelBtn" style="
+            background-color:#f44336;
+            color:white;
+            padding:10px 20px;
+            border:none;
+            border-radius:5px;
+            cursor:pointer;
+            font-size:16px;"
+        >Отмена</button>
     </div>
 </div>
 {% endblock %}

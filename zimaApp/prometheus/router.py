@@ -14,7 +14,8 @@ from redis import asyncio as aioredis
 
 from zimaApp.logger import logger
 from zimaApp.tasks.telegram_bot_template import TelegramInfo
-
+from zimaApp.users.dependencies import get_current_user
+from zimaApp.users.models import Users
 
 router = APIRouter(
     prefix="/prometheus", tags=["Тестирование Grafana + Prometheus + redis + logger"]
@@ -66,11 +67,12 @@ def metrics():
     return PlainTextResponse(generate_latest())
 
 @router.post("/logger_send")
-async def logger_send(message: dict):
+async def logger_send(message: dict, user: Users = Depends(get_current_user)):
     try:
-        await TelegramInfo.send_message_logger(message)
-        # Увеличиваем счетчик успешных вызовов
-        logger_send_success_counter.inc()
+        if user.login_user != 'Зуфаров И.М.':
+            await TelegramInfo.send_message_logger(message)
+            # Увеличиваем счетчик успешных вызовов
+            logger_send_success_counter.inc()
     except Exception as e:
         # Увеличиваем счетчик ошибок
         logger_send_error_counter.inc()

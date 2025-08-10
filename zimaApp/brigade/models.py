@@ -21,3 +21,6 @@ class Brigade(Base):
     brigade_composition = Column(JSON)
     pvo_type = Column(String, nullable=False)
     number_pvo = Column(Integer, nullable=False)
+
+    repair_times = relationship("RepairTime", back_populates="brigade")
+

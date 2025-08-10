@@ -1,0 +1,71 @@
+
+  /* Общие стили для контейнера */
+  #summary-container {
+    max-width: 1200px;
+    margin: 20px auto;
+    padding: 20px;
+    font-family: 'Arial', sans-serif;
+    background-color: #f9f9f9;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  }
+
+  /* Заголовок */
+  #summary-container h2 {
+    text-align: center;
+    color: #333;
+    margin-bottom: 20px;
+    font-size: 24px;
+  }
+
+  /* Стиль для таблицы */
+  #summary-list {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    background-color: #fff;
+    border-radius: 4px;
+    overflow: hidden; /* для скругленных углов */
+  }
+
+  /* Заголовки таблицы */
+  #summary-list thead th {
+    background-color: #4CAF50; /* Зеленый фон */
+    color: white;
+    padding: 12px;
+    text-align: left;
+    font-weight: bold;
+    border-bottom: 2px solid #ddd;
+  }
+
+  /* Вторая строка с фильтрами */
+  #summary-list thead tr:nth-child(2) th {
+    background-color: #e8f5e9; /* Светло-зеленый фон для фильтров */
+    padding: 8px;
+  }
+
+  /* Ячейки таблицы */
+#summary-list tbody td {
+    padding: 12px;
+    border-bottom: 1px solid #ddd;
+}
+
+/* Стиль для select фильтров */
+.filter-select {
+    width: calc(100% - 16px);
+    padding: 6px 10px;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+    font-size: 14px;
+}
+
+/* Стиль для loading и ошибок */
+#loading {
+    text-align: center;
+    font-size: 16px;
+    color: #555;
+}
+#error-message {
+    text-align: center;
+}

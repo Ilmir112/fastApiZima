@@ -10,8 +10,9 @@ sys.path.insert(0, dirname(dirname(dirname(abspath(__file__)))))
 from zimaApp.config import settings
 from zimaApp.database import Base
 from zimaApp.users.models import Users  # noga
-from zimaApp.wells_repair_data.models import WellsRepair  # noga
 from zimaApp.wells_data.models import WellsData  # noga
+from zimaApp.wells_repair_data.models import WellsRepair  # noga
+
 from zimaApp.well_classifier.models import WellClassifier  # noga
 from zimaApp.well_silencing.models import WellSilencing  # noga
 from zimaApp.norms.models import NormsWork  # noga

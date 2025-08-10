@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends
-from datetime import date
+from datetime import date, datetime
 
 from sqlalchemy.exc import SQLAlchemyError
 
@@ -32,15 +32,31 @@ router = APIRouter(
 )
 
 
-
-
-@router.get("/find_by_id_repair")
+@router.get("/find_all_works_by_id_summary")
 @version(1)
-async def find_by_id_repair(summary_id: int, user: Users = Depends(get_current_user)):
+async def find_all_works_by_id_summary(summary_id: int, user: Users = Depends(get_current_user)):
     try:
-        result =  await BrigadeSummaryDAO.find_by_id_repair(summary_id)
-        if result:
-            return result
+        results = await BrigadeSummaryDAO.find_all(repair_time_id=summary_id)
+
+        serialized_data = []
+        if results:
+            for data in results:
+                time_enum_value = data.time_interval.value if hasattr(data.time_interval,
+                                                                      'value') else data.time_interval
+
+                serialized_data.append(
+                    {
+                        "id": data.id,
+                        "Дата": f"{data.date_summary.strftime('%d.%m.%Y')} {time_enum_value}",
+                        "Проведенные работы": data.work_details,
+                        "примечание": data.notes,
+                        "статус акта": data.status_act,
+                        "акт": data.act_path,
+                        "фото": data.photo_path,
+                        "видео": data.video_path,
+                    })
+
+            return serialized_data
     except SQLAlchemyError as db_err:
         msg = f"Database Exception Summary {db_err}"
         logger.error(msg, extra={"summary": summary_id})
@@ -57,15 +73,15 @@ async def find_by_id_repair(summary_id: int, user: Users = Depends(get_current_u
 async def update_summary_data(
         date_work: date,
         time_interval: TimeWorkEnum,
-        summary_info: BrigadeSummary = Depends(find_by_id_repair),
+        summary_info: BrigadeSummary = Depends(find_all_works_by_id_summary),
         user: Users = Depends(get_current_user)
 ):
     try:
         result = await BrigadeSummaryDAO.update_data(
-                summary_info.id,
-                date=data.date,
-                time_interval=time_interval,
-                work_details=data.time_interval)
+            summary_info.id,
+            date=data.date,
+            time_interval=time_interval,
+            work_details=data.time_interval)
         if result:
             logger.info(f"Добавлены данные в базу {summary_info.id} ")
             return result
@@ -93,7 +109,7 @@ async def update_summary_data(
 @router.delete("/delete")
 @version(1)
 async def delete_brigade(
-    brigade_id: int, user: Users = Depends(get_current_user)
+        brigade_id: int, user: Users = Depends(get_current_user)
 ):
     try:
         return await BrigadeSummaryDAO.delete_item_all_by_filter(

@@ -1,0 +1,55 @@
+{% extends "layout/base.html" %}
+
+{% block title %}Сводная информация{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="/static/css/mytable.css"/>
+
+<div id="summary-container">
+    <h2>Сводная информация работ по скважине </h2>
+
+    <div id="loading" style="display:none;">Загрузка...</div>
+
+    <div id="error-message" style="display:none;"></div>
+
+    <!-- Таблица -->
+    <table id="summary-list">
+        <thead>
+        <tr>
+            <th>ID</th>
+            <th>Дата</th>
+            <th>Проведенные работы</th>
+            <th>Примечание</th>
+            <th>Акт</th>
+            <th>Фото</th>
+            <th>Видео</th>
+        </tr>
+        <!-- Фильтры -->
+        <tr>
+            <th></th>
+            <th>
+                <select class="filter-select" data-column="Дата" title="Фильтр по дате">
+                    <option value="">Все</option>
+                </select>
+            </th>
+            <!-- Можно добавить фильтры для других колонок при необходимости -->
+            <th></th><th></th><th></th><th></th><th></th>
+        </tr>
+        </thead>
+        <tbody id="tableBody">
+        <!-- Данные вставляются сюда через JS -->
+        </tbody>
+    </table>
+
+<!-- Передача данных из Python в JS -->
+{% if summary_data %}
+<script type="application/json" id="initial-data">{{ summary_data | tojson }}</script>
+{% endif %}
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<!-- Подключение внешнего JS файла -->
+<script src="/static/js/summaryById.js"></script>
+{% endblock %}

@@ -184,11 +184,13 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
 
 app.include_router(user_router)
 app.include_router(wells_data_router)
+
 app.include_router(wells_repair_router)
 app.include_router(repair_time_router)
 app.include_router(summary_router)
 app.include_router(repair_gis_router)
 app.include_router(brigade_router)
+
 app.include_router(norms_router)
 app.include_router(classifier_router)
 app.include_router(silencing_router)

@@ -1,3 +1,5 @@
+from datetime import datetime, timedelta
+
 from fastapi import APIRouter, Depends
 
 from sqlalchemy.exc import SQLAlchemyError
@@ -23,6 +25,7 @@ router = APIRouter(
     prefix="/repair_time",
     tags=["Сводная времени сводки"],
 )
+
 
 @router.get("/check_well_id_and_end_time")
 @version(1)
@@ -60,7 +63,7 @@ async def check_brigade_id_and_end_time(brigade_id: int, user: Users = Depends(g
 @version(1)
 async def find_by_id_repair(summary_id: int, user: Users = Depends(get_current_user)):
     try:
-        result =  await RepairTimeDAO.find_by_id_repair(summary_id)
+        result = await RepairTimeDAO.find_by_id_repair(summary_id)
         if result:
             return result
     except SQLAlchemyError as db_err:
@@ -73,15 +76,15 @@ async def find_by_id_repair(summary_id: int, user: Users = Depends(get_current_u
         logger.error(msg, extra={"summary": summary_id})
         raise ExceptionError(msg)
 
+
 @router.post("/add")
 @version(1)
 async def add_data(
         summary_info: SUpdateSummary,
-        well_data: WellsData=Depends(find_wells_data_by_id),
-        brigade: Brigade=Depends(find_brigade_by_id),
+        well_data: WellsData = Depends(find_wells_data_by_id),
+        brigade: Brigade = Depends(find_brigade_by_id),
         user: Users = Depends(get_current_user)
 ):
-
     check_wells = await check_well_id_and_end_time(well_data.id)
     if check_wells:
         raise WellsAlreadyExistsException
@@ -141,15 +144,31 @@ async def add_data(
         raise ExceptionError(msg)
 
 
-
-
 @router.get("/find_all_by_filter_status")
 @version(1)
-async def find_all_by_filter_open( user: Users = Depends(get_current_user)):
+async def find_all_by_filter_status(status: StatusSummary = StatusSummary.OPEN,
+                                    user: Users = Depends(get_current_user)):
     try:
-        repair = await RepairTimeDAO.find_all(status=StatusSummary.OPEN)
-        if repair:
-            return {"status": "success", "data": repair}
+        repairs = await RepairTimeDAO.get_all(status=status)
+        serialized_data = []
+        for repair in repairs:
+            data = {"id": repair.id,
+                    "Номер Бригады":f"Бр №{repair.brigade.number_brigade}",
+                    "Номер скважины": repair.well.well_number,
+                    "площадь": repair.well.well_area,
+                    "Месторождение": repair.well.well_oilfield,
+                    "Статус ремонта": repair.status,
+                    "Дата открытия ремонта": repair.start_time.strftime("%Y-%m-%d %H:%M"),
+                    "Дата закрытия ремонта": repair.end_time,
+                    # "Продолжительность ремонта": timedelta(datetime.now().timetz() - repair.start_time).hours()
+                    "Продолжительность ремонта": None
+                    }
+
+
+            serialized_data.append(data)
+
+        if serialized_data:
+            return serialized_data
     except SQLAlchemyError as db_err:
         msg = f"Database Exception filter {db_err}"
         logger.error(msg)
@@ -159,9 +178,10 @@ async def find_all_by_filter_open( user: Users = Depends(get_current_user)):
         logger.error(msg, exc_info=True)
         raise ExceptionError(msg)
 
+
 @router.get("/find_all")
 @version(1)
-async def find_all( user: Users = Depends(get_current_user)):
+async def find_all(user: Users = Depends(get_current_user)):
     try:
         repair = await RepairTimeDAO.find_all()
         if repair:
@@ -174,6 +194,7 @@ async def find_all( user: Users = Depends(get_current_user)):
         msg = f"Unexpected error: {str(e)}"
         logger.error(msg, exc_info=True)
         raise ExceptionError(msg)
+
 
 @router.get("/find_one_repair")
 @version(1)
@@ -191,11 +212,12 @@ async def find_one_repair(repair_id: int, user: Users = Depends(get_current_user
         logger.error(msg, extra={" repair_id": repair_id})
         raise ExceptionError(msg)
 
+
 @router.put("/update")
 @version(1)
 async def update_repair_time(
-        repair_info: SRepairTimeClose=Depends(),
-        repair: SRepairTime=Depends(find_one_repair),
+        repair_info: SRepairTimeClose = Depends(),
+        repair: SRepairTime = Depends(find_one_repair),
         user: Users = Depends(get_current_user)
 ):
     try:
@@ -217,14 +239,14 @@ async def update_repair_time(
 @router.delete("/delete")
 @version(1)
 async def delete_brigade(
-        repair: SRepairTime=Depends(find_one_repair),
+        repair: SRepairTime = Depends(find_one_repair),
         user: Users = Depends(get_current_user)
 ):
     try:
 
         return await RepairTimeDAO.delete_item_all_by_filter(
-                id=repair.brigade_summary_id
-            )
+            id=repair.brigade_summary_id
+        )
     except SQLAlchemyError as db_err:
         msg = f"Database Exception RepairTima {db_err}"
         logger.error(msg, extra={" repair_id": repair.id})

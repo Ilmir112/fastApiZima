@@ -76,7 +76,7 @@ class BaseDAO:
                 query = select(cls.model.__table__.columns).filter_by(**filter_by)
                 result = await session.execute(query)
                 if result:
-                    return result.mappings().one_or_none()
+                    return result.mappings().first()
         except Exception as e:
             logger.error(e)
 

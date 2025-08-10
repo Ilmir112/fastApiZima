@@ -1,15 +1,38 @@
-from sqlalchemy import select
+from sqlalchemy import select, join
 from sqlalchemy.orm import selectinload
 
+from zimaApp.brigade.models import Brigade
 from zimaApp.dao.base import BaseDAO
 from zimaApp.database import async_session_maker
 from zimaApp.logger import logger
-from zimaApp.repairtime.models import RepairTime
+from zimaApp.repairtime.models import RepairTime, StatusSummary
 from zimaApp.summary.models import BrigadeSummary
+from zimaApp.wells_data.models import WellsData
 
 
 class RepairTimeDAO(BaseDAO):
     model = RepairTime
+
+    @classmethod
+    async def get_all(cls, status: StatusSummary):
+        async with async_session_maker() as session:
+            try:
+                query = (
+                    select(cls.model)
+                    .options(
+                        selectinload(cls.model.brigade),
+                        selectinload(cls.model.well)
+                    )
+                    .where(cls.model.status == status)
+                )
+                result = await session.execute(query)
+                repair_times = result.scalars().all()
+                return repair_times
+            except Exception as e:
+                # Предполагается наличие логгера
+                logger.error(f"Error in get_all: {e}")
+                return []
+
 
     @classmethod
     async def add_brigade_with_repairs(cls, brigade_data: dict, rt_data: dict):
