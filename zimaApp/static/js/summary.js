@@ -46,6 +46,8 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     };
 
+
+
     // Отрисовка таблицы
     const renderTable = () => {
         let filteredItems = items;
@@ -93,45 +95,21 @@ document.addEventListener('DOMContentLoaded', () => {
             row.appendChild(tdId);
 
             // Остальные ячейки
-            row.innerHTML += `
-                
-                <td>${item['Номер скважины'] || ''}</td>
-                <td>${item['Месторождение'] || ''}</td>
-                <td>${item['площадь'] || ''}</td>
-                <td>${item['Статус ремонта'] || ''}</td>
-                <td>${formatDateTime(item['Дата открытия ремонта'])}</td>
-                <td>${formatDateTime(item['Дата закрытия ремонта'])}</td>
-              `;
+            row.innerHTML += ` 
+            <td>${item['Номер скважины'] || ''}</td>
+            <td>${item['Месторождение'] || ''}</td>
+            <td>${item['площадь'] || ''}</td>
+            <td>${item['Статус ремонта'] || ''}</td>
+            <td>${formatDateTime(item['Дата открытия ремонта'])}</td>
+            <td>${item['Дата закрытия ремонта'] ? formatDateTime(item['Дата закрытия ремонта']) : ''}</td>
+            <td>${calculateDurationHours(item['Дата открытия ремонта'], item['Дата закрытия ремонта'])}</td>
+`;
 
             tableBody.appendChild(row);
         });
     };
 
-    // Форматирование даты
-    function formatDateTime(dateStr) {
-        if (!dateStr) return '';
-        const dateObj = new Date(dateStr);
-        if (isNaN(dateObj)) return '';
-        return dateObj.toLocaleString(); // или другой формат
-    }
 
-    // Расчет длительности
-    function getDuration(startStr, endStr) {
-        if (!startStr || !endStr) return 'В процессе';
-        const startDate = new Date(startStr);
-        const endDate = new Date(endStr);
-
-        if (isNaN(startDate) || isNaN(endDate)) return 'В процессе';
-
-        const diffMs = endDate - startDate;
-        const diffHrs = diffMs / (1000 * 60 * 60);
-
-        if (diffHrs <= 0) return '0 суток';
-
-        const days = Math.floor(diffHrs / 24);
-
-        return `${days} суток`;
-    }
 
     // Обработчики фильтров
     filters.forEach(filter => {
@@ -144,3 +122,49 @@ document.addEventListener('DOMContentLoaded', () => {
     initFilters();
     renderTable();
 });
+
+// Вспомогательная функция для форматирования даты и времени без секунд
+function formatDateTime(dateString) {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    if (isNaN(date)) return '';
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    return `${year}-${month}-${day} ${hours}:${minutes}`;}
+
+// Вспомогательная функция для вычисления длительности в часах с учетом вычитания дней * 2 часа
+function calculateDurationHours(startDateStr, endDateStr) {
+    const startDate = new Date(startDateStr);
+    let endDate;
+
+    if (endDateStr) {
+        endDate = new Date(endDateStr);
+        if (isNaN(endDate)) {
+            // Если дата некорректна, считаем текущим временем
+            endDate = new Date();
+        }
+    } else {
+        // Если дата закрытия отсутствует, используем текущее время
+        endDate = new Date();
+    }
+
+    let diffMs = endDate - startDate;
+    if (diffMs < 0) diffMs = 0; // на всякий случай
+
+    // Переводим миллисекунды в часы
+    let totalHours = diffMs / (1000 * 60 * 60);
+
+    // Вычисляем количество полных дней
+    const totalDays = Math.floor(totalHours / 24);
+
+    // Вычитаем из общего количества часов по 2 часа за каждый полный день
+    let adjustedHours = totalHours - (totalDays * 2);
+
+    // Можно ограничить минимальное значение, например, не меньше нуля
+    if (adjustedHours < 0) adjustedHours = 0;
+
+    return adjustedHours.toFixed(2);
+}

@@ -36,3 +36,6 @@ class SUpdateSummary(BaseModel):
         json_encoders = {
             datetime: lambda v: v.isoformat()
         }
+
+
+

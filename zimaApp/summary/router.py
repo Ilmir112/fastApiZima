@@ -6,8 +6,10 @@ from sqlalchemy.exc import SQLAlchemyError
 from zimaApp.brigade.models import Brigade
 from zimaApp.brigade.router import find_brigade_by_id
 from zimaApp.brigade.schemas import SBrigadeSearch
-from zimaApp.exceptions import ExceptionError, WellsAlreadyExistsException, BrigadeAlreadyExistsException
+from zimaApp.exceptions import ExceptionError, WellsAlreadyExistsException, BrigadeAlreadyExistsException, \
+    DowntimeDurationAlreadyExistsException
 from zimaApp.logger import logger
+from zimaApp.repairGis.schemas import RepairGisUpdate
 from zimaApp.repairtime.dao import RepairTimeDAO
 from zimaApp.repairtime.models import StatusSummary
 from zimaApp.repairtime.schemas import SRepairTime
@@ -50,7 +52,7 @@ async def find_all_works_by_id_summary(summary_id: int, user: Users = Depends(ge
                         "Дата": f"{data.date_summary.strftime('%d.%m.%Y')} {time_enum_value}",
                         "Проведенные работы": data.work_details,
                         "примечание": data.notes,
-                        "статус акта": data.status_act,
+                        "статус подписания": data.status_act,
                         "акт": data.act_path,
                         "фото": data.photo_path,
                         "видео": data.video_path,
@@ -67,6 +69,34 @@ async def find_all_works_by_id_summary(summary_id: int, user: Users = Depends(ge
         logger.error(msg, extra={"summary": summary_id})
         raise ExceptionError(msg)
 
+
+
+@router.put("/update")
+async def update_repair_summary(
+    repair_info: RepairGisUpdate, user: Users = Depends(get_current_user)
+):
+    try:
+        repair_dict = repair_info.model_dump()
+        if repair_info:
+            result = await BrigadeSummaryDAO.update(
+                {"id": repair_info.id}, **repair_dict["fields"]
+            )
+
+            # await TelegramInfo.send_message_update_brigade(user.login_user, repair_info.number_brigade,
+            #                                                brigade.contractor)
+
+            return result
+    except SQLAlchemyError as db_err:
+        msg = f"Database Exception Brigade {db_err}"
+        logger.error(
+            msg,
+            extra={
+                "number_brigade": repair_info.number_brigade,
+                "contractor": repair_info.contractor,
+            },
+            exc_info=True,
+        )
+        return {"error": str(msg)}
 
 @router.put("/update_summary")
 @version(1)

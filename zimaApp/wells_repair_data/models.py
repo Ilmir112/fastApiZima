@@ -40,7 +40,7 @@ class WellsRepair(Base):
     signed_work_plan_path: str = Column(String, nullable=True)
     status_work_plan: StatusWorkPlan = Column(
         SqlEnum(StatusWorkPlan, native_enum=True,
-                create_type=False), default=StatusWorkPlan.NOT_SIGNED, nullable=True
+                create_type=False), default=StatusWorkPlan.NOT_SIGNED.value, nullable=True
     )
 
     well_data = relationship("WellsData", back_populates="repairs")

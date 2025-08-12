@@ -35,7 +35,7 @@ class BrigadeSummary(Base):
     repair_time_id = Column(Integer, ForeignKey('repair_times.id'), nullable=False)
     notes = Column(Text, nullable=True)
     act_path = Column(Text, default=None, nullable=True)
-    status_act = Column(status_enum, default=StatusWorkPlan.NOT_SIGNED, nullable=True)
+    status_act = Column(status_enum, default=StatusWorkPlan.NOT_SIGNED.value, nullable=True)
     photo_path = Column(ARRAY(String), default=None, nullable=True)
     video_path = Column(ARRAY(String), default=None, nullable=True)
 

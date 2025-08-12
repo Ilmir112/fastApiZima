@@ -22,6 +22,7 @@ class SWellClassifier(BaseModel):
     today: date
     region: str
     costumer: str
+    wellhead_pressure: str
 
     class Config:
         from_attributes = True
@@ -45,6 +46,7 @@ class SWellsClassifierCreate(BaseModel):
     today: date
     region: str
     costumer: str
+    wellhead_pressure: str
 
 
 class SWellsClassifierRegion(BaseModel):

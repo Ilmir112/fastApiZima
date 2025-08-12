@@ -11,6 +11,8 @@ from zimaApp.logger import logger
 from zimaApp.repairGis.dao import RepairsGisDAO
 from zimaApp.repairGis.router import update_repair_gis_data
 from zimaApp.repairGis.schemas import RepairGisUpdate
+from zimaApp.summary.dao import BrigadeSummaryDAO
+from zimaApp.summary.router import update_repair_summary
 from zimaApp.tasks.telegram_bot_template import TelegramInfo
 from zimaApp.users.dependencies import get_current_user
 from zimaApp.users.models import Users
@@ -19,18 +21,45 @@ from zimaApp.wells_repair_data.dao import WellsRepairsDAO
 from zimaApp.wells_repair_data.models import StatusWorkPlan
 from zimaApp.wells_repair_data.router import update_plan_status, find_repair_filter_by_number
 from zimaApp.wells_repair_data.schemas import WellsRepairFile
+from fastapi import FastAPI, File, UploadFile, HTTPException
+from typing import List
+import pandas as pd
+import io
 
 router = APIRouter(
     prefix="/files",
     tags=["работа с файлами"],
 )
 
-from fastapi import FastAPI, File, UploadFile, HTTPException
-from typing import List
-import pandas as pd
-import io
+@router.post("/upload_images")
+async def upload_images(
+        request: Request,
+        itemId: str,  # Предполагается, что itemId передается как параметр или из тела запроса
+        files: List[UploadFile] = File(...),
+        user: Users = Depends(get_current_user)):
 
-app = FastAPI()
+    results = []
+
+    for file in files:
+        try:
+            # Загружаем файл через ваш метод MongoFile.upload_file
+            file_url, file_id, filename = await MongoFile.upload_file(request, itemId, file)
+
+            # После успешной загрузки можно сохранить информацию в базе данных или выполнить другие действия
+            # Например, добавление записи о файле в коллекцию
+
+            results.append(file_url)
+
+        except Exception as e:
+            results.append({
+                "filename": file.filename,
+                "error": str(e),
+                "status": "failed"
+            })
+    result = await BrigadeSummaryDAO.update_data(int(itemId), photo_path=results)
+    return results
+
+
 
 
 @router.post("/upload_multiple_excel/")
@@ -87,6 +116,43 @@ async def upload_file_gis_akt(request: Request,
         return {"fileId": file_id, "fileUrl": file_url}
 
 
+@router.post("/upload_video")
+async def upload_file_gis_akt(request: Request,
+                              itemId: str = Form(...),
+                              file: UploadFile = File(...),
+                              user: Users = Depends(get_current_user),
+                              ):
+    if file.size > 12000007:
+        return {"status": "Слишком большой объем видео"}
+    file_url, file_id, filename = await MongoFile.upload_file(request, itemId, file)
+
+    update_file = RepairGisUpdate(id=int(itemId),
+                                  fields={"video_path": [file_url]})
+
+    result_file = await update_repair_summary(update_file)
+
+    if result_file:
+        return {"fileId": file_id, "fileUrl": file_url}
+
+
+
+@router.post("/upload_summary_act")
+async def upload_file_summary(request: Request,
+                              itemId: str = Form(...),
+                              file: UploadFile = File(...),
+                              status: str = Form(...),
+                              user: Users = Depends(get_current_user),
+                              ):
+    file_url, file_id, filename = await MongoFile.upload_file(request, itemId, file)
+
+    update_file = RepairGisUpdate(id=int(itemId),
+                                  fields={"act_path":file_url, "status_act":status})
+
+    result_file = await update_repair_summary(update_file)
+
+    if result_file:
+        return {"fileId": file_id, "fileUrl": file_url}
+
 @router.get("/{file_id}")
 async def get_file(request: Request, file_id: str, user: Users = Depends(get_current_user)):
     try:
@@ -127,6 +193,7 @@ async def get_file(request: Request, file_id: str, user: Users = Depends(get_cur
         return {"error": str(e)}
 
 
+
 @router.delete("/delete_plan")
 async def delete_file(request: Request,
                       data: dict):
@@ -140,11 +207,68 @@ async def delete_file(request: Request,
             if result_mongo:
                 new_status = WellsRepairFile(id=int(item_id),
                                              signed_work_plan_path=None,
-                                             status_work_plan=StatusWorkPlan.NOT_SIGNED)
+                                             status_work_plan=StatusWorkPlan.NOT_SIGNED.value)
                 result = await update_plan_status(new_status)
 
                 # обновление базы данных
                 return {"message": "Файл успешно удален"}
+
+
+@router.delete("/delete_video")
+async def delete_video(request: Request,
+                      data: dict):
+    item_id = data.get("itemId")
+    plan_info = await BrigadeSummaryDAO.find_one_or_none(id=int(item_id))
+    if plan_info:
+        file_id = plan_info["video_path"][0]
+        if file_id:
+
+            result_mongo = await MongoFile.delete_file_from_mongo(request, file_id.replace("/files/", ""))
+            if result_mongo:
+
+                result = await BrigadeSummaryDAO.update_data(int(item_id), video_path=[])
+
+                # обновление базы данных
+                return {"message": "Файл успешно удален"}
+
+
+@router.delete("/delete_photo")
+async def delete_photo(request: Request,
+                      data: dict):
+    try:
+        item_id = data.get("itemId")
+        summary_info = await BrigadeSummaryDAO.find_one_or_none(id=int(item_id))
+        if summary_info:
+            file_id = summary_info["photo_path"]
+            if file_id:
+                # result_mongo = await MongoFile.delete_file_from_mongo(request, file_id.replace("/files/", ""))
+                # if result_mongo:
+                result = await BrigadeSummaryDAO.update_data(int(item_id), photo_path=None)
+
+                # обновление базы данных
+                return {"message": "Файл успешно удален"}
+    except Exception as e:
+        return {"error": str(e)}
+
+
+@router.delete("/delete_act")
+async def delete_act(request: Request,
+                      data: dict):
+    try:
+        item_id = data.get("itemId")
+        summary_info = await BrigadeSummaryDAO.find_one_or_none(id=int(item_id))
+        if summary_info:
+            file_id = summary_info["act_path"]
+            if file_id:
+                # result_mongo = await MongoFile.delete_file_from_mongo(request, file_id.replace("/files/", ""))
+                # if result_mongo:
+                result = await BrigadeSummaryDAO.update_data(int(item_id), act_path="",
+                                                             status_act=StatusWorkPlan.NOT_SIGNED.value)
+
+                # обновление базы данных
+                return {"message": "Файл успешно удален"}
+    except Exception as e:
+        return {"error": str(e)}
 
 
 @router.delete("/delete_act_gis")

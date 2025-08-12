@@ -26,8 +26,8 @@ router = APIRouter(
     tags=["Фронтенд"],
 )
 
-# templates = Jinja2Templates(directory="zimaApp/templates")
-templates = Jinja2Templates(directory="templates")
+templates = Jinja2Templates(directory="zimaApp/templates")
+# templates = Jinja2Templates(directory="templates")
 
 
 @router.get("/registration")

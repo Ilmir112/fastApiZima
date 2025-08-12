@@ -256,6 +256,7 @@ async function uploadFile(itemId, files) {
 }
 
 
+
 // Асинхронная функция для обновления поля записи
 async function updateField(id, field, value) {
     const apiUrl = `${apiBaseUrl}/update`; // Убедитесь, что apiBaseUrl определен в вашем коде

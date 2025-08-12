@@ -1,6 +1,3 @@
-
-
-
 // Функция для генерации таблицы с цветами
 function generateTableHTML(tableData) {
     const table = document.createElement('table');
@@ -129,40 +126,7 @@ a:hover {
     text-decoration: underline;
 }
 
-/* Модальное окно */
-#myModal {
-    display: none; 
-    position: fixed; 
-    z-index: 999; 
-    padding-top: 100px; 
-    left: 0;
-    top: 0;
-    width: 100%; 
-    height: 100%; 
-    overflow: auto; 
-    background-color: rgba(0,0,0,0.6); /* полупрозрачный черный фон */
-}
 
-#modalContent {
-    background-color: #fff8dc; /* светло-желтый фон */
-    margin: auto;
-    padding: 20px;
-    border-radius: 10px;
-    width: 40%;
-}
-
-#closeModal, #cancelBtn {
-   background-color: #ff7f50; /* коралловый */
-   color: white;
-   border: none;
-   padding: 10px 20px;
-   margin-top: 10px;
-   border-radius: 5px;
-   cursor: pointer;
-}
-#closeModal:hover, #cancelBtn:hover {
-   background-color: #ff6347; /* томатный */
-}
 
 /* Стиль для таблицы данных */
 #dataTable {
@@ -185,13 +149,63 @@ a:hover {
 `;
 document.head.appendChild(styleSheet);
 
-// Остальные функции остаются без изменений
+// Обработчик для открытия модального окна
+function openModal() {
+    const modal = document.getElementById('myModal');
 
-// Вызов функции для генерации таблицы с примером данных или при необходимости
-// generateTableHTML(yourData);
+    modal.style.display = 'flex';
+    modal.classList.add('show');
 
-// static/js/scripts.js
 
+    // Назначаем обработчики только один раз
+    const confirmBtn = document.getElementById('confirmBtn');
+    const cancelBtn = document.getElementById('cancelBtn');
+
+    // Очистка предыдущих обработчиков
+    confirmBtn.onclick = null;
+    cancelBtn.onclick = null;
+
+    // Обработчик подтверждения
+    confirmBtn.onclick = () => {
+        const selectedStatus = document.getElementById('statusSelect').value;
+
+        closeModal();
+        resolveStatus(selectedStatus);
+    };
+
+    // Обработчик отмены
+    cancelBtn.onclick = () => {
+        closeModal();
+        resolveStatus(null);
+    };
+}
+
+// Функция для закрытия модального окна
+function closeModal() {
+    document.getElementById('myModal').style.display = 'none';
+     // modal.classList.remove('show');
+}
+
+// Объявляем переменную для хранения промиса
+let statusPromiseResolve;
+
+// Функция для получения статуса через промис
+function askStatus() {
+    return new Promise((resolve) => {
+        statusPromiseResolve = resolve;
+        openModal();
+    });
+}
+
+// Внутренний вызов для разрешения промиса
+function resolveStatus(status) {
+    if (statusPromiseResolve) {
+        statusPromiseResolve(status);
+        statusPromiseResolve = null;
+    }
+}
+
+// В событии загрузки страницы назначьте обработчик для кнопки загрузки файла
 document.addEventListener('DOMContentLoaded', () => {
     const loadBtn = document.getElementById('loadDataBtn');
     if (loadBtn) {
@@ -201,26 +215,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 alert('Пожалуйста, введите номер скважины.');
                 return;
             }
-
             const url = `/wells_repair_router/find_repair_filter_by_number?well_number=${encodeURIComponent(wellNumber)}`;
-
             fetch(url)
-              .then(response => {
-                if (!response.ok) {
-                  throw new Error(`HTTP error! статус: ${response.status}`);
-                }
-                return response.json();
-              })
-              .then(data => {
-                displayData(data);
-              })
-              .catch(error => {
-                console.error('Ошибка:', error);
-                alert('Произошла ошибка при загрузке данных.');
-              });
+                .then(response => response.json())
+                .then(data => displayData(data))
+                .catch(error => alert('Произошла ошибка при загрузке данных.'));
         });
     }
 });
+
 
 // Функция для отображения данных в виде таблицы
 function displayData(data) {
@@ -276,7 +279,7 @@ function displayData(data) {
 
                 if (!planValue) {
                     // Нет файла, показываем кнопку для загрузки файла
-                    td.innerHTML = `<input type="file" accept=".png,.jpeg,.jpg,.pdf" onchange="uploadFile('${item.id}', this.files)">`;
+                    td.innerHTML = `<input type="file" accept=".png,.jpeg,.jpg,.pdf" onchange="uploadFilePlan('${item.id}', this.files)">`;
                 } else {
                     // Есть файл, показываем ссылку "Открыть" и кнопку "Удалить"
                     td.innerHTML = `
@@ -312,7 +315,7 @@ function findWellById(wellId) {
 }
 
 
-async function uploadFile(itemId, files) {
+async function uploadFilePlan(itemId, files) {
     if (!files || files.length === 0) return;
     const token = localStorage.getItem('access_token');
     const file = files[0];
@@ -385,7 +388,7 @@ async function deleteFile(itemId) {
             if (row) {
                 const linkCell = row.querySelector('.file-link');
                 linkCell.innerHTML = `
-                    <input type="file" accept=".png,.jpeg,.jpg,.pdf" onchange="uploadFile('${itemId}', this.files)">
+                    <input type="file" accept=".png,.jpeg,.jpg,.pdf" onchange="uploadFilePlan('${itemId}', this.files)">
                 `;
             }
         } else {
@@ -397,48 +400,24 @@ async function deleteFile(itemId) {
     }
 }
 
-// Получаем элементы
-const modal = document.getElementById('myModal');
-const closeBtn = document.getElementById('closeModal');
-const confirmBtn = document.getElementById('confirmBtn');
-const cancelBtn = document.getElementById('cancelBtn');
-
-// Функция для открытия окна
-function openModal() {
-    modal.style.display = 'block';
-}
-
-// Функция для закрытия окна
-function closeModal() {
-    modal.style.display = 'none';
-}
-
-// Обработчики
-closeBtn.onclick = closeModal;
-cancelBtn.onclick = closeModal;
-
-// Можно закрывать окно при клике вне содержимого
-window.onclick = function(event) {
-    if (event.target == modal) {
-        closeModal();
-    }
-};
 
 async function askStatus() {
     return new Promise((resolve) => {
         openModal();
 
-        // Обработчик подтверждения
+// Обработчик подтверждения
         confirmBtn.onclick = () => {
             const selectedStatus = document.getElementById('statusSelect').value;
             closeModal();
             resolve(selectedStatus);
         };
 
-        // Обработчик отмены
+// Обработчик отмены
         cancelBtn.onclick = () => {
             closeModal();
             resolve(null);
         };
     });
 }
+
+window.askStatus = askStatus

@@ -103,7 +103,7 @@ async def add_data(
                 "work_details": summary_info.work_details,
                 "notes": None,
                 "act_path": None,
-                "status_act": StatusWorkPlan.NOT_SIGNED,
+                "status_act": StatusWorkPlan.NOT_SIGNED.value,
                 "photo_path": None,
                 "video_path": None
             }

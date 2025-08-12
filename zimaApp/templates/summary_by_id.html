@@ -20,13 +20,14 @@
             <th>Дата</th>
             <th>Проведенные работы</th>
             <th>Примечание</th>
+            <th>Статус подписания</th>
             <th>Акт</th>
             <th>Фото</th>
             <th>Видео</th>
         </tr>
         <!-- Фильтры -->
         <tr>
-            <th></th>
+
             <th>
                 <select class="filter-select" data-column="Дата" title="Фильтр по дате">
                     <option value="">Все</option>
@@ -42,14 +43,22 @@
     </table>
 
 <!-- Передача данных из Python в JS -->
+<script>
+    const apiBaseUrl = "";
+</script>
+
 {% if summary_data %}
 <script type="application/json" id="initial-data">{{ summary_data | tojson }}</script>
 {% endif %}
+
 </div>
 
 {% endblock %}
 
 {% block scripts %}
+
 <!-- Подключение внешнего JS файла -->
+<script src="/static/js/plan.js"></script>
 <script src="/static/js/summaryById.js"></script>
+{% include "modal.html" %}
 {% endblock %}

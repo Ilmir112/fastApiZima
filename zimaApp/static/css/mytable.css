@@ -2,8 +2,8 @@
   /* Общие стили для контейнера */
   #summary-container {
     max-width: 1200px;
-    margin: 20px auto;
-    padding: 20px;
+    margin: 10px auto;
+    padding: 10px;
     font-family: 'Arial', sans-serif;
     background-color: #f9f9f9;
     border-radius: 8px;
@@ -60,6 +60,9 @@
     font-size: 14px;
 }
 
+.custom-width {
+  width: 250px; /* или любая нужная ширина */
+}
 /* Стиль для loading и ошибок */
 #loading {
     text-align: center;

@@ -24,3 +24,4 @@ class WellClassifier(Base):
     today: Date = Column(Date, nullable=False)
     region: str = Column(String, nullable=False)
     costumer: str = Column(String, nullable=False)
+    wellhead_pressure: str = Column(String, nullable=True)
