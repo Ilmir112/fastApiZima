@@ -5,6 +5,7 @@ from fastapi_cache.decorator import cache
 from fastapi import APIRouter, Depends, Request, Response, HTTPException
 
 from zimaApp.logger import logger
+from zimaApp.tasks.telegram_bot_template import TelegramInfo
 from zimaApp.well_classifier.dao import WellClassifierDAO
 from zimaApp.well_classifier.models import WellClassifier
 from zimaApp.well_classifier.schemas import (
@@ -106,6 +107,8 @@ async def add_data_well_classifier(wells_data: SWellsClassifierBatch):
                 )
 
         logger.info(f"Добавлено {len(results)} скважин", exc_info=True)
+
+        TelegramInfo.send_message_update_classification(len(results))
 
     except SQLAlchemyError as db_err:
         msg = f"Database Exception {db_err}"

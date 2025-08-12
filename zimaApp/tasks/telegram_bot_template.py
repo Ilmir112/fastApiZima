@@ -85,6 +85,18 @@ class TelegramInfo:
             response.raise_for_status()
 
     @classmethod
+    async def send_message_update_classification(
+            cls, results: str):
+        message = (
+            f"Добавлено {len(results)} скважин в классификатор"
+        )
+
+        payload = {"chat_id": settings.CHAT_ID, "text": message}
+        async with httpx.AsyncClient() as client:
+            response = await client.post(TelegramInfo.URL, json=payload)
+            response.raise_for_status()
+
+    @classmethod
     async def send_message_create_repair_gis(cls, result: SRepairsGis):
         wells_id = await WellsDatasDAO.find_one_or_none(id=result.well_id)
         message = (

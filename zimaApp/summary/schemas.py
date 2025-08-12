@@ -26,6 +26,10 @@ class SBrigadeSummary(BaseModel):
         from_attributes = True
         arbitrary_types_allowed = True
 
+# Модель для входных данных
+class DeletePhotoRequest(BaseModel):
+    itemId: int
+    fileUrl: str
 
 class SUpdateSummary(BaseModel):
     date_summary: datetime

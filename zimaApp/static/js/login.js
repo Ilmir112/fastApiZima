@@ -115,7 +115,7 @@ async function loadPage(path) {
     if (path === '/pages/login') {
         if (await checkAuth()) {
             // Уже авторизован — редирект на домашнюю
-            window.location.href = '/pages/home';
+            window.location.reload();
             return;
         }
         // Нет токена — показываем форму входа
@@ -137,7 +137,7 @@ async function loadPage(path) {
             if (response.ok) {
                 const htmlContent = await response.text();
                 if (contentContainer) {
-                    contentContainer.innerHTML = htmlContent;
+                    // contentContainer.innerHTML = htmlContent;
                     contentContainer.style.display = 'block';
                 }
                 if (loginContainer) loginContainer.style.display = 'none';

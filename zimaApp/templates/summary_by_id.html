@@ -20,32 +20,42 @@
             <th>Дата</th>
             <th>Проведенные работы</th>
             <th>Примечание</th>
-            <th>Статус подписания</th>
+            <th>статус подписания</th>
             <th>Акт</th>
             <th>Фото</th>
             <th>Видео</th>
         </tr>
         <!-- Фильтры -->
         <tr>
-
+            <th></th>
             <th>
-                <select class="filter-select" data-column="Дата" title="Фильтр по дате">
+                <select class="filter-container" data-column="Дата" title="Фильтр по дате">
                     <option value="">Все</option>
                 </select>
             </th>
             <!-- Можно добавить фильтры для других колонок при необходимости -->
-            <th></th><th></th><th></th><th></th><th></th>
+            <th></th>
+            <th>
+                <select class="filter-container" data-column="Примечание" title="Фильтр по примечанию">
+                    <option value="">Все</option>
+                </select>
+            </th>
+            <th>
+                <select class="filter-container" data-column="статус подписания" title="Фильтр по статусу">
+                    <option value="">Все</option>
+                </select>
+            </th><th></th><th></th><th></th>
         </tr>
+
         </thead>
         <tbody id="tableBody">
+
         <!-- Данные вставляются сюда через JS -->
         </tbody>
     </table>
 
 <!-- Передача данных из Python в JS -->
-<script>
-    const apiBaseUrl = "";
-</script>
+
 
 {% if summary_data %}
 <script type="application/json" id="initial-data">{{ summary_data | tojson }}</script>

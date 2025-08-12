@@ -13,6 +13,7 @@ from zimaApp.repairGis.router import update_repair_gis_data
 from zimaApp.repairGis.schemas import RepairGisUpdate
 from zimaApp.summary.dao import BrigadeSummaryDAO
 from zimaApp.summary.router import update_repair_summary
+from zimaApp.summary.schemas import DeletePhotoRequest
 from zimaApp.tasks.telegram_bot_template import TelegramInfo
 from zimaApp.users.dependencies import get_current_user
 from zimaApp.users.models import Users
@@ -233,22 +234,31 @@ async def delete_video(request: Request,
 
 
 @router.delete("/delete_photo")
-async def delete_photo(request: Request,
-                      data: dict):
+async def delete_photo(request: Request, data: DeletePhotoRequest):
     try:
-        item_id = data.get("itemId")
-        summary_info = await BrigadeSummaryDAO.find_one_or_none(id=int(item_id))
-        if summary_info:
-            file_id = summary_info["photo_path"]
-            if file_id:
-                # result_mongo = await MongoFile.delete_file_from_mongo(request, file_id.replace("/files/", ""))
-                # if result_mongo:
-                result = await BrigadeSummaryDAO.update_data(int(item_id), photo_path=None)
+        item_id = data.itemId
+        # Находим запись по itemId
+        summary_info = await BrigadeSummaryDAO.find_one_or_none(id=item_id)
+        if not summary_info:
+            raise HTTPException(status_code=404, detail="Запись не найдена")
 
-                # обновление базы данных
-                return {"message": "Файл успешно удален"}
+        file_path = summary_info.get("photo_path")
+        if not file_path:
+            return {"success": False, "message": "Файл не найден или уже удален"}
+        file_path.pop(file_path.index(data.fileUrl))
+
+        # Тут можно добавить удаление файла из хранилища, если нужно
+        # Например:
+        result_mongo = await MongoFile.delete_file_from_mongo(request, data.fileUrl.replace("/files/", ""))
+        if not result_mongo:
+            raise HTTPException(status_code=500, detail="Ошибка при удалении файла из хранилища")
+
+        # Обновляем запись в базе данных
+        await BrigadeSummaryDAO.update_data(item_id, photo_path=file_path)
+
+        return {"success": True}
     except Exception as e:
-        return {"error": str(e)}
+        return {"success": False, "error": str(e)}
 
 
 @router.delete("/delete_act")
