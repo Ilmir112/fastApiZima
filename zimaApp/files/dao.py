@@ -102,28 +102,52 @@ class ExcelRead:
         if self.df.empty:
             print("Данных нет.")
             return None
-
-        # Проверка, что есть хотя бы одна строка
-        if self.df.empty:
-            print("Данных нет.")
-            return None
-
+        skv_number = None
+        region = None
         for row in self.df.itertuples():
             # Объединение всех ячеек первой строки в одну строку для поиска
             row_text = ' '.join(str(cell) for cell in row)
-            if 'переезд' in row_text:
+            if 'Начало' in row_text:
+                skv_pattern = r'№(\d+)'
+
+                # Регулярное выражение для даты (день.месяц.год)
+                date_pattern = r'(\d{2}\.\d{2}\.\d{4})'
+
+                # Регулярное выражение для времени начала (первое время в диапазоне)
+                time_pattern = r'(\d{2}:\d{2}) - (\d{2}:\d{2})'
+
+                # Поиск даты
+                date_match = re.search(date_pattern, row_text)
+                date_value = date_match.group(1) if date_match else None
+
+                # Поиск времени начала (первое время в диапазоне)
+                time_match = re.search(time_pattern, row_text)
+                start_time = time_match.group(1) if time_match else None
+
+                # Поиск номера скважины
+                skv_match = re.search(skv_pattern, row_text)
+                skv_number = skv_match.group(1) if skv_match else None
+                if ' КР)' in row_text:
+                    region = "КГМ"
+                elif ' ТР)' in row_text:
+                    region = "ТГМ"
+                elif ' ИР)' in row_text:
+                    region = "ИГМ"
+                elif ' АР)' in row_text:
+                    region = "АГМ"
+                elif ' ЧР)' in row_text:
+                    region = "ЧГМ"
+
+            if 'переезд' in row_text.lower():
                 break
 
-        # Попытка найти фразу "на скв 217 Алкинского" или подобное
-        # Например, ищем номера скважин и месторождения
-        skv_numbers = re.findall(r'на скв №(\d+)', row_text, re.IGNORECASE)[0]
 
-        mesto_matches = re.findall(r'на скв\s*№\d+\s*([\w\-]+)\s*м-я', row_text, re.IGNORECASE)[0]
+        mesto_matches = re.findall(r'на скв.\s*№\d+\s*([\w\-]+)\s*', row_text, re.IGNORECASE)
 
-        if skv_numbers is None or mesto_matches is None:
+        if skv_number is None or mesto_matches is None:
             return
 
-        return skv_numbers, mesto_matches
+        return skv_number, mesto_matches, region, date_value, start_time
 
     # Пример использования:
     # df = pd.read_excel('ваш_файл.xls', engine='xlrd')

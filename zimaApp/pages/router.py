@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, Request, HTTPException
 from fastapi.templating import Jinja2Templates
 
+from zimaApp.files.router import get_open_files
 from zimaApp.logger import logger
 from fastapi_cache.decorator import cache
 from fastapi_versioning import version
@@ -53,6 +54,16 @@ async def get_repair_gis(request: Request, repairs=Depends(get_repair_gis_all)):
         context={"request": request, "repair_url": repair_url, "repairs": repairs},
     )
 
+@router.get("/open_files", response_class=HTMLResponse)
+@version(1)
+async def get_files_html(request: Request, files=Depends(get_open_files)):
+    try:
+        return templates.TemplateResponse(
+            "open_files.html",
+            context={"request": request, "files": files},
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/home", response_class=HTMLResponse)
 @version(1)

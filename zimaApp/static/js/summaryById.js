@@ -63,59 +63,58 @@ document.addEventListener('DOMContentLoaded', () => {
         tableBody.innerHTML = '';
 
         filteredItems.forEach(item => {
-    const row = document.createElement('tr');
-    row.setAttribute('data-id', item.id);
+            const row = document.createElement('tr');
+            row.setAttribute('data-id', item.id);
 
-    // 1. ID
-    const idTd = document.createElement('td');
-    idTd.textContent = item["id"] || '';
-    row.appendChild(idTd);
+            // 1. ID
+            const idTd = document.createElement('td');
+            idTd.textContent = item["id"] || '';
+            row.appendChild(idTd);
 
-    // 2. Дата
-    const dateTd = document.createElement('td');
-    dateTd.textContent = item["Дата"] || '';
-    row.appendChild(dateTd);
+            // 2. Дата
+            const dateTd = document.createElement('td');
+            dateTd.textContent = item["Дата"] || '';
+            row.appendChild(dateTd);
 
-    // 3. Проведенные работы
-    const worksTd = document.createElement('td');
-    worksTd.textContent = item["Проведенные работы"] || '';
-    row.appendChild(worksTd);
+            // 3. Проведенные работы
+            const worksTd = document.createElement('td');
+            worksTd.textContent = item["Проведенные работы"] || '';
+            row.appendChild(worksTd);
 
-    // 4. Примечание - input с onchange
-    const noteTd = document.createElement('td');
-    const noteInputId = `note-${item.id}`;
-    const noteInput = document.createElement('input');
-    noteInput.type = 'text';
-    noteInput.id = noteInputId;
-    noteInput.value = item["примечание"] || '';
-    noteTd.appendChild(noteInput);
-    row.appendChild(noteTd);
+            // 4. Примечание - input с onchange
+            const noteTd = document.createElement('td');
+            const noteInputId = `note-${item.id}`;
+            const noteInput = document.createElement('input');
+            noteInput.type = 'text';
+            noteInput.id = noteInputId;
+            noteInput.value = item["примечание"] || '';
+            noteTd.appendChild(noteInput);
+            row.appendChild(noteTd);
 
-    // 5. Статус подписания
-    const statusTd = document.createElement('td');
-    statusTd.textContent = item["статус подписания"] || '';
-    row.appendChild(statusTd);
+            // 5. Статус подписания
+            const statusTd = document.createElement('td');
+            statusTd.textContent = item["статус подписания"] || '';
+            row.appendChild(statusTd);
 
-    // 6. Акт - ссылка или кнопка загрузки файла
-    const actTd = document.createElement('td');
-    actTd.appendChild(generateFileCell(item, 'акт'));
-    row.appendChild(actTd);
+            // 6. Акт - ссылка или кнопка загрузки файла
+            const actTd = document.createElement('td');
+            actTd.appendChild(generateFileCell(item, 'акт'));
+            row.appendChild(actTd);
 
-    // 7. Фото - ссылка или кнопка загрузки файла
-    const photoTd = document.createElement('td');
-    photoTd.appendChild(generateFileCell(item, 'фото'));
-    row.appendChild(photoTd);
+            // 7. Фото - ссылка или кнопка загрузки файла
+            const photoTd = document.createElement('td');
+            photoTd.appendChild(generateFileCell(item, 'фото'));
+            row.appendChild(photoTd);
 
-    // 8. Видео - ссылка или кнопка загрузки файла
-    const videoTd = document.createElement('td');
-    videoTd.appendChild(generateFileCell(item, 'видео'));
+            // 8. Видео - ссылка или кнопка загрузки файла
+            const videoTd = document.createElement('td');
+            videoTd.appendChild(generateFileCell(item, 'видео'));
 
-    row.appendChild(videoTd);
+            row.appendChild(videoTd);
 
 
-
-// Добавляем строку в таблицу
-tableBody.appendChild(row);
+            // Добавляем строку в таблицу
+            tableBody.appendChild(row);
 
 
             // Назначение обработчиков для input "примечание"
@@ -124,23 +123,23 @@ tableBody.appendChild(row);
             });
         });
 
-        // Обработчики кнопок удаления файлов
-        document.querySelectorAll('.delete-file-btn_act').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const id = btn.dataset.id;
-                const type = btn.dataset.type;
-                deleteFileAct(id, type).then();
-            });
-        });
+        // // Обработчики кнопок удаления файлов
+        // document.querySelectorAll('.delete-file-btn_act').forEach(btn => {
+        //     btn.addEventListener('click', () => {
+        //         const id = btn.dataset.id;
+        //         const type = btn.dataset.type;
+        //         deleteFileAct(id, type).then();
+        //     });
+        // });
 
-        // Обработчики кнопок удаления файлов
-        document.querySelectorAll('.delete-file-btn_video').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const id = btn.dataset.id;
-                const type = btn.dataset.type;
-                deleteFileVideo(id, type).then();
-            });
-        });
+        // // Обработчики кнопок удаления файлов
+        // document.querySelectorAll('.delete-file-btn_video').forEach(btn => {
+        //     btn.addEventListener('click', () => {
+        //         const id = btn.dataset.id;
+        //         const type = btn.dataset.type;
+        //         deleteFileVideo(id, type).then();
+        //     });
+        // });
     };
 
     async function deleteFileAct(itemId) {
@@ -161,13 +160,27 @@ tableBody.appendChild(row);
             const result = await response.json();
 
             if (response.ok) {
-                // Обновляем таблицу: удаляем ссылку и кнопку
+                // Обновляем таблицу: заменяем ссылку на input для загрузки файла
                 const row = document.querySelector(`tr[data-id="${itemId}"]`);
                 if (row) {
-                    const linkCell = row.querySelector('.file-link_act');
-                    linkCell.innerHTML = `
-                    <input type="file" accept=".pdf" onchange="uploadFileAct('${itemId}', this.files)">
-                `;
+                    const linkCell = row.querySelector('a[href*="act_path"]');
+                    if (linkCell) {
+                        // Очищаем содержимое ячейки
+                        linkCell.innerHTML = '';
+                        let deleteBtn = row.querySelector('.delete-file-btn_act');
+                        if (deleteBtn) {
+                            deleteBtn.style.display = 'none'; // или 'block', если нужно
+                        }
+
+                        // Создаем новый input для загрузки файла
+                        const inputFile = document.createElement('input');
+                        inputFile.type = 'file';
+                        inputFile.accept = '.pdf';
+                        inputFile.onchange = () => uploadFileAct(itemId, inputFile.files);
+
+                        // Вставляем input в ячейку
+                        linkCell.appendChild(inputFile);
+                    }
                 }
             } else {
                 alert('Ошибка: ' + result.message);
@@ -185,248 +198,208 @@ tableBody.appendChild(row);
 
         try {
             const response = await fetch('/files/delete_video', {
-                method: 'DELETE', // или 'DELETE', в зависимости от API
+                method: 'DELETE',
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`
                 },
-                body: JSON.stringify({itemId})
+                body: JSON.stringify({ itemId })
             });
 
             const result = await response.json();
 
             if (response.ok) {
-                // Обновляем таблицу: удаляем ссылку и кнопку
-                const row = document.querySelector(`tr[data-id="${itemId}"]`);
-                if (row) {
-                    const linkCell = row.querySelector('.file-link_video');
-                    linkCell.innerHTML = `
-                    <input type="file" accept=".mp4, .3gp" onchange="uploadFilePlan('${itemId}', this.files)">
-                `;
+        const row = document.querySelector(`tr[data-id="${itemId}"]`);
+        if (row) {
+            console.log(row.innerHTML);
+            // Найти ячейку по классу
+            let photoLink = row.querySelector('a[href*="video_path"]');
+            if (photoLink) {
+                // Скрыть кнопку внутри ссылки
+                 const buttonInside = row.querySelector('.delete-file-btn_video');
+                if (buttonInside) {
+                    buttonInside.style.display = 'none'; // скрываем кнопку
                 }
-            } else {
-                alert('Ошибка: ' + result.message);
+
+                photoLink.innerHTML = '';
+                const inputFile = document.createElement('input');
+                inputFile.type = 'file';
+                inputFile.className = 'video-cell'
+                inputFile.accept = '.mp4';
+                inputFile.multiple = true;
+                inputFile.onchange = () => uploadFile(itemId, inputFile.files);
+
+                // Вставить ссылку в ячейку
+                photoLink.appendChild(inputFile);
             }
-        } catch (e) {
-            console.error(e);
-            alert('Ошибка при удалении файла');
+            }
+
+
+        } else {
+            alert('Ошибка: ' + result.message);
         }
+    } catch (e) {
+        console.error(e);
+        alert('Ошибка при удалении файла');
     }
+}
+
+async function deleteFilePhoto(itemId) {
+    const token = localStorage.getItem('access_token');
+
+    if (!confirm('Вы уверены, что хотите удалить файл?')) return;
+
+    try {
+        const response = await fetch('/files/delete_photo', {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ itemId })
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+            const row = document.querySelector(`tr[data-id="${itemId}"]`);
+            if (row) {
+
+                // Найти ячейку по классу
+                let photoLink = row.querySelector('a[href*="photo_path"]');
+                if (photoLink) {
+                    // Скрыть кнопку внутри ссылки
+                     const buttonInside = row.querySelector('.delete-file-btn_photo');
+                    if (buttonInside) {
+                        buttonInside.style.display = 'none'; // скрываем кнопку
+                    }
+
+                    photoLink.innerHTML = '';
+                    const inputFile = document.createElement('input');
+                    inputFile.type = 'file';
+                    inputFile.className = 'photo-cell'
+                    inputFile.accept = '.jpeg,.png';
+                    inputFile.multiple = true;
+                    inputFile.onchange = () => uploadFilePhoto(itemId, inputFile.files);
+
+                    // Вставить ссылку в ячейку
+                    photoLink.appendChild(inputFile);
+                }
+            }
+
+        } else {
+            alert('Ошибка: ' + result.message);
+        }
+    } catch (e) {
+        console.error(e);
+        alert('Ошибка при удалении файла');
+    }
+}
 
 // Генерация HTML для ячейки файла/ссылки
     function generateFileCell(item, fileType) {
-    const fileUrl = item[fileType];
+        const container = document.createElement('div');
 
-    if (fileType === 'фото') {
-        let linkCell;
-        // Создаем контейнер для кнопок
-        linkCell = document.createElement('div');
-        linkCell.style.display = 'grid';
-        linkCell.style.gridTemplateColumns = '1fr 1fr';
-        linkCell.style.gap = '5px';
-        if (fileUrl && fileUrl.length > 0) {
+        if (fileType === 'акт') {
+            // Для 'акт' — ссылка или кнопка загрузки
+            if (item[fileType]) {
+                const link = document.createElement('a');
+                link.href = `open_files?files_id=${item.id}&status_file=act_path`;
+                link.target = '_blank';
+                link.textContent = 'Открыть акт';
 
+                container.appendChild(link);
 
-            // Для каждого файла создаем кнопки
-            fileUrl.forEach((path, index) => {
-                // Кнопка "Открыть файлы"
-                const openBtn = document.createElement('button');
-                openBtn.id = `openFilesBtn_${item.id}_${index}`;
-                openBtn.textContent = 'Открыть';
-                openBtn.style.fontSize = '10px';
-                openBtn.style.padding = '3px 4px';
-
-                openBtn.addEventListener('click', () => {
-
-                    const url = path.startsWith('http') ? path : `${path}`;
-                      const link = document.createElement('a');
-                      link.href = url;
-                      link.target = '_blank';
-                      link.textContent = 'Открыть ' ;
-                      document.body.appendChild(link);
-                      link.click();
-                      document.body.removeChild(link);
-                });
-
-                // Кнопка "Удалить файлы"
                 const deleteBtn = document.createElement('button');
                 deleteBtn.textContent = 'Удалить';
-                deleteBtn.style.fontSize = '10px';
-                deleteBtn.style.padding = '3px 6px';
-
-                deleteBtn.id = `deleteFilesBtn_${item.id}_${index}`;
-
-
+                deleteBtn.className = 'delete-file-btn_act';
+                deleteBtn.dataset.id = item.id;
+                deleteBtn.dataset.type = 'акт';
 
                 deleteBtn.addEventListener('click', () => {
-                    fetch(`/files/delete_photo`, {
-                        method: 'DELETE',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
-                        },
-                        body: JSON.stringify({ itemId: item.id, fileUrl: path }), // Передаем itemId
-                    })
-                    .then(res => res.json())
-                    .then(data => {
-                        if (data.success) {
-                            alert('Файл удален');
-                            // Обновляем UI
-                            linkCell.innerHTML = '';
-                        } else {
-                            alert('Ошибка при удалении файла');
-                        }
-                    })
-                    .catch(e => {
-                        console.error(e);
-                        alert('Ошибка сервера при удалении');
-                    });
+                    deleteFileAct(item.id);
                 });
 
-                // Добавляем кнопки в контейнер
-                linkCell.appendChild(openBtn);
-                linkCell.appendChild(deleteBtn);
-            });
-        } else {
-            const inputFile = document.createElement('input');
-            inputFile.type = 'file';
-            inputFile.accept = '.jpeg,.png'; // или 'image/jpeg, image/png'
-            inputFile.multiple = true; // разрешить выбор нескольких файлов
+                container.appendChild(deleteBtn);
+            } else {
+                const inputFile = document.createElement('input');
+                inputFile.type = 'file';
+                inputFile.accept = '.pdf';
+                inputFile.onchange = () => uploadFileAct(item.id, inputFile.files);
+                container.appendChild(inputFile);
+            }
+        } else if (fileType === 'фото') {
+            // Для фото — кнопка для загрузки
+            if (item['фото']) {
+                const link = document.createElement('a');
+                link.href = `open_files?files_id=${item.id}&status_file=photo_path`;
+                link.target = '_blank';
+                link.textContent = 'Открыть фото';
 
-            // Можно добавить обработчик выбора файлов
-            inputFile.addEventListener('change', () => {
-                const files = inputFile.files; // это будет FileList с выбранными файлами
-                for (let i = 0; i < files.length; i++) {
-                    console.log(files[i].name);
+                const deleteBtn = document.createElement('button');
+                deleteBtn.textContent = 'Удалить';
+                deleteBtn.className = 'delete-file-btn_photo';
+                deleteBtn.dataset.id = item.id;
+                deleteBtn.dataset.type = 'фото';
 
-                }
-                uploadFilePhoto(item.id, files);
-            });
-
-
-            linkCell.appendChild(inputFile)
-        }
-        return linkCell;}
-    else if (fileType === 'акт') {
-        const container = document.createElement('div');
-        container.className = 'file-link_act';
-
-        if (fileUrl && fileUrl.length > 0) {
-            const link = document.createElement('a');
-            link.href = fileUrl;
-            link.target = '_blank';
-            link.textContent = 'Открыть ' + fileType;
-
-            const deleteBtn = document.createElement('button');
-            deleteBtn.className = 'delete-file-btn_act';
-            deleteBtn.dataset.id = item.id;
-            deleteBtn.dataset.type = fileType;
-            deleteBtn.textContent = 'Удалить';
-
-            // Обработчик удаления
-            deleteBtn.addEventListener('click', () => {
-                // ваш fetch-запрос
-                fetch(`/files/delete_photo`, {
-                    method: 'DELETE',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
-                    },
-                    body: JSON.stringify({ paths: [fileUrl] }),
-                })
-                .then(res => res.json())
-                .then(data => {
-                    if (data.success) {
-                        alert('Файл удален');
-                        // Обновить UI по необходимости
-                        container.innerHTML = '';
-                    } else {
-                        alert('Ошибка при удалении файла');
-                    }
-                })
-                .catch(e => {
-                    console.error(e);
-                    alert('Ошибка сервера при удалении');
+                deleteBtn.addEventListener('click', () => {
+                    deleteFilePhoto(item.id);
                 });
-            });
 
-            container.appendChild(link);
-            container.appendChild(deleteBtn);
-        } else {
-            const inputFile = document.createElement('input');
-            inputFile.type = 'file';
-            inputFile.accept = '.pdf';
-            inputFile.onchange = () => uploadFileAct(item.id, inputFile.files);
-            container.appendChild(inputFile);
-        }
+                container.appendChild(link);
+                container.appendChild(deleteBtn)
+            } else {
+                const inputFile = document.createElement('input');
+                inputFile.type = 'file';
+                inputFile.className = 'photo-cell'
+                inputFile.accept = '.jpeg,.png';
+                inputFile.multiple = true;
+                inputFile.onchange = () => uploadFilePhoto(item.id, inputFile.files);
+                container.appendChild(inputFile);
+            }
+        } else if (fileType === 'видео') {
+            // Для видео — ссылка или кнопка загрузки
+            if (item['видео'].length > 0) {
+                const link = document.createElement('a');
+                link.href = `open_files?files_id=${item.id}&status_file=video_path`;
+                link.target = '_blank';
+                link.textContent = 'Открыть видео';
 
-        return container;
-    } else if (fileType === 'видео') {
-        const container = document.createElement('div');
-        container.className = 'file-link_video';
+                container.appendChild(link);
 
-        if (fileUrl && fileUrl.length > 0) {
-            const link = document.createElement('a');
-            link.href = fileUrl;
-            link.target = '_blank';
-            link.textContent = 'Открыть ' + fileType;
+                const deleteBtn = document.createElement('button');
+                deleteBtn.textContent = 'Удалить';
+                deleteBtn.className = 'delete-file-btn_video';
+                deleteBtn.dataset.id = item.id;
+                deleteBtn.dataset.type = 'видео';
 
-            const deleteBtn = document.createElement('button');
-            deleteBtn.className = 'delete-file-btn_video';
-            deleteBtn.dataset.id = item.id;
-            deleteBtn.dataset.type = fileType;
-            deleteBtn.textContent = 'Удалить';
+                deleteBtn.addEventListener('click', () => deleteFileVideo(item.id));
 
-            // Обработчик удаления
-            deleteBtn.addEventListener('click', () => {
-                fetch(`/files/delete_video`, {
-                    method: 'DELETE',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
-                    },
-                    body: JSON.stringify({ paths: [fileUrl] }),
-                })
-                .then(res => res.json())
-                .then(data => {
-                    if (data.success) {
-                        alert('Файл удален');
-                        container.innerHTML = '';
-                    } else {
-                        alert('Ошибка при удалении файла');
-                    }
-                })
-                .catch(e => {
-                    console.error(e);
-                    alert('Ошибка сервера при удалении');
-                });
-            });
-
-            container.appendChild(link);
-            container.appendChild(deleteBtn);
-        } else {
-            const inputFile = document.createElement('input');
-            inputFile.type = 'file';
-            inputFile.accept = '.mp4,.3gp';
-            inputFile.onchange = () => uploadFile(item.id, inputFile.files);
-            container.appendChild(inputFile);
+                container.appendChild(deleteBtn);
+            } else {
+                const inputFile = document.createElement('input');
+                inputFile.type = 'file';
+                inputFile.accept = '.mp4,.3gp';
+                inputFile.multiple = true;
+                inputFile.onchange = () => uploadFile(item.id, inputFile.files);
+                container.appendChild(inputFile);
+            }
         }
 
         return container;
     }
 
-    return null;
-}
+
 // Инициализация фильтров и таблицы при загрузке
-initFilters();
-renderTable();
+    initFilters();
+    renderTable();
 
 // Обработчики фильтров
-filters.forEach(filter => {
-    filter.addEventListener('change', () => {
-        renderTable();
+    filters.forEach(filter => {
+        filter.addEventListener('change', () => {
+            renderTable();
+        });
     });
-});
 
 })
 ;
@@ -439,7 +412,6 @@ async function uploadFile(itemId, files) {
 
     formData.append('file', file);
     formData.append('itemId', itemId);
-
 
     try {
         const response = await fetch('/files/upload_video', {
@@ -454,24 +426,41 @@ async function uploadFile(itemId, files) {
         if (response.status === 200) {
             // Обновляем ссылку в таблице
             const row = document.querySelector(`tr[data-id="${itemId}"]`);
-            if (row) { // исправлено условие
-                const linkCell = row.querySelector('.file-link_video');
-                if (linkCell) {
-                    linkCell.innerHTML = `
-                        <a href="${result.fileUrl}" target="_blank">Открыть видео</a>
-                        <button class="delete-file-btn_act" data-id="${itemId}">Удалить</button>
-                    `;
+            if (row) {
+                // Найти ячейку с ссылкой на видео
+                const photoLink = row.querySelector('a[href*="video_path"]');
+                if (photoLink) {
+                    // Очищаем содержимое ссылки
+                    photoLink.innerHTML = '';
 
+                    // Обновляем href для открытия файла
+                    photoLink.href = `open_files?files_id=${itemId}&status_file=video_path`;
+                    photoLink.target = '_blank'; // открыть в новой вкладке
+                    photoLink.textContent = 'Открыть видео';
+
+                    // Создаем кнопку удаления, если еще не создана
+                    let deleteBtn = row.querySelector('.delete-file-btn_video');
+                    if (deleteBtn) {
+                        deleteBtn.style.display = 'flex'; // или 'block', если нужно
+                    }
+
+                    // Вставляем кнопку рядом с ссылкой
+                    photoLink.parentNode.insertBefore(deleteBtn, photoLink.nextSibling);
+
+                    console.log(photoLink)
+                } else {
+                    console.error('Не найдена ссылка на видео');
                 }
             }
         } else {
-            alert('Ошибка загрузки: ' + result.message);
+            alert('Ошибка при отправке файла: ' + result.message);
         }
     } catch (e) {
         console.error(e);
         alert('Ошибка при отправке файла');
     }
 }
+
 
 async function uploadFileAct(itemId, files) {
     if (!files || files.length === 0) return;
@@ -505,14 +494,27 @@ async function uploadFileAct(itemId, files) {
             // Обновляем ссылку в таблице
             const row = document.querySelector(`tr[data-id="${itemId}"]`);
             if (row) { // исправлено условие
-                const linkCell = row.querySelector('.file-link_act');
-                if (linkCell) {
-                    linkCell.innerHTML = `
-                        <div class="file-link_act">
-                            <a href="${result.fileUrl}" target="_blank">Открыть</a>
-                            <button class="delete-file-btn_act" data-id="${itemId}" data-type="Акт">Удалить</button>
-                </div>
-                          `;
+
+                const photoLink = row.querySelector('a[href*="act_path"]');
+                if (photoLink) {
+                    // Очищаем содержимое ссылки
+                    photoLink.innerHTML = '';
+
+                    // Обновляем href для открытия файла
+                    photoLink.href = `open_files?files_id=${itemId}&status_file=act_path`;
+                    photoLink.target = '_blank'; // открыть в новой вкладке
+                    photoLink.textContent = 'Открыть акт';
+
+                    // Создаем кнопку удаления, если еще не создана
+                    let deleteBtn = row.querySelector('.delete-file-btn_act');
+                    if (deleteBtn) {
+                        deleteBtn.style.display = 'flex'; // или 'block', если нужно
+                    }
+
+                    // Вставляем кнопку рядом с ссылкой
+                    photoLink.parentNode.insertBefore(deleteBtn, photoLink.nextSibling);
+
+                    console.log(photoLink)
 
                 }
             }
@@ -546,64 +548,53 @@ async function uploadFilePhoto(itemId, files) {
             body: formData,
         });
         const result = await response.json();
+
         if (response.status === 200) {
             const row = document.querySelector(`tr[data-id="${itemId}"]`);
             if (row) {
-                const linkCell = row.querySelector('.file-link_photo');
-                if (linkCell) {
-                    const filePaths = result; // ваш массив путей
-                    if (filePaths.length > 0) {
-                        // Создаем кнопку для открытия всех файлов
-                        linkCell.innerHTML = `
-                    
-                    <button id="openFilesBtn_${itemId}">Открыть фото</button>
-                    <button id="deleteFilesBtn_${itemId}">Удалить фото</button>
-                `;
+                console.log(row)
+                const photoLink = row.querySelector('a[href*="photo_path"]');
+                if (photoLink) {
+                    // Очищаем содержимое ссылки
+                    photoLink.innerHTML = '';
 
-                        // Обработчик для открытия файлов
-                        document.getElementById(`openFilesBtn_${itemId}`).addEventListener('click', () => {
-                            const token = localStorage.getItem('access_token');
-                            filePaths.forEach(path => {
-                                const url = path.startsWith('http') ? path : `${apiBaseUrl}/${path}`;
-                                  const link = document.createElement('a');
-                                  link.href = url;
-                                  link.target = '_blank';
-                                  link.textContent = 'Открыть ' ;
-                                  document.body.appendChild(link);
-                                  link.click();
-                                  document.body.removeChild(link);
-                            });
-                        });
+                    // Обновляем href для открытия файла
+                    photoLink.href = `open_files?files_id=${itemId}&status_file=photo_path`;
+                    photoLink.target = '_blank'; // открыть в новой вкладке
+                    photoLink.textContent = 'Открыть фото';
 
-                        // Обработчик для удаления файлов
-                        document.getElementById(`deleteFilesBtn_${itemId}`).addEventListener('click', () => {
-                            // Тут вызовите API для удаления файлов, например:
-                            fetch(`/files/delete_photo`, {
-                                method: 'DELETE',
-                                headers: {
-                                    'Content-Type': 'application/json',
-                                    'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
-                                },
-                                body: JSON.stringify({paths: filePaths}),
-                            })
-                                .then(res => res.json())
-                                .then(data => {
-                                    if (data.success) {
-                                        alert('Файлы удалены');
-                                        // Обновите UI, например, очистите ячейку
-                                        linkCell.innerHTML = '';
-                                    } else {
-                                        alert('Ошибка при удалении файлов');
-                                    }
-                                })
-                                .catch(e => {
-                                    console.error(e);
-                                    alert('Ошибка сервера при удалении');
-                                });
-                        });
-                    } else {
-                        linkCell.innerHTML = 'Нет файлов';
+                    // Создаем кнопку удаления, если еще не создана
+                    let deleteBtn = row.querySelector('.delete-file-btn_photo');
+                    if (deleteBtn) {
+                        deleteBtn.style.display = 'flex'; // или 'block', если нужно
                     }
+
+                    // Вставляем кнопку рядом с ссылкой
+                    photoLink.parentNode.insertBefore(deleteBtn, photoLink.nextSibling);
+
+                    console.log((photoLink))
+                        // row.querySelector('td').appendChild(photoLink);
+                } else {
+                    // Если ссылки нет, можно создать новую
+                    const newLink = document.createElement('a');
+                    newLink.href = `open_files?files_id=${itemId}&status_file=photo_path`;
+                    newLink.target = '_blank';
+                    newLink.textContent = 'Открыть фото';
+
+                    row.querySelector('td').appendChild(newLink);
+
+                    // Создаем кнопку удаления
+                    const deleteBtn = document.createElement('button');
+                    deleteBtn.className = 'delete-file-btn_photo';
+                    deleteBtn.dataset.id = itemId;
+                    deleteBtn.dataset.type = 'фото';
+                    deleteBtn.textContent = 'Удалить';
+
+                    deleteBtn.addEventListener('click', () => {
+                        deleteFilePhoto(itemId);
+                    });
+
+                    row.querySelector('td').appendChild(deleteBtn);
                 }
             }
         } else {
@@ -614,4 +605,5 @@ async function uploadFilePhoto(itemId, files) {
         alert('Ошибка при отправке файла');
     }
 }
+
 

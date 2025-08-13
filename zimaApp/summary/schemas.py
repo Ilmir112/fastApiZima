@@ -29,7 +29,7 @@ class SBrigadeSummary(BaseModel):
 # Модель для входных данных
 class DeletePhotoRequest(BaseModel):
     itemId: int
-    fileUrl: str
+
 
 class SUpdateSummary(BaseModel):
     date_summary: datetime
