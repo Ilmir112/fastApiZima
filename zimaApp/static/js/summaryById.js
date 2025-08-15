@@ -66,10 +66,10 @@ document.addEventListener('DOMContentLoaded', () => {
             const row = document.createElement('tr');
             row.setAttribute('data-id', item.id);
 
-            // 1. ID
-            const idTd = document.createElement('td');
-            idTd.textContent = item["id"] || '';
-            row.appendChild(idTd);
+            // // 1. ID
+            // const idTd = document.createElement('td');
+            // idTd.textContent = item["id"] || '';
+            // row.appendChild(idTd);
 
             // 2. Дата
             const dateTd = document.createElement('td');
@@ -302,7 +302,7 @@ async function deleteFilePhoto(itemId) {
 
         if (fileType === 'акт') {
             // Для 'акт' — ссылка или кнопка загрузки
-            if (item[fileType]) {
+            if (item[fileType][0]) {
                 const link = document.createElement('a');
                 link.href = `open_files?files_id=${item.id}&status_file=act_path`;
                 link.target = '_blank';
@@ -359,7 +359,7 @@ async function deleteFilePhoto(itemId) {
             }
         } else if (fileType === 'видео') {
             // Для видео — ссылка или кнопка загрузки
-            if (item['видео'].length > 0) {
+            if (item['видео']) {
                 const link = document.createElement('a');
                 link.href = `open_files?files_id=${item.id}&status_file=video_path`;
                 link.target = '_blank';
@@ -424,34 +424,7 @@ async function uploadFile(itemId, files) {
         const result = await response.json();
 
         if (response.status === 200) {
-            // Обновляем ссылку в таблице
-            const row = document.querySelector(`tr[data-id="${itemId}"]`);
-            if (row) {
-                // Найти ячейку с ссылкой на видео
-                const photoLink = row.querySelector('a[href*="video_path"]');
-                if (photoLink) {
-                    // Очищаем содержимое ссылки
-                    photoLink.innerHTML = '';
-
-                    // Обновляем href для открытия файла
-                    photoLink.href = `open_files?files_id=${itemId}&status_file=video_path`;
-                    photoLink.target = '_blank'; // открыть в новой вкладке
-                    photoLink.textContent = 'Открыть видео';
-
-                    // Создаем кнопку удаления, если еще не создана
-                    let deleteBtn = row.querySelector('.delete-file-btn_video');
-                    if (deleteBtn) {
-                        deleteBtn.style.display = 'flex'; // или 'block', если нужно
-                    }
-
-                    // Вставляем кнопку рядом с ссылкой
-                    photoLink.parentNode.insertBefore(deleteBtn, photoLink.nextSibling);
-
-                    console.log(photoLink)
-                } else {
-                    console.error('Не найдена ссылка на видео');
-                }
-            }
+            window.location.reload(); // или обновить конкретную ячейку
         } else {
             alert('Ошибка при отправке файла: ' + result.message);
         }
@@ -492,32 +465,8 @@ async function uploadFileAct(itemId, files) {
 
         if (response.status === 200) {
             // Обновляем ссылку в таблице
-            const row = document.querySelector(`tr[data-id="${itemId}"]`);
-            if (row) { // исправлено условие
+            window.location.reload(); // или обновить конкретную ячейку
 
-                const photoLink = row.querySelector('a[href*="act_path"]');
-                if (photoLink) {
-                    // Очищаем содержимое ссылки
-                    photoLink.innerHTML = '';
-
-                    // Обновляем href для открытия файла
-                    photoLink.href = `open_files?files_id=${itemId}&status_file=act_path`;
-                    photoLink.target = '_blank'; // открыть в новой вкладке
-                    photoLink.textContent = 'Открыть акт';
-
-                    // Создаем кнопку удаления, если еще не создана
-                    let deleteBtn = row.querySelector('.delete-file-btn_act');
-                    if (deleteBtn) {
-                        deleteBtn.style.display = 'flex'; // или 'block', если нужно
-                    }
-
-                    // Вставляем кнопку рядом с ссылкой
-                    photoLink.parentNode.insertBefore(deleteBtn, photoLink.nextSibling);
-
-                    console.log(photoLink)
-
-                }
-            }
         } else {
             alert('Ошибка загрузки: ' + result.message);
         }

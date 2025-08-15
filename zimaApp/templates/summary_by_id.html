@@ -6,19 +6,19 @@
 <link rel="stylesheet" href="/static/css/mytable.css"/>
 
 <div id="summary-container">
-    <h2>Сводная информация работ по скважине </h2>
+    <h2>Сводная информация работ по скважине {{ well_number }} {{ field_name }} площади</h2>
 
     <div id="loading" style="display:none;">Загрузка...</div>
 
     <div id="error-message" style="display:none;"></div>
 
     <!-- Таблица -->
-    <table id="summary-list">
+    <table id="summary-list" style="width: 100%; table-layout: fixed;">
         <thead>
         <tr>
-            <th>ID</th>
+<!--            <th>ID</th>-->
             <th>Дата</th>
-            <th>Проведенные работы</th>
+            <th class="work-column">Проведенные работы</th>
             <th>Примечание</th>
             <th>статус подписания</th>
             <th>Акт</th>
@@ -27,7 +27,7 @@
         </tr>
         <!-- Фильтры -->
         <tr>
-            <th></th>
+<!--            <th></th>-->
             <th>
                 <select class="filter-container" data-column="Дата" title="Фильтр по дате">
                     <option value="">Все</option>

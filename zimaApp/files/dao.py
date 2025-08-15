@@ -149,6 +149,27 @@ class ExcelRead:
 
         return skv_number, mesto_matches, region, date_value, start_time
 
+    @staticmethod
+    def extract_datetimes(row):
+        asde = [str(cell) for cell in row]
+        # Обработка строки с датой
+        date_str = row[1].split('\n')[0]  # '03.08.2025'
+        time_range = row[1].split('\n')[1]  # '18:00-22:00'
+
+        # Парсим дату
+        date_obj = datetime.strptime(date_str, '%d.%m.%Y')
+
+        # Парсим время начала и конца интервала
+        start_time_str, end_time_str = time_range.split('-')
+        start_time = datetime.strptime(start_time_str.strip(), '%H:%M').time()
+        end_time = datetime.strptime(end_time_str.strip(), '%H:%M').time()
+
+        # Создаем datetime объекты для начала и конца работы
+        start_datetime = datetime.combine(date_obj.date(), start_time)
+        end_datetime = datetime.combine(date_obj.date(), end_time)
+
+        return (start_datetime, row[2])
+
     # Пример использования:
     # df = pd.read_excel('ваш_файл.xls', engine='xlrd')
     # ремонты = проверить_и_найти(df)

@@ -41,6 +41,12 @@ async def find_brigade_by_id(brigade_id: int, user: Users = Depends(get_current_
         if result.contractor == user.contractor:
             return result
 
+@router.get("/find_brigade_by_number")
+@version(1)
+async def find_brigade_by_number(number_brigade: int, user: Users = Depends(get_current_user)):
+    result =  await BrigadeDAO.find_one_or_none(number_brigade=number_brigade, contractor=user.contractor)
+    if result:
+        return result
 
 @router.get("/find_well_repairs_brigade_by_filter/")
 @version(1)
@@ -60,7 +66,6 @@ async def add_wells_data(
         if brigade_info:
             await delete_brigade(brigade_info)
             result = await BrigadeDAO.add_data(
-                id=brigade_info.id,
                 contractor=brigade_info.contractor,
                 costumer=brigade_info.costumer,
                 expedition=brigade_info.expedition,

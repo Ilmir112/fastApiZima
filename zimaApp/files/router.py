@@ -8,17 +8,21 @@ from fastapi import APIRouter, Form, UploadFile, HTTPException, Depends, File, R
 from fastapi_versioning import version
 
 from fastapi.responses import StreamingResponse
-from sqlalchemy import String
+from sqlalchemy import String, values
 
+from zimaApp.brigade.dao import BrigadeDAO
+from zimaApp.brigade.router import find_brigade_by_number
 from zimaApp.files.dao import MongoFile, ExcelRead
 from zimaApp.logger import logger
 
 from zimaApp.repairGis.dao import RepairsGisDAO
 from zimaApp.repairGis.router import update_repair_gis_data
 from zimaApp.repairGis.schemas import RepairGisUpdate
+from zimaApp.repairtime.dao import RepairTimeDAO
+from zimaApp.repairtime.router import open_summary_data
 from zimaApp.summary.dao import BrigadeSummaryDAO
-from zimaApp.summary.router import update_repair_summary
-from zimaApp.summary.schemas import DeletePhotoRequest
+from zimaApp.summary.router import update_repair_summary, update_summary_data, add_summary
+from zimaApp.summary.schemas import DeletePhotoRequest, SUpdateSummary
 from zimaApp.tasks.telegram_bot_template import TelegramInfo
 from zimaApp.users.dependencies import get_current_user
 from zimaApp.users.models import Users
@@ -26,9 +30,9 @@ from zimaApp.wells_data.dao import WellsDatasDAO
 
 from zimaApp.wells_repair_data.dao import WellsRepairsDAO
 from zimaApp.wells_repair_data.models import StatusWorkPlan
-from zimaApp.wells_repair_data.router import update_plan_status, find_repair_filter_by_number
+from zimaApp.wells_repair_data.router import update_plan_status
 from zimaApp.wells_repair_data.schemas import WellsRepairFile
-from fastapi import FastAPI, File, UploadFile, HTTPException
+from fastapi import File, UploadFile, HTTPException
 from typing import List
 import pandas as pd
 import io
@@ -37,10 +41,13 @@ router = APIRouter(
     prefix="/files",
     tags=["работа с файлами"],
 )
+
+
 class PathEnum(str, Enum):
     ACT_PATH = "act_path"
     VIDEO_PATH = "video_path"
     PHOTO_PATH = "photo_path"
+
 
 @router.post("/upload_images")
 async def upload_images(
@@ -58,7 +65,7 @@ async def upload_images(
             # После успешной загрузки можно сохранить информацию в базе данных или выполнить другие действия
             # Например, добавление записи о файле в коллекцию
 
-            results.append(file_url)
+            results.append((file_url, filename))
 
         except Exception as e:
             results.append({
@@ -97,24 +104,38 @@ async def upload_multiple_excel(
             brigade_match = re.search(brigade_pattern, file.filename)
             # Поиск МКВ
             mkv_match = re.search(mkv_pattern, file.filename)
-
-            if brigade_match and mkv_match:
-                brigade_number = brigade_match.group(1)
-                well_number = mkv_match.group(1)
+            well_number = mkv_match.group(1)
+            brigade_number = brigade_match.group(1)
             skv_number, mesto_matches, region, date_value, start_time = excel_xlrd.find_pars()
             if skv_number != well_number:
                 return
 
-            wells_repair = await WellsDatasDAO.find_all(well_number=well_number, contractor=user.contractor)
-            if wells_repair:
-                # Обработка данных по необходимости
-                data_list = df.to_dict(orient='records')
+            well_data = await WellsDatasDAO.find_all(well_number=skv_number, contractor=user.contractor)
 
-                results.append({
-                    "filename": file.filename,
-                    "rows": len(data_list),
-                    "data": data_list  # или только часть данных
-                })
+            if well_data:
+                if len(well_data) == 1:
+                    well_data = well_data[0]
+
+            if brigade_match and mkv_match:
+                brigade_data = await find_brigade_by_number(number_brigade=brigade_number, user=user)
+                summary_info = await RepairTimeDAO.find_one_or_none(brigade_id=brigade_data.id, status="открыт")
+                for row in df.itertuples():
+                    date_str, work_details = ExcelRead.extract_datetimes(row)
+                    work_data = SUpdateSummary(date_summary=date_str,
+                                               work_details=work_details)
+                    while summary_info is None:
+                        result = await open_summary_data(
+                            summary_info=work_data,
+                            well_data=well_data,
+                            brigade=brigade_data
+                        )
+                        summary_info = result["data"]
+
+
+                    result = await add_summary(work_data=work_data, work_details=work_details,
+                                               summary_info=summary_info.id)
+
+
 
         except Exception as e:
             return {
@@ -131,11 +152,12 @@ async def get_open_files(request: Request, files_id: int, status_file: PathEnum)
         result = await BrigadeSummaryDAO.find_one_or_none(id=files_id)
 
         if result:
-            return result[f'{status_file.value}'] \
-                if type(result[f'{status_file.value}']) is list else [result[f'{status_file.value}']]
+
+            adasf = result[f'{status_file.value}']
+            return [result[f'{status_file.value}']] \
+                if status_file.value != 'photo_path' else result[f'{status_file.value}']
     except Exception as e:
         print(str(e))
-
 
 
 @router.post("/upload")
@@ -146,7 +168,7 @@ async def upload_file_gis_akt(request: Request,
                               ):
     file_url, file_id, filename = await MongoFile.upload_file(request, itemId, file)
 
-    result_file = RepairGisUpdate(id=int(itemId), fields={"image_pdf": file_url}, )
+    result_file = RepairGisUpdate(id=int(itemId), fields={"image_pdf": (file_url, filename)}, )
     result_file = await update_repair_gis_data(result_file)
 
     if result_file:
@@ -164,7 +186,7 @@ async def upload_file_gis_akt(request: Request,
     file_url, file_id, filename = await MongoFile.upload_file(request, itemId, file)
 
     update_file = RepairGisUpdate(id=int(itemId),
-                                  fields={"video_path": [file_url]})
+                                  fields={"video_path": [file_url, filename]})
 
     result_file = await update_repair_summary(update_file)
 
@@ -179,15 +201,18 @@ async def upload_file_summary(request: Request,
                               status: str = Form(...),
                               user: Users = Depends(get_current_user),
                               ):
-    file_url, file_id, filename = await MongoFile.upload_file(request, itemId, file)
+    try:
+        file_url, file_id, filename = await MongoFile.upload_file(request, itemId, file)
 
-    update_file = RepairGisUpdate(id=int(itemId),
-                                  fields={"act_path": file_url, "status_act": status})
+        # update_file = RepairGisUpdate(id=int(itemId),
+        #                               fields={"act_path": file_url, "status_act": status})
 
-    result_file = await update_repair_summary(update_file)
+        result_file = await BrigadeSummaryDAO.update(filter_by={"id": int(itemId)}, act_path=(file_url, filename), status_act=status)
 
-    if result_file:
-        return {"fileId": file_id, "fileUrl": file_url}
+        if result_file:
+            return {"fileId": file_id, "fileUrl": file_url}
+    except Exception as e:
+        logger.error(str(e))
 
 
 @router.get("/{file_id}")
@@ -256,15 +281,16 @@ async def delete_video(request: Request,
     item_id = data.get("itemId")
     plan_info = await BrigadeSummaryDAO.find_one_or_none(id=int(item_id))
     if plan_info:
-        file_id = plan_info["video_path"]
+        file_id = [plan_info["video_path"]]
         if file_id:
-            for file_path in file_id:
+            for file_path, _ in file_id:
                 result_mongo = await MongoFile.delete_file_from_mongo(request, file_path.replace("/files/", ""))
             if result_mongo:
-                result = await BrigadeSummaryDAO.update_data(int(item_id), video_path=[])
-                    # обновление базы данных
+                result = await BrigadeSummaryDAO.update_data(int(item_id), video_path=None)
+                # обновление базы данных
                 return {"message": "Файл успешно удален"}
     return {"message": "Файл отсутствует"}
+
 
 @router.delete("/delete_photo")
 async def delete_photo(request: Request, data: DeletePhotoRequest):
@@ -278,13 +304,15 @@ async def delete_photo(request: Request, data: DeletePhotoRequest):
         files_path = summary_info.get("photo_path")
         if not files_path:
             return {"success": False, "message": "Файл не найден или уже удален"}
-        for file_path in files_path:
+
+        for file_path, _ in files_path:
             result_mongo = await MongoFile.delete_file_from_mongo(request, file_path.replace("/files/", ""))
             if not result_mongo:
                 raise HTTPException(status_code=500, detail="Ошибка при удалении файла из хранилища")
 
-        # Обновляем запись в базе данных
-        await BrigadeSummaryDAO.update_data(item_id, photo_path=None)
+        if result_mongo:
+            result = await BrigadeSummaryDAO.update_data(int(item_id), photo_path=None)
+
 
         return {"success": True}
     except Exception as e:

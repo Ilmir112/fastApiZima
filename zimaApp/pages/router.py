@@ -1,3 +1,5 @@
+import os
+
 from fastapi import APIRouter, Depends, Request, HTTPException
 from fastapi.templating import Jinja2Templates
 
@@ -16,6 +18,7 @@ from zimaApp.users.auth import authenticate_user
 from zimaApp.users.dependencies import get_current_user, get_current_admin_user
 from zimaApp.users.models import Users
 from zimaApp.users.router import login_user
+from zimaApp.wells_data.dao import WellsDatasDAO
 from zimaApp.wells_repair_data.router import (
     find_work_plan_all,
     find_repair_filter_by_number,
@@ -58,10 +61,23 @@ async def get_repair_gis(request: Request, repairs=Depends(get_repair_gis_all)):
 @version(1)
 async def get_files_html(request: Request, files=Depends(get_open_files)):
     try:
-        return templates.TemplateResponse(
-            "open_files.html",
-            context={"request": request, "files": files},
-        )
+
+        # Обработка списка
+        processed_files = []
+
+        for path, filename in files:
+            ext = os.path.splitext(filename)[1].lower()
+            processed_files.append({
+                "path": path,
+                "ext": ext
+            })
+
+        # Передайте processed_files в шаблон
+        return templates.TemplateResponse("open_files.html", {
+            "request": request,
+            "files": processed_files
+        })
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -116,10 +132,13 @@ async def get_summary_by_id(request: Request,
                       summary_data=Depends(find_all_works_by_id_summary),
                       user: Users = Depends(get_current_user)):
     try:
+        well_data = await WellsDatasDAO.find_one_or_none(id=summary_data[1])
         return templates.TemplateResponse("summary_by_id.html",
             context={
                 "request": request,
-                "summary_data": summary_data,
+                "summary_data": summary_data[0],
+                "well_number": well_data.well_number,
+                "field_name": well_data.well_area,
                 "error_message": "Произошла ошибка при отображении страницы."
             }
             )

@@ -1,7 +1,7 @@
 
   /* Общие стили для контейнера */
   #summary-container {
-    max-width: 1200px;
+    max-width: 1900px;
     margin: 10px auto;
     padding: 10px;
     font-family: 'Arial', sans-serif;
@@ -17,10 +17,17 @@
     margin-bottom: 20px;
     font-size: 24px;
   }
+  #summary-list th:nth-child(1) {
+        width: 7%;
+    }
 
+    #summary-list th:nth-child(2) {
+        width: 50%;
+    }
   /* Стиль для таблицы */
   #summary-list {
     width: 100%;
+    /*table-layout: fixed;*/
     border-collapse: collapse;
     font-size: 14px;
     box-shadow: 0 2px 8px rgba(0,0,0,0.1);
@@ -48,7 +55,7 @@
   /* Ячейки таблицы */
 #summary-list tbody td {
     padding: 12px;
-    border-bottom: 1px solid #ddd;
+    border-bottom: 2px solid #525050;
 }
 
 /* Стиль для select фильтров */
@@ -59,10 +66,13 @@
     border: 1px solid #ccc;
     font-size: 14px;
 }
-
 .custom-width {
   width: 250px; /* или любая нужная ширина */
 }
+/*.work-column {*/
+/*    width: 70%;*/
+/*}*/
+
 /* Стиль для loading и ошибок */
 #loading {
     text-align: center;

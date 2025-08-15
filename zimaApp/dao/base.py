@@ -189,27 +189,27 @@ class BaseDAO:
         # Определяем интервал
         if (time_only >= datetime.strptime("02:00", "%H:%M").time()
                 and time_only < datetime.strptime("06:00","%H:%M").time()):
-            interval = TimeWorkEnum.EARLY_MORNING
+            interval = TimeWorkEnum.EARLY_MORNING.value
             result_date = dt.date()
         elif (time_only >= datetime.strptime("06:00", "%H:%M").time()
               and time_only < datetime.strptime("10:00","%H:%M").time()):
-            interval = TimeWorkEnum.MORNING
+            interval = TimeWorkEnum.MORNING.value
             result_date = dt.date()
         elif (time_only >= datetime.strptime("10:00", "%H:%M").time()
               and time_only < datetime.strptime("14:00","%H:%M").time()):
-            interval = TimeWorkEnum.LATE_MORNING
+            interval = TimeWorkEnum.LATE_MORNING.value
             result_date = dt.date()
         elif (datetime.strptime("14:00", "%H:%M").time() <= time_only < datetime.strptime("18:00", "%H:%M").time()):
-            interval = TimeWorkEnum.AFTERNOON
+            interval = TimeWorkEnum.AFTERNOON.value
             result_date = dt.date()
         elif time_only >= datetime.strptime("18:00", "%H:%M").time() and time_only < datetime.strptime("22:00",
                                                                                                        "%H:%M").time():
-            interval = TimeWorkEnum.EVENING
+            interval = TimeWorkEnum.EVENING.value
             result_date = dt.date()
         else:
             # Время с 22:00 до 02:00 следующего дня или с 00 до 02 утра
             # Для интервала NIGHT (22:00-02:00)
-            interval = TimeWorkEnum.NIGHT
+            interval = TimeWorkEnum.NIGHT.value
             # Если время с 22:00 до конца дня, дата остаётся той же
             if time_only >= datetime.strptime("22:00", "%H:%M").time():
                 result_date = dt.date()

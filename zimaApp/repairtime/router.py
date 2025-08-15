@@ -8,6 +8,7 @@ from zimaApp.brigade.models import Brigade
 from zimaApp.brigade.router import find_brigade_by_id
 from zimaApp.exceptions import ExceptionError, WellsAlreadyExistsException, BrigadeAlreadyExistsException
 from zimaApp.logger import logger
+from zimaApp.prometheus.router import time_consumer
 from zimaApp.repairtime.dao import RepairTimeDAO
 from zimaApp.repairtime.models import StatusSummary
 from zimaApp.repairtime.schemas import SRepairTime, SRepairTimeClose
@@ -79,12 +80,13 @@ async def find_by_id_repair(summary_id: int, user: Users = Depends(get_current_u
 
 @router.post("/add")
 @version(1)
-async def add_data(
+async def open_summary_data(
         summary_info: SUpdateSummary,
         well_data: WellsData = Depends(find_wells_data_by_id),
         brigade: Brigade = Depends(find_brigade_by_id),
         user: Users = Depends(get_current_user)
 ):
+
     check_wells = await check_well_id_and_end_time(well_data.id)
     if check_wells:
         raise WellsAlreadyExistsException
@@ -110,14 +112,14 @@ async def add_data(
 
             repair_data = {
                 'well_id': well_data.id,
-                'start_time': summary_info.date_summary,
+                'start_time': summary_info.date_summary + timedelta(hours=3),
                 'end_time': None,
                 "brigade_id": brigade.id
             }
 
             result = await RepairTimeDAO.add_brigade_with_repairs(summary_data, repair_data)
             if result:
-                return {"status": "success", "id": result}
+                return {"status": "success", "data": result}
 
     except SQLAlchemyError as db_err:
         msg = f"Database Exception Brigade {db_err}"

@@ -12,7 +12,7 @@ class Brigade(Base):
     contractor = Column(String, nullable=False)
     costumer = Column(String, nullable=False)
     expedition = Column(String, nullable=False)
-    number_brigade = Column(Integer, nullable=False, unique=True)
+    number_brigade = Column(String, nullable=False, unique=True)
     brigade_master = Column(JSON, nullable=False)
     phone_number_brigade = Column(String, nullable=False)
     lifting_unit = Column(String, nullable=False)

@@ -1,3 +1,4 @@
+from celery.bin.result import result
 from fastapi import APIRouter, Depends
 from datetime import date, datetime
 
@@ -38,6 +39,8 @@ router = APIRouter(
 @version(1)
 async def find_all_works_by_id_summary(summary_id: int, user: Users = Depends(get_current_user)):
     try:
+        wells = await RepairTimeDAO.find_one_or_none(id=summary_id)
+
         results = await BrigadeSummaryDAO.find_all(repair_time_id=summary_id)
 
         serialized_data = []
@@ -58,7 +61,7 @@ async def find_all_works_by_id_summary(summary_id: int, user: Users = Depends(ge
                         "видео": data.video_path,
                     })
 
-            return serialized_data
+            return sorted(serialized_data, key=lambda x: x["Дата"]), wells.well_id
     except SQLAlchemyError as db_err:
         msg = f"Database Exception Summary {db_err}"
         logger.error(msg, extra={"summary": summary_id})
@@ -98,6 +101,31 @@ async def update_repair_summary(
         )
         return {"error": str(msg)}
 
+@router.post("/add_summary")
+async def add_summary(work_details: str, work_data: SUpdateSummary,
+        summary_info: BrigadeSummary = Depends(),
+        user: Users = Depends(get_current_user)):
+
+    try:
+        if summary_info:
+            result_date, result_time, result_interval = await RepairTimeDAO.get_date_and_interval(
+            work_data.date_summary)
+            summary =  await BrigadeSummaryDAO.find_one_or_none(time_interval=result_interval, date_summary=result_date)
+            if summary:
+                return
+            result = await BrigadeSummaryDAO.add_data(
+                date_summary=result_date,
+                time_interval=result_interval,
+                work_details = work_details,
+                repair_time_id=summary_info,)
+            return result
+    except SQLAlchemyError as db_err:
+        msg = f"Database Exception Summary {db_err}"
+        logger.error(msg)
+    except Exception as e:
+        msg = f"Unexpected error: {str(e)}"
+        logger.error(msg)
+
 @router.put("/update_summary")
 @version(1)
 async def update_summary_data(
@@ -109,9 +137,9 @@ async def update_summary_data(
     try:
         result = await BrigadeSummaryDAO.update_data(
             summary_info.id,
-            date=data.date,
+            date=date_work,
             time_interval=time_interval,
-            work_details=data.time_interval)
+            work_details=summary_info.time_interval)
         if result:
             logger.info(f"Добавлены данные в базу {summary_info.id} ")
             return result
