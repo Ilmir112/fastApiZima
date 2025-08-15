@@ -24,7 +24,10 @@ async def register_user(user_data: SUsersRegister):
         if existing_user:
             raise UserAlreadyExistsException
         hashed_password = get_password_hash(user_data.password)
-        if user_data.position_id in ["Главный геолог", "Начальник ПТО","Заместитель начальника ПТО"]:
+        if user_data.position_id in ["Главный геолог", "Начальник ПТО","Заместитель начальника ПТО",
+                                     "Зам.генерального директора",
+                                     "Главный инженер"
+                                     ]:
             user_data.ctcrs = ""
         await UsersDAO.add_data(
             login_user=user_data.login_user,
