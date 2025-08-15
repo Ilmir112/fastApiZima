@@ -108,7 +108,7 @@ class ExcelRead:
             # Объединение всех ячеек первой строки в одну строку для поиска
             row_text = ' '.join(str(cell) for cell in row)
             if 'Начало' in row_text:
-                skv_pattern = r'№(\d+)'
+                skv_pattern = r'№(\d+).'
 
                 # Регулярное выражение для даты (день.месяц.год)
                 date_pattern = r'(\d{2}\.\d{2}\.\d{4})'

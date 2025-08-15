@@ -341,3 +341,29 @@ function setViewMode() {
         }
     )
 }
+
+// Получаем элементы модального окна и кнопки
+const registerModal = document.getElementById('registerModal');
+const registerBtn = document.getElementById('registerBtn');
+const closeRegisterBtn = document.getElementById('closeRegisterModal');
+
+// Обработчик открытия модального окна при клике на кнопку "Регистрация"
+if (registerBtn && registerModal) {
+    registerBtn.addEventListener('click', () => {
+        registerModal.style.display = 'block';
+    });
+}
+
+// Обработчик закрытия по клику на крестик
+if (closeRegisterBtn) {
+    closeRegisterBtn.onclick = () => {
+        registerModal.style.display = 'none';
+    };
+}
+
+// Обработка закрытия при клике вне области модального окна
+window.onclick = (event) => {
+    if (event.target === registerModal) {
+        registerModal.style.display = 'none';
+    }
+};

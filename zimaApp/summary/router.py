@@ -110,7 +110,7 @@ async def add_summary(work_details: str, work_data: SUpdateSummary,
         if summary_info:
             result_date, result_time, result_interval = await RepairTimeDAO.get_date_and_interval(
             work_data.date_summary)
-            summary =  await BrigadeSummaryDAO.find_one_or_none(time_interval=result_interval, date_summary=result_date)
+            summary =  await BrigadeSummaryDAO.find_one_or_none(time_interval=result_interval, date_summary=result_date, repair_time_id=summary_info)
             if summary:
                 return
             result = await BrigadeSummaryDAO.add_data(

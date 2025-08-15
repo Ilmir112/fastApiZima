@@ -34,7 +34,7 @@ templates = Jinja2Templates(directory="zimaApp/templates")
 # templates = Jinja2Templates(directory="templates")
 
 
-@router.get("/registration")
+@router.get("/register")
 @version(1)
 async def registration_new_user(request: Request):
     try:

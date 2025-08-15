@@ -112,7 +112,7 @@ async def open_summary_data(
 
             repair_data = {
                 'well_id': well_data.id,
-                'start_time': summary_info.date_summary + timedelta(hours=3),
+                'start_time': summary_info.date_summary + timedelta(hours=5),
                 'end_time': None,
                 "brigade_id": brigade.id
             }

@@ -302,7 +302,7 @@ async function deleteFilePhoto(itemId) {
 
         if (fileType === 'акт') {
             // Для 'акт' — ссылка или кнопка загрузки
-            if (item[fileType][0]) {
+            if (item[fileType]) {
                 const link = document.createElement('a');
                 link.href = `open_files?files_id=${item.id}&status_file=act_path`;
                 link.target = '_blank';
@@ -499,53 +499,33 @@ async function uploadFilePhoto(itemId, files) {
         const result = await response.json();
 
         if (response.status === 200) {
-            const row = document.querySelector(`tr[data-id="${itemId}"]`);
-            if (row) {
-                console.log(row)
-                const photoLink = row.querySelector('a[href*="photo_path"]');
-                if (photoLink) {
-                    // Очищаем содержимое ссылки
-                    photoLink.innerHTML = '';
-
-                    // Обновляем href для открытия файла
-                    photoLink.href = `open_files?files_id=${itemId}&status_file=photo_path`;
-                    photoLink.target = '_blank'; // открыть в новой вкладке
-                    photoLink.textContent = 'Открыть фото';
-
-                    // Создаем кнопку удаления, если еще не создана
-                    let deleteBtn = row.querySelector('.delete-file-btn_photo');
-                    if (deleteBtn) {
-                        deleteBtn.style.display = 'flex'; // или 'block', если нужно
-                    }
-
-                    // Вставляем кнопку рядом с ссылкой
-                    photoLink.parentNode.insertBefore(deleteBtn, photoLink.nextSibling);
-
-                    console.log((photoLink))
-                        // row.querySelector('td').appendChild(photoLink);
-                } else {
-                    // Если ссылки нет, можно создать новую
-                    const newLink = document.createElement('a');
-                    newLink.href = `open_files?files_id=${itemId}&status_file=photo_path`;
-                    newLink.target = '_blank';
-                    newLink.textContent = 'Открыть фото';
-
-                    row.querySelector('td').appendChild(newLink);
-
-                    // Создаем кнопку удаления
-                    const deleteBtn = document.createElement('button');
-                    deleteBtn.className = 'delete-file-btn_photo';
-                    deleteBtn.dataset.id = itemId;
-                    deleteBtn.dataset.type = 'фото';
-                    deleteBtn.textContent = 'Удалить';
-
-                    deleteBtn.addEventListener('click', () => {
-                        deleteFilePhoto(itemId);
-                    });
-
-                    row.querySelector('td').appendChild(deleteBtn);
-                }
-            }
+            window.location.reload(); // или обновить конкретную ячейку
+            // const row = document.querySelector(`tr[data-id="${itemId}"]`);
+            // if (row) {
+            //     console.log(row)
+            //     const photoLink = row.querySelector('a[href*="photo_path"]');
+            //     if (photoLink) {
+            //         // Очищаем содержимое ссылки
+            //         photoLink.innerHTML = '';
+            //
+            //         // Обновляем href для открытия файла
+            //         photoLink.href = `open_files?files_id=${itemId}&status_file=photo_path`;
+            //         photoLink.target = '_blank'; // открыть в новой вкладке
+            //         photoLink.textContent = 'Открыть фото';
+            //
+            //         // Создаем кнопку удаления, если еще не создана
+            //         let deleteBtn = row.querySelector('.delete-file-btn_photo');
+            //         if (deleteBtn) {
+            //             deleteBtn.style.display = 'flex'; // или 'block', если нужно
+            //         }
+            //
+            //         // Вставляем кнопку рядом с ссылкой
+            //         photoLink.parentNode.insertBefore(deleteBtn, photoLink.nextSibling);
+            //
+            //         console.log((photoLink))
+            //             // row.querySelector('td').appendChild(photoLink);
+               //
+            //}
         } else {
             alert('Ошибка загрузки: ' + result.message);
         }

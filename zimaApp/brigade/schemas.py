@@ -6,7 +6,7 @@ class SWellsBrigade(BaseModel):
     contractor: str
     costumer: str
     expedition: str
-    number_brigade: int
+    number_brigade: str
     brigade_master: dict
     phone_number_brigade: str
     lifting_unit: str

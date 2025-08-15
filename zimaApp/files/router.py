@@ -107,10 +107,10 @@ async def upload_multiple_excel(
             well_number = mkv_match.group(1)
             brigade_number = brigade_match.group(1)
             skv_number, mesto_matches, region, date_value, start_time = excel_xlrd.find_pars()
-            if skv_number != well_number:
+            if skv_number not in well_number:
                 return
 
-            well_data = await WellsDatasDAO.find_all(well_number=skv_number, contractor=user.contractor)
+            well_data = await WellsDatasDAO.find_all(well_number=well_number, contractor=user.contractor)
 
             if well_data:
                 if len(well_data) == 1:
@@ -328,10 +328,10 @@ async def delete_act(request: Request,
         if summary_info:
             file_id = summary_info["act_path"]
             if file_id:
-                # result_mongo = await MongoFile.delete_file_from_mongo(request, file_id.replace("/files/", ""))
-                # if result_mongo:
-                result = await BrigadeSummaryDAO.update_data(int(item_id), act_path="",
-                                                             status_act=StatusWorkPlan.NOT_SIGNED.value)
+                result_mongo = await MongoFile.delete_file_from_mongo(request, file_id[0].replace("/files/", ""))
+                if result_mongo:
+                    result = await BrigadeSummaryDAO.update_data(int(item_id), act_path=None,
+                                                                 status_act=StatusWorkPlan.NOT_SIGNED.value)
 
                 # обновление базы данных
                 return {"message": "Файл успешно удален"}
