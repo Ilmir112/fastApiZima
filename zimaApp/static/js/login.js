@@ -409,11 +409,13 @@ form.onsubmit = (e) => {
     e.preventDefault();
 
     // Получение данных формы
+    const loginUser = document.getElementById('loginUser').value.trim();
     const lastName = document.getElementById('lastName').value.trim();
     const firstName = document.getElementById('firstName').value.trim();
     const secondName = document.getElementById('secondName').value.trim();
     const position = document.getElementById('position').value.trim();
     const organization = document.getElementById('organization').value.trim();
+    const consumer = document.getElementById('consumer').value.trim();
     const region = document.getElementById('regionOrExpedition').value.trim();
     const password = document.getElementById('password').value.trim();
     const password2 = document.getElementById('password2').value.trim();
@@ -426,14 +428,18 @@ form.onsubmit = (e) => {
     // Здесь можно отправлять данные на сервер или обрабатывать их далее
     // Например, через fetch:
 
+
     const dataToSend = {
-        last_name: lastName,
-        first_name: firstName,
+        login_user: loginUser,
+        name_user: firstName,
+        surname_user: lastName,
         second_name: secondName,
-        position_in: position + " " + region,
-        organization: organization,
-        password: password,
-        region: region
+        position_id: position + " " + region,
+        costumer: consumer,
+        contractor: organization,
+        ctcrs: region,
+        password: password
+
     };
 
 // Пример отправки данных (замените URL на ваш API)
@@ -444,7 +450,7 @@ form.onsubmit = (e) => {
     })
         .then(res => res.json())
         .then(data => {
-            if (data.success) {
+            if (data) {
                 alert("Пользователь успешно зарегистрирован");
                 modal.style.display = 'none'; // закрыть окно
             } else if (data.error === 'exists') {
