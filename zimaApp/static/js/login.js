@@ -388,7 +388,7 @@ organizationSelect.onchange = () => {
     } else if (selectedOrg === 'ООО РН-Сервис') {
         // Установка для экспедиций
         regionLabel.textContent = 'Экспедиция:';
-        const expeditions = ['АУП','экспедиции №1', 'экспедиции №2', 'экспедиции №3', 'экспедиции №4', 'экспедиции №5', 'экспедиции №6', 'экспедиции №7'];
+        const expeditions = ['АУП', 'экспедиции №1', 'экспедиции №2', 'экспедиции №3', 'экспедиции №4', 'экспедиции №5', 'экспедиции №6', 'экспедиции №7'];
         expeditions.forEach(e => {
             const option = document.createElement('option');
             option.value = e;
@@ -441,8 +441,7 @@ form.onsubmit = (e) => {
         password: password
 
     };
-
-// Пример отправки данных (замените URL на ваш API)
+// Отправка данных на сервер для регистрации пользователя
     fetch('/auth/register', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
@@ -450,13 +449,13 @@ form.onsubmit = (e) => {
     })
         .then(res => res.json())
         .then(data => {
-            if (data) {
+            if (data.status === 'success') {
                 alert("Пользователь успешно зарегистрирован");
                 modal.style.display = 'none'; // закрыть окно
             } else if (data.error === 'exists') {
                 alert("Данный пользователь уже существует");
             } else {
-                alert("Произошла ошибка");
+                alert("Произошла ошибка: " + (data.message || "Неизвестная ошибка"));
             }
         })
         .catch(() => alert("Ошибка сети"));

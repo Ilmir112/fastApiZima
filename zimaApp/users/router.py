@@ -15,20 +15,24 @@ from zimaApp.users.schemas import SUsersAuth, SUsersRegister, SUserUpdate
 
 router = APIRouter(prefix="/auth", tags=["Auth & пользователи"])
 
-
 @router.post("/register")
 @version(1)
 async def register_user(user_data: SUsersRegister):
     try:
+        # Проверка существования пользователя по логину
         existing_user = await UsersDAO.find_one_or_none(login_user=user_data.login_user)
         if existing_user:
-            raise UserAlreadyExistsException
+            # Возвращаем ошибку, если пользователь уже существует
+            return {
+                "status": "error",
+                "error": "exists",
+                "message": "Пользователь с таким логином уже существует"
+            }
+
+        # Хеширование пароля перед сохранением
         hashed_password = get_password_hash(user_data.password)
-        if user_data.position_id in ["Главный геолог", "Начальник ПТО","Заместитель начальника ПТО",
-                                     "Зам.генерального директора",
-                                     "Главный инженер"
-                                     ]:
-            user_data.ctcrs = "АУП"
+
+        # Добавление нового пользователя в базу данных
         await UsersDAO.add_data(
             login_user=user_data.login_user,
             name_user=user_data.name_user,
@@ -41,11 +45,16 @@ async def register_user(user_data: SUsersRegister):
             password=hashed_password,
             access_level='user',
         )
+
+        # Отправка сообщения в Telegram при продакшене
         if settings.MODE == "PROD":
             await TelegramInfo.send_message_registration_users(user_data)
+
+        # Логирование успешной регистрации
         logger.info(
-            "Users adding", extra={"new_user": user_data.login_user}, exc_info=True
+            "User registered", extra={"login": user_data.login_user}
         )
+
         return {
             "status": "success",
             "message": "Пользователь успешно зарегистрирован",
@@ -54,8 +63,9 @@ async def register_user(user_data: SUsersRegister):
             }
         }
     except Exception as e:
-        logger.error("Critical error", extra=e, exc_info=True)
-        raise HTTPException(status_code=500, detail=str(e))
+        # Логирование ошибок и возврат внутренней ошибки сервера
+        logger.error("Critical error during registration", exc_info=True)
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
 
 @router.post("/login")
