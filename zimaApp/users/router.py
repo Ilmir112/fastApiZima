@@ -28,7 +28,7 @@ async def register_user(user_data: SUsersRegister):
                                      "Зам.генерального директора",
                                      "Главный инженер"
                                      ]:
-            user_data.ctcrs = ""
+            user_data.ctcrs = "АУП"
         await UsersDAO.add_data(
             login_user=user_data.login_user,
             name_user=user_data.name_user,

@@ -342,28 +342,119 @@ function setViewMode() {
     )
 }
 
-// Получаем элементы модального окна и кнопки
-const registerModal = document.getElementById('registerModal');
-const registerBtn = document.getElementById('registerBtn');
-const closeRegisterBtn = document.getElementById('closeRegisterModal');
 
-// Обработчик открытия модального окна при клике на кнопку "Регистрация"
-if (registerBtn && registerModal) {
-    registerBtn.addEventListener('click', () => {
-        registerModal.style.display = 'block';
-    });
-}
+// Получение элементов
+const modal = document.getElementById('registerModal');
+const openBtn = document.getElementById('openRegisterBtn');
+const closeBtn = document.getElementById('closeModal');
+const organizationSelect = document.getElementById('organization');
+const regionLabel = document.getElementById('regionLabel');
+const regionSelect = document.getElementById('regionOrExpedition');
+const form = document.getElementById('registerForm');
 
-// Обработчик закрытия по клику на крестик
-if (closeRegisterBtn) {
-    closeRegisterBtn.onclick = () => {
-        registerModal.style.display = 'none';
-    };
-}
+// Открытие модального окна
+openBtn.onclick = () => {
+    modal.style.display = 'block';
+};
 
-// Обработка закрытия при клике вне области модального окна
+// Закрытие модального окна
+closeBtn.onclick = () => {
+    modal.style.display = 'none';
+};
+
+// Закрытие при клике вне окна
 window.onclick = (event) => {
-    if (event.target === registerModal) {
-        registerModal.style.display = 'none';
+    if (event.target == modal) {
+        modal.style.display = 'none';
     }
 };
+
+// Обновление опций региона/экспедиции в зависимости от выбранной организации
+organizationSelect.onchange = () => {
+    const selectedOrg = organizationSelect.value;
+
+    regionSelect.innerHTML = ''; // очистить текущие опции
+
+    if (selectedOrg === 'ООО Ойл-сервис') {
+        // Установка для ЦЕХ
+        regionLabel.textContent = 'ЦЕХ:';
+        const regions = ['АУП', 'ЦТКРС №1', 'ЦТКРС №2', 'ЦТКРС №3', 'ЦТКРС №4', 'ЦТКРС №5', 'ЦТКРС №6', 'ЦТКРС №7'];
+        regions.forEach(r => {
+            const option = document.createElement('option');
+            option.value = r;
+            option.textContent = r;
+            regionSelect.appendChild(option);
+        });
+    } else if (selectedOrg === 'ООО РН-Сервис') {
+        // Установка для экспедиций
+        regionLabel.textContent = 'Экспедиция:';
+        const expeditions = ['АУП','экспедиции №1', 'экспедиции №2', 'экспедиции №3', 'экспедиции №4', 'экспедиции №5', 'экспедиции №6', 'экспедиции №7'];
+        expeditions.forEach(e => {
+            const option = document.createElement('option');
+            option.value = e;
+            option.textContent = e;
+            regionSelect.appendChild(option);
+        });
+    } else {
+        // Если ничего не выбрано
+        const option = document.createElement('option');
+        option.value = '';
+        option.textContent = '--Выберите--';
+        regionSelect.appendChild(option);
+    }
+};
+
+// Обработка отправки формы
+form.onsubmit = (e) => {
+    e.preventDefault();
+
+    // Получение данных формы
+    const lastName = document.getElementById('lastName').value.trim();
+    const firstName = document.getElementById('firstName').value.trim();
+    const secondName = document.getElementById('secondName').value.trim();
+    const position = document.getElementById('position').value.trim();
+    const organization = document.getElementById('organization').value.trim();
+    const region = document.getElementById('regionOrExpedition').value.trim();
+    const password = document.getElementById('password').value.trim();
+    const password2 = document.getElementById('password2').value.trim();
+
+    if (password !== password2) {
+        alert("Пароли не совпадают");
+        return;
+    }
+
+    // Здесь можно отправлять данные на сервер или обрабатывать их далее
+    // Например, через fetch:
+
+    const dataToSend = {
+        last_name: lastName,
+        first_name: firstName,
+        second_name: secondName,
+        position_in: position + " " + region,
+        organization: organization,
+        password: password,
+        region: region
+    };
+
+// Пример отправки данных (замените URL на ваш API)
+    fetch('/auth/register', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(dataToSend)
+    })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                alert("Пользователь успешно зарегистрирован");
+                modal.style.display = 'none'; // закрыть окно
+            } else if (data.error === 'exists') {
+                alert("Данный пользователь уже существует");
+            } else {
+                alert("Произошла ошибка");
+            }
+        })
+        .catch(() => alert("Ошибка сети"));
+
+// Можно также добавить обработку ошибок и более сложную логику.
+};
+
