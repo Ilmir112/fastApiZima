@@ -56,9 +56,9 @@ class NormsAdmin(ModelView, model=NormsWork):
     # pk_columns = [NormsWork.__table__.c.id]  # замените 'id' на ваше имя первичного ключа
 
     column_list = [
-        "well_repair.well_data.well_number",
-        "well_repair.well_data.well_area",
-    ] + [c.name for c in NormsWork.__table__.columns]
+                      "well_repair.well_data.well_number",
+                      "well_repair.well_data.well_area",
+                  ] + [c.name for c in NormsWork.__table__.columns]
 
     def format_summary_work(self, obj):
         from markupsafe import Markup
@@ -105,20 +105,24 @@ class ClassifierAdmin(ModelView, model=WellClassifier):
     }
     column_sortable_list = ["region", "well_number", "cdng"]
     column_filters = ["well_number", "well_area"]
-    column_filters = False
+
     can_delete = False
     icon = "fa fa-users"
 
 
 class RepairDataAdmin(ModelView, model=WellsRepair):
-
     column_list = (
-        ["well_data.well_number", "well_data.well_area"]
-        + [WellsRepair.well_data]
-        + [c.name for c in WellsRepair.__table__.c]
+        "well_data.well_number", "well_data.well_area",
+         "type_kr",
+         "work_plan",
+         "norms_time",
+         "users.login_user",
+         "date_create"
     )
     name = "план работ"
     name_plural = "Планы работ"
+    column_filters = ["well_data.well_number", "well_data.well_area", "date_create"]
+    column_sortable_list = ["well_data.well_number", "well_data.well_area", "date_create"]
 
     def get_query(self):
         return super().get_query().options(joinedload(WellsRepair.well_data))

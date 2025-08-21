@@ -104,6 +104,7 @@ class ExcelRead:
             return None
         skv_number = None
         region = None
+        mesto_matches = []
         for row in self.df.itertuples():
             # Объединение всех ячеек первой строки в одну строку для поиска
             row_text = ' '.join(str(cell) for cell in row)
@@ -114,7 +115,7 @@ class ExcelRead:
                 date_pattern = r'(\d{2}\.\d{2}\.\d{4})'
 
                 # Регулярное выражение для времени начала (первое время в диапазоне)
-                time_pattern = r'(\d{2}:\d{2}) - (\d{2}:\d{2})'
+                time_pattern = r'(\d+:\d{2}) - (\d{2}:\d{2})'
 
                 # Поиск даты
                 date_match = re.search(date_pattern, row_text)
@@ -137,15 +138,12 @@ class ExcelRead:
                     region = "АГМ"
                 elif ' ЧР)' in row_text:
                     region = "ЧГМ"
-
-            if 'переезд' in row_text.lower():
+            mesto_matches = re.findall(r'скв\.?\s*№\s*[\w\-]+(?:\s+)([\w\-]+)', row_text, re.IGNORECASE)
+            if 'переезд' in row_text.lower() and len(mesto_matches) != 0:
                 break
 
-
-        mesto_matches = re.findall(r'на скв.\s*№\d+\s*([\w\-]+)\s*', row_text, re.IGNORECASE)
-
-        if skv_number is None or mesto_matches is None:
-            return
+        # if skv_number is None or mesto_matches[0] is None:
+        #     return
 
         return skv_number, mesto_matches, region, date_value, start_time
 

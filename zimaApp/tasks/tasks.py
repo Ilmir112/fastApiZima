@@ -5,18 +5,31 @@ import imaplib
 import re
 import smtplib
 from datetime import datetime, timedelta
+from io import BytesIO
 from nntplib import decode_header
+
+import pandas as pd
+import pytz
+from fastapi.params import Depends
 from pydantic import EmailStr
 import email.utils
 
+from sqlalchemy.sql.functions import current_user
+
+from zimaApp.brigade.dao import BrigadeDAO
 from zimaApp.config import settings
+from zimaApp.files.dao import ExcelRead
 from zimaApp.logger import logger
 from zimaApp.repairGis.schemas import SRepairsGis
+from zimaApp.repairtime.dao import RepairTimeDAO
+
+from zimaApp.summary.schemas import SUpdateSummary
 from zimaApp.tasks.celery_app import celery_app
 from zimaApp.tasks.email_templates import create_zima_confirmation_template
 from telegram import Bot
 
 from zimaApp.tasks.rabbitmq.producer import send_message_to_queue
+from zimaApp.users.models import Users
 from zimaApp.well_classifier.dao import WellClassifierDAO
 from zimaApp.wells_data.dao import WellsDatasDAO
 
@@ -49,6 +62,17 @@ def check_emails_async():
         logger.info(f"Ошибка в check_emails_async: {e}")
         return result
 
+@celery_app.task(name="tasks.check_emails_summary")
+def check_emails_summary(token: str):
+    result = None
+    try:
+        logger.info("Задача check_emails_summary запущена")
+        excel_info = check_emails_for_excel()
+        result = asyncio.run(send_message_to_queue(excel_info, "summary_info", token))
+        return result
+    except Exception as e:
+        logger.info(f"Ошибка в check_emails_async: {e}")
+        return result
 
 def check_emails():
     try:
@@ -117,10 +141,11 @@ def check_emails():
                         )
 
                     if (
-                        from_address in settings.EMAIL_CHECK_LIST
-                        and "просто" in body_text
+                            from_address in settings.EMAIL_CHECK_LIST
+                            and "просто" in body_text
                     ):
                         message_list.append((from_address, subject, body_text, dt))
+        mail.logout()
         return message_list
         #     try:
         #        result = await send_message_to_queue(msg_bytes, "repair_gis")
@@ -135,7 +160,7 @@ def check_emails():
         #     if parsed_data:
         #         return add_telephonegram_to_db(parsed_data)
 
-        mail.logout()
+
     except Exception as e:
         logger.error(f"Error checking emails: {e}")
 
@@ -235,6 +260,9 @@ async def parse_telephonegram(body_text: str, from_address: email, dt: datetime)
     return None
 
 
+required_columns = ['Дата', 'Работы', 'Примечание']
+
+
 async def add_telephonegram_to_db(parsed_data: dict):
     from zimaApp.repairGis.router import add_wells_data
 
@@ -258,3 +286,163 @@ async def add_telephonegram_to_db(parsed_data: dict):
 
     # Вызов вашего роутера или функции добавления данных
     return await add_wells_data(repair_info)
+
+
+def decode_mime_words(s):
+    decoded_fragments = decode_header(s)
+    decoded_string = ''
+    if len(decoded_fragments) == 2:
+        for fragment, encoding in decoded_fragments:
+            if isinstance(fragment, bytes):
+                encoding = encoding or 'utf-8'
+                try:
+                    decoded_string += fragment.decode(encoding)
+                except Exception:
+                    decoded_string += fragment.decode('utf-8', errors='ignore')
+            else:
+                decoded_string += fragment
+    else:
+        decoded_string = decoded_fragments
+    return decoded_string
+
+
+def check_emails_for_excel():
+    try:
+        mail = imaplib.IMAP4_SSL(settings.IMAP_SERVER)
+        mail.login(settings.EMAIL_ACCOUNT, settings.PASSWORD)
+        mail.select("inbox")
+        now = datetime.utcnow().replace(tzinfo=pytz.UTC)
+        today_str = now.strftime('%d-%b-%Y')  # формат: 01-Oct-2023
+
+        status, messages = mail.search(None, f'SINCE {today_str}')
+
+        email_ids = messages[0].split()
+        results_files = []
+
+        now_time = datetime.now()
+
+        for email_id in email_ids:
+            status, msg_data = mail.fetch(email_id, "(RFC822)")
+            for response_part in msg_data:
+                if isinstance(response_part, tuple):
+                    msg = email.message_from_bytes(response_part[1])
+
+                    # Получаем время письма из заголовка Date
+                    date_header = msg.get("Date")
+                    if date_header:
+                        # Преобразуем строку в datetime
+                        email_date_tuple = email.utils.parsedate_tz(date_header)
+                        if email_date_tuple:
+                            email_timestamp = email.utils.mktime_tz(email_date_tuple)
+                            email_datetime = datetime.fromtimestamp(email_timestamp)
+
+                            # Проверяем, что письмо пришло за последний час
+                            if now_time - timedelta(hours=1) <= email_datetime <= now_time:
+                                for part in msg.walk():
+                                    content_disposition = str(part.get("Content-Disposition"))
+                                    if "attachment" in content_disposition:
+                                        filename = part.get_filename()
+                                        if filename:
+                                            filename = decode_mime_words(filename)
+                                            if filename.endswith(('.xlsx', '.xls')):
+                                                file_data = part.get_payload(decode=True)
+                                                excel_bytesio = BytesIO(file_data)
+                                                try:
+                                                    df = pd.read_excel(excel_bytesio)
+                                                    if all(col in df.columns for col in required_columns):
+                                                        results_files.append({
+                                                            "filename": filename,
+                                                            "dataframe": df
+                                                        })
+                                                except Exception as e:
+                                                    print(f"Ошибка чтения файла {filename}: {e}")
+
+        return results_files
+
+    except Exception as e:
+        print(f"Ошибка при проверке почты: {e}")
+        return []
+
+
+async def work_with_excel_summary(filename, df):
+    from zimaApp.repairtime.router import open_summary_data
+    from zimaApp.summary.router import add_summary
+
+    excel_xlrd = ExcelRead(df)
+    # Регулярное выражение для поиска номера бригады и МКВ
+    brigade_pattern = r'№\s*(\d+)'  # ищет номер бригады после символа №
+    mkv_pattern = r'скв\s*([\w\d]+)'  # ищет МКВ после 'МКВ'
+
+    # Поиск номера бригады
+    brigade_match = re.search(brigade_pattern, filename)
+    # Поиск МКВ
+    mkv_match = re.search(mkv_pattern, filename)
+    well_number = mkv_match.group(1)
+    brigade_number = brigade_match.group(1)
+    skv_number, mesto_matches, region, date_value, start_time = excel_xlrd.find_pars()
+    if mesto_matches:
+        mesto_matches = mesto_matches[0]
+    else:
+        mesto_matches = ''
+    if skv_number not in well_number:
+        return
+    contractor = "ООО Ойл-сервис"
+    well_data = await WellsDatasDAO.find_all(well_number=well_number, contractor=contractor)
+
+    if well_data:
+        if len(well_data) == 1:
+            well_data = well_data[0]
+        elif len(well_data) > 1:
+            for data in well_data:
+                if data.well_oilfield[:4].lower() == mesto_matches[:4].lower():
+                    well_data = data
+                    break
+    else:
+        logger.error(f'Скважины {skv_number} по бригаде {brigade_number} не в базе')
+        return
+
+    if type(well_data) is list:
+        logger.error(f"Добавление сводки не получилось\nНесколько скважин с номером {skv_number} ")
+        return
+
+    if brigade_number:
+        brigade_data = await BrigadeDAO.find_one_or_none(number_brigade=brigade_number, contractor=contractor)
+
+        if brigade_data and well_number == well_data.well_number:
+
+            summary_info = await RepairTimeDAO.find_one_or_none(brigade_id=brigade_data.id, status='открыт')
+
+            for row in df.itertuples():
+                date_str, work_details = ExcelRead.extract_datetimes(row)
+                work_data = SUpdateSummary(date_summary=date_str,
+                                           work_details=work_details)
+                if summary_info is None:
+
+                    open_status = await open_summary_data(
+                        summary_info=work_data,
+                        well_data=well_data,
+                        brigade=brigade_data
+                    )
+                    if open_status.status_code == 409:
+                        break
+
+                    summary_info = open_status["data"]
+                    continue
+
+                results = await add_summary(work_data=work_data, work_details=work_details,
+                                            summary_info=summary_info.id)
+
+                if 'завершен' in work_details.lower() or 'сдача с' in work_details.lower():
+                    match = re.search(r'\d{2}:\d{2}', work_details.lower())
+                    if match:
+                        time_str = match.group()
+                        t = datetime.strptime(time_str, "%H:%M").time()
+
+                        # заменяем время
+                        date_str = date_str.replace(hour=t.hour, minute=t.minute) + timedelta(hours=5)
+                        results = await RepairTimeDAO.update_data(summary_info.id, end_time=date_str, status="закрыт")
+
+        else:
+            logger.info(f"Бригада {brigade_number} отсутствует")
+            return
+    return well_data

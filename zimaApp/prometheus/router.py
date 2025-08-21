@@ -4,7 +4,7 @@ from random import random
 from starlette.responses import PlainTextResponse
 
 # from zimaApp.tasks.rabbitmq.consumer import start_consumer
-from zimaApp.tasks.tasks import check_emails, check_emails_async
+from zimaApp.tasks.tasks import check_emails, check_emails_async, check_emails_for_excel, work_with_excel_summary
 from prometheus_client import Counter, generate_latest
 from fastapi import APIRouter, HTTPException, Depends
 
@@ -54,7 +54,6 @@ async def run_check_emails():
     # result = await start_consumer()
     result = await check_emails_async()
     return result
-
 
 @router.get("/memory_consumer")
 def memory_consumer():
@@ -116,3 +115,16 @@ async def redis_get(key: str):
         return {"status": "success", "key": key, "value": value}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Redis error: {e}")
+
+@router.post("/check_emails_and_upload")
+async def check_emails_and_process(user: Users = Depends(get_current_user)):
+    files_data = check_emails_for_excel()
+
+    for file_data in files_data:
+        well_data = await work_with_excel_summary(file_data["filename"], file_data["dataframe"], user)
+        if well_data:
+            logger.info(f"сводка по скважине {well_data.well_number} обновлена")
+    return {
+        "found_files": [file['filename'] for file in files_data],
+        "count": len(files_data)
+    }

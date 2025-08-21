@@ -57,6 +57,16 @@ async def get_repair_gis(request: Request, repairs=Depends(get_repair_gis_all)):
         context={"request": request, "repair_url": repair_url, "repairs": repairs},
     )
 
+
+@router.get("/norms", response_class=HTMLResponse)
+@version(1)
+async def get_repair_gis(request: Request, repairs=Depends(get_repair_gis_all)):
+    repair_url = request.url_for("repairs_gis")
+    return templates.TemplateResponse(
+        "norms.html",
+        context={"request": request, "repair_url": repair_url, "repairs": repairs},
+    )
+
 @router.get("/open_files", response_class=HTMLResponse)
 @version(1)
 async def get_files_html(request: Request, files=Depends(get_open_files)):

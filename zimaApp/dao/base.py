@@ -1,8 +1,8 @@
 from datetime import datetime, timedelta
+import re
 
 from sqlalchemy import and_, delete, insert, update
 from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy import update as sqlalchemy_update
 from sqlalchemy.orm import joinedload
@@ -59,6 +59,23 @@ class BaseDAO:
             )  # Используем модель для выборки
             result = await session.execute(query)
             return result.scalars().first()
+
+    @staticmethod
+    def extract_date(date_str):
+        # Регулярное выражение ищет дд.мм.гггг чч:мм
+        match = re.search(r'(\d{2})\.(\d{2})\.(\d{4}) (\d{2}):(\d{2})', date_str)
+        if match:
+            day, month, year, hour, minute = match.groups()
+            return datetime(
+                int(year),
+                int(month),
+                int(day),
+                int(hour),
+                int(minute)
+            )
+        else:
+            # Если формат не найден, возвращаем минимальную дату
+            return datetime.min
 
     @classmethod
     async def find_by_id(cls, model_id: int):
@@ -141,11 +158,11 @@ class BaseDAO:
         #     return None
 
     @classmethod
-    async def update_data(cls, datas, **data):
+    async def update_data(cls, id, **data):
         async with async_session_maker() as session:
             query = (
                 update(cls.model)
-                .where(cls.model.id == datas)
+                .where(cls.model.id == id)
                 .values(**data)
                 .returning(*cls.model.__table__.columns)
             )

@@ -10,7 +10,6 @@ function generateTableHTML(tableData) {
 
     const occupied = {};
 
-
     tableData.row.forEach((rowData, rowIndex) => {
         const tr = document.createElement('tr');
         tr.style.height = rowData.height + 'px';

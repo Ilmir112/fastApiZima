@@ -1,16 +1,15 @@
-import io
+
 import mimetypes
 import re
 import urllib
+from datetime import time, datetime, timedelta
 from enum import Enum
 
-from fastapi import APIRouter, Form, UploadFile, HTTPException, Depends, File, Request
+from fastapi import APIRouter, Form, Depends,  Request
 from fastapi_versioning import version
 
 from fastapi.responses import StreamingResponse
-from sqlalchemy import String, values
 
-from zimaApp.brigade.dao import BrigadeDAO
 from zimaApp.brigade.router import find_brigade_by_number
 from zimaApp.files.dao import MongoFile, ExcelRead
 from zimaApp.logger import logger
@@ -21,8 +20,9 @@ from zimaApp.repairGis.schemas import RepairGisUpdate
 from zimaApp.repairtime.dao import RepairTimeDAO
 from zimaApp.repairtime.router import open_summary_data
 from zimaApp.summary.dao import BrigadeSummaryDAO
-from zimaApp.summary.router import update_repair_summary, update_summary_data, add_summary
+from zimaApp.summary.router import update_repair_summary, add_summary
 from zimaApp.summary.schemas import DeletePhotoRequest, SUpdateSummary
+from zimaApp.tasks.tasks import work_with_excel_summary
 from zimaApp.tasks.telegram_bot_template import TelegramInfo
 from zimaApp.users.dependencies import get_current_user
 from zimaApp.users.models import Users
@@ -94,52 +94,13 @@ async def upload_multiple_excel(
             contents = await file.read()
             excel_data = io.BytesIO(contents)
             df = pd.read_excel(excel_data)
-            excel_xlrd = ExcelRead(df)
+            filename = file.filename
 
-            # Регулярное выражение для поиска номера бригады и МКВ
-            brigade_pattern = r'№\s*(\d+)'  # ищет номер бригады после символа №
-            mkv_pattern = r'скв\s*([\w\d]+)'  # ищет МКВ после 'МКВ'
-
-            # Поиск номера бригады
-            brigade_match = re.search(brigade_pattern, file.filename)
-            # Поиск МКВ
-            mkv_match = re.search(mkv_pattern, file.filename)
-            well_number = mkv_match.group(1)
-            brigade_number = brigade_match.group(1)
-            skv_number, mesto_matches, region, date_value, start_time = excel_xlrd.find_pars()
-            if skv_number not in well_number:
-                return
-
-            well_data = await WellsDatasDAO.find_all(well_number=well_number, contractor=user.contractor)
-
-            if well_data:
-                if len(well_data) == 1:
-                    well_data = well_data[0]
-
-            if brigade_match and mkv_match:
-                brigade_data = await find_brigade_by_number(number_brigade=brigade_number, user=user)
-                summary_info = await RepairTimeDAO.find_one_or_none(brigade_id=brigade_data.id, status="открыт")
-                for row in df.itertuples():
-                    date_str, work_details = ExcelRead.extract_datetimes(row)
-                    work_data = SUpdateSummary(date_summary=date_str,
-                                               work_details=work_details)
-                    while summary_info is None:
-                        result = await open_summary_data(
-                            summary_info=work_data,
-                            well_data=well_data,
-                            brigade=brigade_data
-                        )
-                        summary_info = result["data"]
-
-
-                    result = await add_summary(work_data=work_data, work_details=work_details,
-                                               summary_info=summary_info.id)
-
-
+            results = await work_with_excel_summary(filename, df, user)
 
         except Exception as e:
             return {
-                "error": f"Ошибка при обработке файла {file.filename}: {str(e)}"
+                "error": f"Ошибка при обработке файла {filename}: {str(e)}"
             }
 
     return {"files_processed": results}

@@ -9,7 +9,7 @@ from zimaApp.users.auth import authenticate_user, create_access_token, get_passw
 
 from fastapi_versioning import version
 from zimaApp.users.dao import UsersDAO
-from zimaApp.users.dependencies import get_current_admin_user, get_current_user
+from zimaApp.users.dependencies import  get_current_user
 from zimaApp.users.models import Users
 from zimaApp.users.schemas import SUsersAuth, SUsersRegister, SUserUpdate
 

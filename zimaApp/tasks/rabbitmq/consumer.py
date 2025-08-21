@@ -1,5 +1,7 @@
 import json
 
+from fastapi.params import Depends
+
 from zimaApp.config import settings, router_broker
 
 import asyncio
@@ -7,7 +9,23 @@ import aio_pika
 
 from zimaApp.logger import logger
 
-from zimaApp.tasks.tasks import parse_telephonegram, add_telephonegram_to_db
+from zimaApp.tasks.tasks import parse_telephonegram, add_telephonegram_to_db, work_with_excel_summary
+from zimaApp.users.dependencies import get_current_user
+from zimaApp.users.models import Users
+
+
+@router_broker.subscriber("summary_info")
+async def process_read_summary(message:aio_pika.IncomingMessage):
+    try:
+        for file_data in message:
+            well_data = await work_with_excel_summary(file_data["filename"], file_data["dataframe"])
+            if well_data:
+                logger.info(f"сводка по скважине {well_data.well_number} обновлена")
+    except aio_pika.exceptions.AMQPConnectionError as e:
+        logger.error(f"Connection lost: {e}")
+
+    except Exception as e:
+        logger.error(e)
 
 
 @router_broker.subscriber("repair_gis")
@@ -45,14 +63,23 @@ async def start_consumer():
     connection = await aio_pika.connect_robust(settings.rabbitmq_url)
     async with connection:
         channel = await connection.channel()
-        queue = await channel.declare_queue("repair_gis", durable=True)
 
-        # Запуск потребителя
-        await queue.consume(process_message)
+        # Объявляем очереди
+        queue_repair_gis = await channel.declare_queue("repair_gis", durable=True)
+        queue_summary_info = await channel.declare_queue("summary_info", durable=True)
 
-        logger.info("Начинаю слушать очередь 'repair_gis'...")
-        # Чтобы слушать бесконечно, используем asyncio.Event()
-        await asyncio.Event().wait()
+        # Запускаем оба потребителя параллельно
+        task1 = asyncio.create_task(queue_repair_gis.consume(process_message))
+        task2 = asyncio.create_task(queue_summary_info.consume(process_read_summary))
+
+        logger.info("Начинаю слушать очереди 'repair_gis' и 'summary_info'...")
+
+        # Ожидаем завершения обеих задач (они будут работать бесконечно)
+        await asyncio.gather(task1, task2)
+
+# В основном файле запуска
+if __name__ == "__main__":
+    asyncio.run(start_consumer())
 
 
 if __name__ == "__main__":

@@ -27,6 +27,10 @@ class BrigadeAlreadyExistsException(ZimaException):
     status_code = status.HTTP_409_CONFLICT
     detail = "На бригаду открыт ремонт"
 
+class WellsClosedExistsException(ZimaException):
+    status_code = status.HTTP_409_CONFLICT
+    detail = "На бригаду открыт ремонт"
+
 
 class DowntimeDurationAlreadyExistsException(ZimaException):
     status_code = status.HTTP_409_CONFLICT

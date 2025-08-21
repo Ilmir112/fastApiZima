@@ -1,3 +1,5 @@
+from typing import Optional, Union, List
+
 from sqlalchemy import select, join
 from sqlalchemy.orm import selectinload
 
@@ -14,7 +16,10 @@ class RepairTimeDAO(BaseDAO):
     model = RepairTime
 
     @classmethod
-    async def get_all(cls, status: StatusSummary):
+    async def get_all(
+            cls,
+            status: Optional[Union[StatusSummary, List[StatusSummary]]] = None
+    ):
         async with async_session_maker() as session:
             try:
                 query = (
@@ -23,11 +28,19 @@ class RepairTimeDAO(BaseDAO):
                         selectinload(cls.model.brigade),
                         selectinload(cls.model.well)
                     )
-                    .where(cls.model.status == status)
                 )
+
+                # Обработка фильтрации по статусу
+                if status is not None:
+                    if isinstance(status, list):
+                        query = query.where(cls.model.status.in_(status))
+                    else:
+                        query = query.where(cls.model.status == status)
+
                 result = await session.execute(query)
                 repair_times = result.scalars().all()
                 return repair_times
+
             except Exception as e:
                 # Предполагается наличие логгера
                 logger.error(f"Error in get_all: {e}")

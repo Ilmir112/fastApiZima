@@ -18,7 +18,11 @@ celery_app = Celery(
 celery_app.conf.beat_schedule = {
     "check-emails-every-2-minutes": {
         "task": "tasks.check_emails_async",
-        "schedule": 600,  # интервал в секундах (2 минуты)
+        "schedule": 600,  # интервал в секундах (10 минуты)
+    },
+    "check-emails-for-excel-every-hour": {
+        "task": "tasks.check_emails_summary",
+        "schedule": 3600,  # интервал в секундах (1 час)
     },
 }
 celery_app.conf.timezone = "Asia/Yekaterinburg"

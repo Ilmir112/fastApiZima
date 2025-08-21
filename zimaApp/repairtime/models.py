@@ -14,7 +14,7 @@ class StatusSummary(str, enum):
     PAUSE = "приостановлен"
 
 class RepairTime(Base):
-    __tablename__ = 'repair_times'
+    __tablename__ = "repair_times"
 
     id = Column(Integer, primary_key=True)
     brigade_id = Column(Integer, ForeignKey('brigade.id'), nullable=False)

@@ -1,12 +1,10 @@
 from celery.bin.result import result
 from fastapi import APIRouter, Depends
-from datetime import date, datetime
+from datetime import date
 
 from sqlalchemy.exc import SQLAlchemyError
 
-from zimaApp.brigade.models import Brigade
-from zimaApp.brigade.router import find_brigade_by_id
-from zimaApp.brigade.schemas import SBrigadeSearch
+
 from zimaApp.exceptions import ExceptionError, WellsAlreadyExistsException, BrigadeAlreadyExistsException, \
     DowntimeDurationAlreadyExistsException
 from zimaApp.logger import logger
@@ -22,12 +20,8 @@ from zimaApp.tasks.telegram_bot_template import TelegramInfo
 from zimaApp.users.dependencies import get_current_user
 from zimaApp.users.models import Users
 
-from zimaApp.brigade.dao import BrigadeDAO
 from fastapi_versioning import version
 
-from zimaApp.wells_data.models import WellsData
-from zimaApp.wells_data.router import find_wells_data_by_id
-from zimaApp.wells_repair_data.models import StatusWorkPlan
 
 router = APIRouter(
     prefix="/summary",
@@ -61,7 +55,7 @@ async def find_all_works_by_id_summary(summary_id: int, user: Users = Depends(ge
                         "видео": data.video_path,
                     })
 
-            return sorted(serialized_data, key=lambda x: x["Дата"]), wells.well_id
+            return sorted(serialized_data, key=lambda x: RepairTimeDAO.extract_date(x["Дата"])), wells.well_id
     except SQLAlchemyError as db_err:
         msg = f"Database Exception Summary {db_err}"
         logger.error(msg, extra={"summary": summary_id})
@@ -71,6 +65,7 @@ async def find_all_works_by_id_summary(summary_id: int, user: Users = Depends(ge
         msg = f"Unexpected error: {str(e)}"
         logger.error(msg, extra={"summary": summary_id})
         raise ExceptionError(msg)
+
 
 
 

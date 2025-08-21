@@ -1,0 +1,30 @@
+{% extends "layout/base.html" %}
+
+{% block title %}АВР{% endblock %}
+
+{% block content %}
+<h1 style="color: #2E8B57; text-align: center; margin-top: 20px;">Поиск АВР</h1>
+<div style="margin: 20px;">
+    <!-- Поле ввода и кнопка -->
+    <label for="wellNumberInput" style="font-weight: bold; font-size: 16px;">Введите номер скважины:</label>
+    <input type="text" id="wellNumberInput" placeholder="Введите номер скважины"
+           style="padding: 8px; margin-left: 10px; border-radius: 5px; border: 2px solid #4CAF50;">
+    <button id="loadDataBtn"
+            style="background-color: #4CAF50; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; margin-left: 10px;">
+        Загрузить данные
+    </button>
+</div>
+
+<!-- Контейнер для отображения таблицы -->
+<div id="tableContainer" style="margin: 20px;"></div>
+
+{% endblock %}
+
+{% block scripts %}
+<div>
+    {% include "modal.html" %}
+</div>
+<!-- Подключение внешнего JS файла -->
+<script src="/static/js/plan.js"></script>
+
+{% endblock %}

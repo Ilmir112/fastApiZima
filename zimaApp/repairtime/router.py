@@ -3,10 +3,12 @@ from datetime import datetime, timedelta
 from fastapi import APIRouter, Depends
 
 from sqlalchemy.exc import SQLAlchemyError
+from starlette import status
 
 from zimaApp.brigade.models import Brigade
 from zimaApp.brigade.router import find_brigade_by_id
-from zimaApp.exceptions import ExceptionError, WellsAlreadyExistsException, BrigadeAlreadyExistsException
+from zimaApp.exceptions import ExceptionError, WellsAlreadyExistsException, BrigadeAlreadyExistsException, \
+    WellsClosedExistsException
 from zimaApp.logger import logger
 from zimaApp.prometheus.router import time_consumer
 from zimaApp.repairtime.dao import RepairTimeDAO
@@ -26,7 +28,6 @@ router = APIRouter(
     prefix="/repair_time",
     tags=["Сводная времени сводки"],
 )
-
 
 @router.get("/check_well_id_and_end_time")
 @version(1)
@@ -89,16 +90,21 @@ async def open_summary_data(
 
     check_wells = await check_well_id_and_end_time(well_data.id)
     if check_wells:
-        raise WellsAlreadyExistsException
+        return WellsAlreadyExistsException
 
     check_brigade = await check_brigade_id_and_end_time(brigade.id)
     if check_brigade:
-        raise BrigadeAlreadyExistsException
+        return BrigadeAlreadyExistsException
     try:
         if summary_info:
             result_date, result_time, result_interval = await RepairTimeDAO.get_date_and_interval(
                 summary_info.date_summary)
-
+            check_start_wells = await RepairTimeDAO.find_one_or_none(well_id=well_data.id, status="закрыт",
+                                                                     start_time=summary_info.date_summary + timedelta(hours=5))
+            if check_start_wells:
+                mes = f"Скважина {well_data.well_number} c началом ремонта уже загружена и закрыта"
+                logger.error(mes)
+                return WellsClosedExistsException
             summary_data = {
                 "date_summary": result_date,
                 "time_interval": result_interval,
@@ -119,7 +125,7 @@ async def open_summary_data(
 
             result = await RepairTimeDAO.add_brigade_with_repairs(summary_data, repair_data)
             if result:
-                return {"status": "success", "data": result}
+                return {"status_code": status.HTTP_200_OK, "success": "OK", "data": result}
 
     except SQLAlchemyError as db_err:
         msg = f"Database Exception Brigade {db_err}"
@@ -148,7 +154,7 @@ async def open_summary_data(
 
 @router.get("/find_all_by_filter_status")
 @version(1)
-async def find_all_by_filter_status(status: StatusSummary = StatusSummary.OPEN,
+async def find_all_by_filter_status(status=None,
                                     user: Users = Depends(get_current_user)):
     try:
         repairs = await RepairTimeDAO.get_all(status=status)
@@ -161,11 +167,10 @@ async def find_all_by_filter_status(status: StatusSummary = StatusSummary.OPEN,
                     "Месторождение": repair.well.well_oilfield,
                     "Статус ремонта": repair.status,
                     "Дата открытия ремонта": repair.start_time.strftime("%Y-%m-%d %H:%M"),
-                    "Дата закрытия ремонта": repair.end_time,
+                    "Дата закрытия ремонта": repair.end_time.strftime("%Y-%m-%d %H:%M") if repair.end_time else repair.end_time,
                     # "Продолжительность ремонта": timedelta(datetime.now().timetz() - repair.start_time).hours()
                     "Продолжительность ремонта": None
                     }
-
 
             serialized_data.append(data)
 
