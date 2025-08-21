@@ -63,12 +63,12 @@ def check_emails_async():
         return result
 
 @celery_app.task(name="tasks.check_emails_summary")
-def check_emails_summary(token: str):
+def check_emails_summary():
     result = None
     try:
         logger.info("Задача check_emails_summary запущена")
         excel_info = check_emails_for_excel()
-        result = asyncio.run(send_message_to_queue(excel_info, "summary_info", token))
+        result = asyncio.run(send_message_to_queue(excel_info, "summary_info"))
         return result
     except Exception as e:
         logger.info(f"Ошибка в check_emails_async: {e}")
