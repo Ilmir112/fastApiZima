@@ -71,15 +71,14 @@ async def start_consumer():
     task1 = asyncio.create_task(queue_repair_gis.consume(process_message))
     task2 = asyncio.create_task(queue_summary_info.consume(process_read_summary))
 
-    logger.info("Начинаю слушать очереди 'repair_gis' и 'summary_info'...")
-
-    try:
-        # Ожидаем завершения задач (они работают бесконечно)
+    try:        # Ожидаем завершения задач (они работают бесконечно)
         await asyncio.gather(task1, task2)
     except asyncio.CancelledError:
         pass
     finally:
         await connection.close()
+
+    logger.info("Начинаю слушать очереди 'repair_gis' и 'summary_info'...")
 
 # В основном файле запуска
 if __name__ == "__main__":
