@@ -107,12 +107,9 @@ async def lifespan(_: FastAPI):
         consumer_task.cancel()
         try:
             await consumer_task
-            logger.info('consumer стартовал')
         except asyncio.CancelledError:
-            logger.info('consumer стартовал')
             print("Потребитель остановлен")
     print("Завершение работы приложения")
-
 
 app = FastAPI(lifespan=lifespan, title="Zima", version="0.1.0", root_path="")
 

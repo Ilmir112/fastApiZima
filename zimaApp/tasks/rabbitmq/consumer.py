@@ -59,10 +59,9 @@ async def process_message(message: aio_pika.IncomingMessage):
     except Exception as e:
         logger.error(e)
 
-
 async def start_consumer():
     connection = await aio_pika.connect_robust(settings.rabbitmq_url)
-    async with connection:
+    try:
         channel = await connection.channel()
 
         # Объявляем очереди
@@ -75,8 +74,13 @@ async def start_consumer():
 
         logger.info("Начинаю слушать очереди 'repair_gis' и 'summary_info'...")
 
-        # Ожидаем завершения обеих задач (они будут работать бесконечно)
+        # Ждем завершения задач (они будут работать бесконечно)
         await asyncio.gather(task1, task2)
+
+    except Exception as e:
+        logger.exception(f"Ошибка в start_consumer: {e}")
+    finally:
+        await connection.close()
 
 # В основном файле запуска
 if __name__ == "__main__":
