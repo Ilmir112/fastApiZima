@@ -61,24 +61,23 @@ async def process_message(message: aio_pika.IncomingMessage):
 
 async def start_consumer():
     connection = await aio_pika.connect_robust(settings.rabbitmq_url)
+    channel = await connection.channel()
+
+    # Объявляем очереди
+    queue_repair_gis = await channel.declare_queue("repair_gis", durable=True)
+    queue_summary_info = await channel.declare_queue("summary_info", durable=True)
+
+    # Запускаем потребителей
+    task1 = asyncio.create_task(queue_repair_gis.consume(process_message))
+    task2 = asyncio.create_task(queue_summary_info.consume(process_read_summary))
+
+    logger.info("Начинаю слушать очереди 'repair_gis' и 'summary_info'...")
+
     try:
-        channel = await connection.channel()
-
-        # Объявляем очереди
-        queue_repair_gis = await channel.declare_queue("repair_gis", durable=True)
-        queue_summary_info = await channel.declare_queue("summary_info", durable=True)
-
-        # Запускаем оба потребителя параллельно
-        task1 = asyncio.create_task(queue_repair_gis.consume(process_message))
-        task2 = asyncio.create_task(queue_summary_info.consume(process_read_summary))
-
-        logger.info("Начинаю слушать очереди 'repair_gis' и 'summary_info'...")
-
-        # Ждем завершения задач (они будут работать бесконечно)
+        # Ожидаем завершения задач (они работают бесконечно)
         await asyncio.gather(task1, task2)
-
-    except Exception as e:
-        logger.exception(f"Ошибка в start_consumer: {e}")
+    except asyncio.CancelledError:
+        pass
     finally:
         await connection.close()
 

@@ -96,7 +96,7 @@ async def upload_multiple_excel(
             df = pd.read_excel(excel_data)
             filename = file.filename
 
-            results = await work_with_excel_summary(filename, df, user)
+            results = await work_with_excel_summary(filename, df)
 
         except Exception as e:
             return {

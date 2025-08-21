@@ -68,6 +68,9 @@ def check_emails_summary():
     try:
         logger.info("Задача check_emails_summary запущена")
         excel_info = check_emails_for_excel()
+        logger.error({
+            "found_files": [file['filename'] for file in excel_info],
+            "count": len(excel_info)})
         result = asyncio.run(send_message_to_queue(excel_info, "summary_info"))
         return result
     except Exception as e:
