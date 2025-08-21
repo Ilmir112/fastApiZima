@@ -17,6 +17,7 @@ from zimaApp.users.models import Users
 @router_broker.subscriber("summary_info")
 async def process_read_summary(message:aio_pika.IncomingMessage):
     try:
+        print(message)
         for file_data in message:
             well_data = await work_with_excel_summary(file_data["filename"], file_data["dataframe"])
             if well_data:

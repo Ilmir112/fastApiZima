@@ -71,8 +71,6 @@ async def lifespan(_: FastAPI):
 
         from motor.motor_asyncio import AsyncIOMotorClient
 
-
-
         print("Запуск приложения")
         redis = aioredis.from_url(
             f"redis://{settings.REDIS_HOST}:{settings.REDIS_PORT}", encoding="utf8"
@@ -86,9 +84,7 @@ async def lifespan(_: FastAPI):
         if settings.MODE == "PROD":
             logger.info("Брокер стартовал")
             await bot.send_message(chat_id=settings.CHAT_ID, text="Приложение запущено")
-            await bot_user.send_message(
-                chat_id=settings.CHAT_ID, text="Приложение запущено!!!"
-            )
+
             logger.info("Сообщение отправлено успешно")
 
     except Exception as e:
@@ -111,7 +107,9 @@ async def lifespan(_: FastAPI):
         consumer_task.cancel()
         try:
             await consumer_task
+            logger.info('consumer стартовал')
         except asyncio.CancelledError:
+            logger.info('consumer стартовал')
             print("Потребитель остановлен")
     print("Завершение работы приложения")
 
