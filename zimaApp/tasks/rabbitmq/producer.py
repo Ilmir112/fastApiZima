@@ -1,9 +1,7 @@
 import aio_pika
-from celery.bin.result import result
-from pika import ConnectionParameters, BlockingConnection
-from pika.connection import URLParameters
 
-from zimaApp.config import settings, router_broker, init_broker
+
+from zimaApp.config import settings
 from zimaApp.logger import logger
 
 

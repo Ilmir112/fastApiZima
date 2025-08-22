@@ -17,7 +17,7 @@ from zimaApp.users.models import Users
 @router_broker.subscriber("summary_info")
 async def process_read_summary(message:aio_pika.IncomingMessage):
     try:
-        print(message)
+        print(f'потребитель summary_info\n{message}')
         for file_data in message:
             well_data = await work_with_excel_summary(file_data["filename"], file_data["dataframe"])
             if well_data:
@@ -34,6 +34,7 @@ async def process_message(message: aio_pika.IncomingMessage):
     from zimaApp.main import bot_user
 
     try:
+        print(f'потребитель repair_gis\n{message}')
         async with (
             message.process()
         ):  # автоматически подтверждает сообщение после блока
@@ -80,9 +81,6 @@ async def start_consumer():
 
     logger.info("Начинаю слушать очереди 'repair_gis' и 'summary_info'...")
 
-# В основном файле запуска
-if __name__ == "__main__":
-    asyncio.run(start_consumer())
 
 
 if __name__ == "__main__":

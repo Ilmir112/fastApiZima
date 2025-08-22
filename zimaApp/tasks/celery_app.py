@@ -22,7 +22,7 @@ celery_app.conf.beat_schedule = {
     },
     "check-emails-for-excel-every-hour": {
         "task": "tasks.check_emails_summary",
-        "schedule": 3600,  # интервал в секундах (1 час)
+        "schedule": 300,  # интервал в секундах (1 час)
     },
 }
 celery_app.conf.timezone = "Asia/Yekaterinburg"
