@@ -400,7 +400,7 @@ async def work_with_excel_summary(filename, df):
         if skv_number not in well_number:
             return
         contractor = "ООО Ойл-сервис"
-        brigade_data = await BrigadeDAO.find_one_or_none(number_brigade=brigade_number, contractor=contractor)
+
 
         from zimaApp.wells_data.router import find_all_by_number
         well_data = await find_all_by_number(well_number=well_number, contractor=contractor)
@@ -439,8 +439,9 @@ async def work_with_excel_summary(filename, df):
                             well_data=well_data,
                             brigade=brigade_data
                         )
-                        if open_status.status_code == 409:
-                            break
+                        if type(open_status) != dict:
+                            if open_status.status_code == 409:
+                                break
 
                         summary_info = open_status["data"]
                         continue
