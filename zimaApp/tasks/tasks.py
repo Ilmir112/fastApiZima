@@ -69,7 +69,10 @@ def check_emails_summary():
     try:
         logger.info("Задача check_emails_summary запущена")
         excel_info = check_emails_for_excel()
+
+        excel_info = excel_info.to_json(orient='records', force_ascii=False)
         logger.info(f"Serialized DataFrame: {excel_info}")
+
         result = asyncio.run(send_message_to_queue(excel_info, "summary_info"))
 
         return result
