@@ -22,11 +22,12 @@ class TelegramInfo:
     @classmethod
     async def send_message_users(cls, username: str):
         message = f"Пользователь {username} вошел в систему."
-        payload = {"chat_id": settings.CHAT_ID, "text": message}
-        # await send_message(message, settings.CHAT_ID)
-        async with httpx.AsyncClient() as client:
-            response = await client.post(TelegramInfo.URL, json=payload)
-            response.raise_for_status()
+        if username != 'Зуфаров И.М.':
+            payload = {"chat_id": settings.CHAT_ID, "text": message}
+            # await send_message(message, settings.CHAT_ID)
+            async with httpx.AsyncClient() as client:
+                response = await client.post(TelegramInfo.URL, json=payload)
+                response.raise_for_status()
 
     @classmethod
     async def send_message_registration_users(cls, username: SUsersRegister):

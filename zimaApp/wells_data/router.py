@@ -108,6 +108,36 @@ async def add_wells_data(
             exc_info=True,
         )
 
+@router.get("/find_all_by_number")
+@version(1)
+async def find_all_by_number(
+        well_number: str,
+        contractor: str
+
+):
+    try:
+        result = await  WellsDatasDAO.find_all(well_number=well_number, contractor=contractor)
+        return result
+    except SQLAlchemyError as db_err:
+        msg = f"Database Exception {db_err}"
+        logger.error(
+            msg,
+            extra={
+                "well_number": well_number,
+                "contractor": contractor,
+            },
+            exc_info=True,
+        )
+    except Exception as e:
+        msg = f"Unexpected error: {str(e)}"
+        logger.error(
+            msg,
+            extra={
+                "well_number": well_number,
+                "contractor": contractor,
+            },
+            exc_info=True,
+        )
 
 @router.put("/update_wells_data")
 @version(1)

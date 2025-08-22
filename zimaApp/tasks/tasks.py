@@ -11,11 +11,8 @@ from nntplib import decode_header
 
 import pandas as pd
 import pytz
-from fastapi.params import Depends
 from pydantic import EmailStr
 import email.utils
-
-from sqlalchemy.sql.functions import current_user
 
 from zimaApp.brigade.dao import BrigadeDAO
 from zimaApp.config import settings
@@ -30,7 +27,6 @@ from zimaApp.tasks.email_templates import create_zima_confirmation_template
 from telegram import Bot
 
 from zimaApp.tasks.rabbitmq.producer import send_message_to_queue
-from zimaApp.users.models import Users
 from zimaApp.well_classifier.dao import WellClassifierDAO
 from zimaApp.wells_data.dao import WellsDatasDAO
 
@@ -63,6 +59,7 @@ def check_emails_async():
         logger.info(f"Ошибка в check_emails_async: {e}")
         return result
 
+
 @celery_app.task(name="tasks.check_emails_summary")
 def check_emails_summary():
     result = None
@@ -87,6 +84,7 @@ def check_emails_summary():
     except Exception as e:
         logger.info(f"Ошибка в check_emails_async: {e}")
         return result
+
 
 def check_emails():
     try:
@@ -382,81 +380,90 @@ async def work_with_excel_summary(filename, df):
     from zimaApp.repairtime.router import open_summary_data
     from zimaApp.summary.router import add_summary
 
-    excel_xlrd = ExcelRead(df)
-    # Регулярное выражение для поиска номера бригады и МКВ
-    brigade_pattern = r'№\s*(\d+)'  # ищет номер бригады после символа №
-    mkv_pattern = r'скв\s*([\w\d]+)'  # ищет МКВ после 'МКВ'
+    try:
+        excel_xlrd = ExcelRead(df)
+        # Регулярное выражение для поиска номера бригады и МКВ
+        brigade_pattern = r'№\s*(\d+)'  # ищет номер бригады после символа №
+        mkv_pattern = r'скв\s*([\w\d]+)'  # ищет МКВ после 'МКВ'
 
-    # Поиск номера бригады
-    brigade_match = re.search(brigade_pattern, filename)
-    # Поиск МКВ
-    mkv_match = re.search(mkv_pattern, filename)
-    well_number = mkv_match.group(1)
-    brigade_number = brigade_match.group(1)
-    skv_number, mesto_matches, region, date_value, start_time = excel_xlrd.find_pars()
-    if mesto_matches:
-        mesto_matches = mesto_matches[0]
-    else:
-        mesto_matches = ''
-    if skv_number not in well_number:
-        return
-    contractor = "ООО Ойл-сервис"
-    well_data = await WellsDatasDAO.find_all(well_number=well_number, contractor=contractor)
-
-    if well_data:
-        if len(well_data) == 1:
-            well_data = well_data[0]
-        elif len(well_data) > 1:
-            for data in well_data:
-                if data.well_oilfield[:4].lower() == mesto_matches[:4].lower():
-                    well_data = data
-                    break
-    else:
-        logger.error(f'Скважины {skv_number} по бригаде {brigade_number} не в базе')
-        return
-
-    if type(well_data) is list:
-        logger.error(f"Добавление сводки не получилось\nНесколько скважин с номером {skv_number} ")
-        return
-
-    if brigade_number:
+        # Поиск номера бригады
+        brigade_match = re.search(brigade_pattern, filename)
+        # Поиск МКВ
+        mkv_match = re.search(mkv_pattern, filename)
+        well_number = mkv_match.group(1)
+        brigade_number = brigade_match.group(1)
+        skv_number, mesto_matches, region, date_value, start_time = excel_xlrd.find_pars()
+        if mesto_matches:
+            mesto_matches = mesto_matches[0]
+        else:
+            mesto_matches = ''
+        if skv_number not in well_number:
+            return
+        contractor = "ООО Ойл-сервис"
         brigade_data = await BrigadeDAO.find_one_or_none(number_brigade=brigade_number, contractor=contractor)
 
-        if brigade_data and well_number == well_data.well_number:
+        from zimaApp.wells_data.router import find_all_by_number
+        well_data = await find_all_by_number(well_number=well_number, contractor=contractor)
 
-            summary_info = await RepairTimeDAO.find_one_or_none(brigade_id=brigade_data.id, status='открыт')
-
-            for row in df.itertuples():
-                date_str, work_details = ExcelRead.extract_datetimes(row)
-                work_data = SUpdateSummary(date_summary=date_str,
-                                           work_details=work_details)
-                if summary_info is None:
-
-                    open_status = await open_summary_data(
-                        summary_info=work_data,
-                        well_data=well_data,
-                        brigade=brigade_data
-                    )
-                    if open_status.status_code == 409:
+        if well_data:
+            if len(well_data) == 1:
+                well_data = well_data[0]
+            elif len(well_data) > 1:
+                for data in well_data:
+                    if data.well_oilfield[:4].lower() == mesto_matches[:4].lower():
+                        well_data = data
                         break
-
-                    summary_info = open_status["data"]
-                    continue
-
-                results = await add_summary(work_data=work_data, work_details=work_details,
-                                            summary_info=summary_info.id)
-
-                if 'завершен' in work_details.lower() or 'сдача с' in work_details.lower():
-                    match = re.search(r'\d{2}:\d{2}', work_details.lower())
-                    if match:
-                        time_str = match.group()
-                        t = datetime.strptime(time_str, "%H:%M").time()
-
-                        # заменяем время
-                        date_str = date_str.replace(hour=t.hour, minute=t.minute) + timedelta(hours=5)
-                        results = await RepairTimeDAO.update_data(summary_info.id, end_time=date_str, status="закрыт")
-
         else:
-            logger.info(f"Бригада {brigade_number} отсутствует")
+            logger.error(f'Скважины {skv_number} {mesto_matches} по бригаде {brigade_number} не в базе')
             return
-    return well_data
+
+        if type(well_data) is list:
+            logger.error(f"Добавление сводки не получилось\nНесколько скважин с номером {skv_number} ")
+            return
+
+        if brigade_number:
+            brigade_data = await BrigadeDAO.find_one_or_none(number_brigade=brigade_number, contractor=contractor)
+
+            if brigade_data and well_number == well_data.well_number:
+
+                summary_info = await RepairTimeDAO.find_one_or_none(brigade_id=brigade_data.id, status='открыт')
+
+                for row in df.itertuples():
+                    date_str, work_details = ExcelRead.extract_datetimes(row)
+                    work_data = SUpdateSummary(date_summary=date_str,
+                                               work_details=work_details)
+                    if summary_info is None:
+
+                        open_status = await open_summary_data(
+                            summary_info=work_data,
+                            well_data=well_data,
+                            brigade=brigade_data
+                        )
+                        if open_status.status_code == 409:
+                            break
+
+                        summary_info = open_status["data"]
+                        continue
+
+                    results = await add_summary(work_data=work_data, work_details=work_details,
+                                                summary_info=summary_info.id)
+
+                    if 'завершен' in work_details.lower() or 'сдача с' in work_details.lower():
+                        match = re.search(r'\d{2}:\d{2}', work_details.lower())
+                        if match:
+                            time_str = match.group()
+                            t = datetime.strptime(time_str, "%H:%M").time()
+
+                            # заменяем время
+                            date_str = date_str.replace(hour=t.hour, minute=t.minute) + timedelta(hours=5)
+                            results = await RepairTimeDAO.update_data(summary_info.id, end_time=date_str,
+                                                                      status="закрыт")
+
+            else:
+                logger.info(f"Бригада {brigade_number} отсутствует")
+                return
+        return well_data
+
+    except Exception as e:
+        logger.exception(f"Ошибка в work_with_excel_summary: {e}")
+        raise

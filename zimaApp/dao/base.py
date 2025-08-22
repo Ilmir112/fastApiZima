@@ -41,15 +41,18 @@ class BaseDAO:
 
     @classmethod
     async def find_all(cls, limit=None, **filter_by):
-        async with async_session_maker() as session:  # Создаем экземпляр сессии
-            query = select(cls.model).filter_by(
-                **filter_by
-            )  # Используем модель для выборки
+        try:
+            async with async_session_maker() as session:  # Создаем экземпляр сессии
+                query = select(cls.model).filter_by(
+                    **filter_by
+                )  # Используем модель для выборки
 
-            if limit is not None:
-                query = query.limit(limit)  # Добавляем лимит, если он задан
-            result = await session.execute(query)
-            return result.scalars().all()
+                if limit is not None:
+                    query = query.limit(limit)  # Добавляем лимит, если он задан
+                result = await session.execute(query)
+                return result.scalars().all()
+        except Exception as e:
+            logger.error(e)
 
     @classmethod
     async def find_first(cls, **filter_by):

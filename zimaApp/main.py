@@ -66,7 +66,7 @@ bot_user = telegram.Bot(token=settings.TOKEN_USERS)
 async def lifespan(_: FastAPI):
     try:
         # Запускаем потребителя как фоновую задачу
-        consumer_task = asyncio.create_task(start_consumer())
+        consumer_task = asyncio.gather(start_consumer())
     except Exception as e:
         logger.exception(f"Ошибка в start_consumer {e}")
 

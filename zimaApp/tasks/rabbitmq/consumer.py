@@ -10,8 +10,6 @@ import aio_pika
 from zimaApp.logger import logger
 
 from zimaApp.tasks.tasks import parse_telephonegram, add_telephonegram_to_db, work_with_excel_summary
-from zimaApp.users.dependencies import get_current_user
-from zimaApp.users.models import Users
 
 
 @router_broker.subscriber("summary_info")
@@ -20,6 +18,9 @@ async def process_read_summary(message: aio_pika.IncomingMessage):
         # Получаем тело сообщения и декодируем
         body_bytes = message.body
         body_str = body_bytes.decode('utf-8')
+        if not body_str.strip():
+            logger.warning("Received empty message body")
+            return
         # Парсим JSON
         file_data_list = json.loads(body_str)
 
@@ -91,12 +92,7 @@ async def start_consumer():
     task1 = asyncio.create_task(queue_repair_gis.consume(process_message))
     task2 = asyncio.create_task(queue_summary_info.consume(process_read_summary))
 
-    try:        # Ожидаем завершения задач (они работают бесконечно)
-        await asyncio.gather(task1, task2)
-    except asyncio.CancelledError:
-        pass
-    finally:
-        await connection.close()
+    return task1, task2
 
     logger.info("Начинаю слушать очереди 'repair_gis' и 'summary_info'...")
 
