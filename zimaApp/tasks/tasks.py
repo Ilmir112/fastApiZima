@@ -70,6 +70,7 @@ def check_emails_summary():
         logger.info("Задача check_emails_summary запущена")
         excel_info = check_emails_for_excel()
         if excel_info:
+            print(excel_info[0])
             message_body = json.dumps(excel_info)
         logger.info(result)
         result = asyncio.run(send_message_to_queue(message_body, "summary_info"))
