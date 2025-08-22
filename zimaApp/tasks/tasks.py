@@ -349,7 +349,7 @@ def check_emails_for_excel():
                             email_datetime = datetime.fromtimestamp(email_timestamp)
 
                             # Проверяем, что письмо пришло за последний час
-                            if now_time - timedelta(hours=1) <= email_datetime <= now_time:
+                            if now_time - timedelta(hours=12) <= email_datetime <= now_time:
                                 for part in msg.walk():
                                     content_disposition = str(part.get("Content-Disposition"))
                                     if "attachment" in content_disposition:
