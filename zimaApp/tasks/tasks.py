@@ -69,12 +69,19 @@ def check_emails_summary():
     try:
         logger.info("Задача check_emails_summary запущена")
         excel_info = check_emails_for_excel()
-
-        excel_info = excel_info.to_json(orient='records', force_ascii=False)
-        logger.info(f"Serialized DataFrame: {excel_info}")
-
-        result = asyncio.run(send_message_to_queue(excel_info, "summary_info"))
-
+        new_excel = []
+        for df in excel_info:
+            # Предполагается, что df["dataframe"] — это DataFrame
+            df["dataframe"] = df["dataframe"].to_json(orient='records', force_ascii=False)
+            new_excel.append(df)
+        if new_excel:
+            # Сериализация всего списка в JSON строку
+            json_data = json.dumps(new_excel, ensure_ascii=False)
+            logger.info(f"Serialized Data: {json_data}")
+            result = asyncio.run(send_message_to_queue(json_data, "summary_info"))
+        return result
+    except Exception as e:
+        logger.error(f"Ошибка в check_emails_summary: {e}")
         return result
     except Exception as e:
         logger.info(f"Ошибка в check_emails_async: {e}")
