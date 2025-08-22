@@ -2,6 +2,7 @@ import asyncio
 import difflib
 import email
 import imaplib
+import json
 import re
 import smtplib
 from datetime import datetime, timedelta
@@ -68,8 +69,11 @@ def check_emails_summary():
     try:
         logger.info("Задача check_emails_summary запущена")
         excel_info = check_emails_for_excel()
+        if excel_info:
+            message_body = json.dumps(excel_info)
         logger.info(result)
-        result = asyncio.run(send_message_to_queue(excel_info, "summary_info"))
+        result = asyncio.run(send_message_to_queue(message_body, "summary_info"))
+
         return result
     except Exception as e:
         logger.info(f"Ошибка в check_emails_async: {e}")
