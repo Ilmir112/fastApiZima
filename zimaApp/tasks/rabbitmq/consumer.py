@@ -1,5 +1,5 @@
 import json
-
+import pandas as pd
 from fastapi.params import Depends
 
 from zimaApp.config import settings, router_broker
@@ -15,18 +15,37 @@ from zimaApp.users.models import Users
 
 
 @router_broker.subscriber("summary_info")
-async def process_read_summary(message:aio_pika.IncomingMessage):
+async def process_read_summary(message: aio_pika.IncomingMessage):
     try:
-        print(f'потребитель summary_info\n{message}')
-        for file_data in message:
-            well_data = await work_with_excel_summary(file_data["filename"], file_data["dataframe"])
+        # Получаем тело сообщения и декодируем
+        body_bytes = await message.body
+        body_str = body_bytes.decode('utf-8')
+        # Парсим JSON
+        file_data_list = json.loads(body_str)
+
+        # Проверка типа данных
+        if not isinstance(file_data_list, list):
+            logger.error("Ожидался список словарей в сообщении")
+            return
+
+        for file_data in file_data_list:
+            filename = file_data.get("filename")
+            dataframe_json = file_data.get("dataframe")
+            if not filename or not dataframe_json:
+                logger.warning("Некорректные данные в сообщении")
+                continue
+
+            df = pd.read_json(dataframe_json)
+
+            # Обработка DataFrame
+            well_data = await work_with_excel_summary(filename, df)
             if well_data:
                 logger.info(f"сводка по скважине {well_data.well_number} обновлена")
+
     except aio_pika.exceptions.AMQPConnectionError as e:
         logger.error(f"Connection lost: {e}")
-
     except Exception as e:
-        logger.error(e)
+        logger.exception(f"Ошибка при обработке сообщения: {e}")
 
 
 @router_broker.subscriber("repair_gis")
