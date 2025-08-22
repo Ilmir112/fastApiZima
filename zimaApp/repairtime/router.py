@@ -95,16 +95,18 @@ async def open_summary_data(
     check_brigade = await check_brigade_id_and_end_time(brigade.id)
     if check_brigade:
         return BrigadeAlreadyExistsException
+
     try:
         if summary_info:
             result_date, result_time, result_interval = await RepairTimeDAO.get_date_and_interval(
                 summary_info.date_summary)
             check_start_wells = await RepairTimeDAO.find_one_or_none(well_id=well_data.id, status="закрыт",
-                                                                     start_time=summary_info.date_summary + timedelta(hours=5))
+                                                                     start_time=summary_info.date_summary)
             if check_start_wells:
                 mes = f"Скважина {well_data.well_number} c началом ремонта уже загружена и закрыта"
                 logger.error(mes)
                 return WellsClosedExistsException
+
             summary_data = {
                 "date_summary": result_date,
                 "time_interval": result_interval,
@@ -118,7 +120,7 @@ async def open_summary_data(
 
             repair_data = {
                 'well_id': well_data.id,
-                'start_time': summary_info.date_summary + timedelta(hours=5),
+                'start_time': summary_info.date_summary,
                 'end_time': None,
                 "brigade_id": brigade.id
             }

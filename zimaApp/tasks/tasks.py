@@ -401,7 +401,6 @@ async def work_with_excel_summary(filename, df):
             return
         contractor = "ООО Ойл-сервис"
 
-
         from zimaApp.wells_data.router import find_all_by_number
         well_data = await find_all_by_number(well_number=well_number, contractor=contractor)
 
@@ -456,7 +455,7 @@ async def work_with_excel_summary(filename, df):
                             t = datetime.strptime(time_str, "%H:%M").time()
 
                             # заменяем время
-                            date_str = date_str.replace(hour=t.hour, minute=t.minute) + timedelta(hours=5)
+                            date_str = date_str.replace(hour=t.hour, minute=t.minute)
                             results = await RepairTimeDAO.update_data(summary_info.id, end_time=date_str,
                                                                       status="закрыт")
 
