@@ -78,7 +78,8 @@ def check_emails_summary():
             # Сериализация всего списка в JSON строку
             json_data = json.dumps(new_excel, ensure_ascii=False)
             logger.info(f"Serialized Data: {json_data}")
-            result = asyncio.run(send_message_to_queue(json_data, "summary_info"))
+            # Передача в очередь — если требуется байтовый формат
+            result = asyncio.run(send_message_to_queue(json_data.encode('utf-8'), "summary_info"))
         return result
     except Exception as e:
         logger.error(f"Ошибка в check_emails_summary: {e}")
