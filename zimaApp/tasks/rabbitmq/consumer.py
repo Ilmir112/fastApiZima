@@ -18,7 +18,7 @@ from zimaApp.users.models import Users
 async def process_read_summary(message: aio_pika.IncomingMessage):
     try:
         # Получаем тело сообщения и декодируем
-        body_bytes = await message.body
+        body_bytes = message.body
         body_str = body_bytes.decode('utf-8')
         # Парсим JSON
         file_data_list = json.loads(body_str)
