@@ -428,7 +428,7 @@ async def work_with_excel_summary(filename, df):
 
                 summary_info = await RepairTimeDAO.find_one_or_none(brigade_id=brigade_data.id, status='открыт')
 
-                for row in df.itertuples():
+                for row_index, row in enumerate(df.itertuples()):
                     date_str, work_details = ExcelRead.extract_datetimes(row)
                     work_data = SUpdateSummary(date_summary=date_str,
                                                work_details=work_details)
@@ -449,7 +449,7 @@ async def work_with_excel_summary(filename, df):
                     results = await add_summary(work_data=work_data, work_details=work_details,
                                                 summary_info=summary_info.id)
 
-                    if 'завершен' in work_details.lower() or 'сдача с' in work_details.lower():
+                    if 'сдача с' in work_details.lower() and row_index == len(df) - 1:
                         match = re.search(r'\d{2}:\d{2}', work_details.lower())
                         if match:
                             time_str = match.group()
