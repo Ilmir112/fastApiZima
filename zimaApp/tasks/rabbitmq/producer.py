@@ -12,7 +12,6 @@ async def send_message_to_queue(body: str, QUEUE_NAME: str):
     connection = await aio_pika.connect_robust(settings.rabbitmq_url)
     try:
         async with connection:
-
             channel = await connection.channel()
             await channel.default_exchange.publish(
                 aio_pika.Message(body=body), routing_key=QUEUE_NAME
