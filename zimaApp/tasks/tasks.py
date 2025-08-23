@@ -448,13 +448,13 @@ async def work_with_excel_summary(filename, df):
 
                     # Проверка наличия записи с таким work_details
                     existing_entry = await RepairTimeDAO.find_one_or_none(
-                        summary_id=summary_info.id,
+                        id=summary_info.id,
                         work_details=work_details
                     )
 
                     if existing_entry:
                         if original_index == 0:
-                            break
+                            return
                         # Запись с таким work_details уже есть — пропускаем добавление
                         continue
 
