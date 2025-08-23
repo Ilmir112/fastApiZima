@@ -23,8 +23,8 @@ celery_app.conf.beat_schedule = {
     },
     "check-emails-for-excel-every-hour": {
         "task": "tasks.check_emails_summary",
-        # "schedule": crontab(hour='11,23', minute=0)
-        "schedule": 300
+        "schedule": crontab(hour='11,23', minute=0)
+        # "schedule": 300
     },
 }
 celery_app.conf.timezone = "Asia/Yekaterinburg"
