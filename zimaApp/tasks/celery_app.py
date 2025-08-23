@@ -1,4 +1,5 @@
 from celery import Celery
+from celery.schedules import crontab
 
 from zimaApp.config import settings
 
@@ -22,7 +23,7 @@ celery_app.conf.beat_schedule = {
     },
     "check-emails-for-excel-every-hour": {
         "task": "tasks.check_emails_summary",
-        "schedule": 43200,  # интервал в секундах (1 час)
+        "schedule": crontab(hour='11,23', minute=0)
     },
 }
 celery_app.conf.timezone = "Asia/Yekaterinburg"
