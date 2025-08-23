@@ -90,7 +90,6 @@ def check_emails_summary():
         if new_excel:
             # Сериализация всего списка в JSON строку
             json_data = json.dumps(new_excel, ensure_ascii=False)
-            logger.info(f"Serialized Data: {json_data}")
             # Передача в очередь — если требуется байтовый формат
             result = asyncio.run(send_message_to_queue(json_data.encode('utf-8'), "summary_info"))
         return result
@@ -150,7 +149,7 @@ def check_emails():
                     else:
                         subject = ""
                     if subject and "RE:" not in subject.upper():
-                        if dt < now_time - timedelta(minutes=10):
+                        if dt < now_time - timedelta(minutes=10000):
                             continue  # пропускаем это письмо
 
                     # Остальной код обработки тела письма...
