@@ -443,7 +443,7 @@ async def work_with_excel_summary(filename, df):
                         )
                         if type(open_status) != dict:
                             if open_status.status_code == 409:
-                                break
+                                logger.error(open_status.detail)
                         summary_info = open_status["data"]
                         continue
 
