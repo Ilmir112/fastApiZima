@@ -1,4 +1,6 @@
 import json
+from io import StringIO
+
 import pandas as pd
 from fastapi.params import Depends
 
@@ -10,6 +12,7 @@ import aio_pika
 from zimaApp.logger import logger
 
 from zimaApp.tasks.tasks import parse_telephonegram, add_telephonegram_to_db, work_with_excel_summary
+from zimaApp.tasks.telegram_bot_template import TelegramInfo
 
 
 @router_broker.subscriber("summary_info")
@@ -28,7 +31,7 @@ async def process_read_summary(message: aio_pika.IncomingMessage):
         if not isinstance(file_data_list, list):
             logger.error("Ожидался список словарей в сообщении")
             return
-
+        summary_count = 0
         for file_data in file_data_list:
             filename = file_data.get("filename")
             dataframe_json = file_data.get("dataframe")
@@ -36,12 +39,15 @@ async def process_read_summary(message: aio_pika.IncomingMessage):
                 logger.warning("Некорректные данные в сообщении")
                 continue
 
-            df = pd.read_json(dataframe_json)
+            df = pd.read_json(StringIO(dataframe_json))
 
             # Обработка DataFrame
-            well_data = await work_with_excel_summary(filename, df)
-            if well_data:
-                logger.info(f"сводка по скважине {well_data.well_number} обновлена")
+            result = await work_with_excel_summary(filename, df)
+            if result:
+                summary_count += 1
+        await TelegramInfo.send_update_summary(summary_count, len(file_data_list))
+        await message.ack()
+
 
     except aio_pika.exceptions.AMQPConnectionError as e:
         logger.error(f"Connection lost: {e}")
@@ -80,6 +86,7 @@ async def process_message(message: aio_pika.IncomingMessage):
     except Exception as e:
         logger.error(e)
 
+
 async def start_consumer():
     connection = await aio_pika.connect_robust(settings.rabbitmq_url)
     channel = await connection.channel()
@@ -92,10 +99,9 @@ async def start_consumer():
     task1 = asyncio.create_task(queue_repair_gis.consume(process_message))
     task2 = asyncio.create_task(queue_summary_info.consume(process_read_summary))
 
-    return task1, task2
-
     logger.info("Начинаю слушать очереди 'repair_gis' и 'summary_info'...")
 
+    return task1, task2
 
 
 if __name__ == "__main__":

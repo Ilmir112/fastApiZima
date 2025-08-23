@@ -427,12 +427,14 @@ async def work_with_excel_summary(filename, df):
 
                 summary_info = await RepairTimeDAO.find_one_or_none(brigade_id=brigade_data.id, status='открыт')
 
-                for row_index, row in enumerate(df.itertuples()):
+                for row_index, row in enumerate(df[::-1].itertuples()):
+                    original_index = len(df) - 1 - row_index
                     date_str, work_details = ExcelRead.extract_datetimes(row)
+
                     work_data = SUpdateSummary(date_summary=date_str,
                                                work_details=work_details)
                     if summary_info is None:
-
+                        # Обработка открытия сводки
                         open_status = await open_summary_data(
                             summary_info=work_data,
                             well_data=well_data,
@@ -441,10 +443,22 @@ async def work_with_excel_summary(filename, df):
                         if type(open_status) != dict:
                             if open_status.status_code == 409:
                                 break
-
                         summary_info = open_status["data"]
                         continue
 
+                    # Проверка наличия записи с таким work_details
+                    existing_entry = await RepairTimeDAO.find_one_or_none(
+                        summary_id=summary_info.id,
+                        work_details=work_details
+                    )
+
+                    if existing_entry:
+                        if original_index == 0:
+                            break
+                        # Запись с таким work_details уже есть — пропускаем добавление
+                        continue
+
+                    # Добавляем новую запись только если её нет
                     results = await add_summary(work_data=work_data, work_details=work_details,
                                                 summary_info=summary_info.id)
 
@@ -458,11 +472,12 @@ async def work_with_excel_summary(filename, df):
                             date_str = date_str.replace(hour=t.hour, minute=t.minute)
                             results = await RepairTimeDAO.update_data(summary_info.id, end_time=date_str,
                                                                       status="закрыт")
+                logger.info(f"сводка по скважине {well_data.well_number} обновлена")
 
             else:
                 logger.info(f"Бригада {brigade_number} отсутствует")
                 return
-        return well_data
+        return results
 
     except Exception as e:
         logger.exception(f"Ошибка в work_with_excel_summary: {e}")

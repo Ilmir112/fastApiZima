@@ -62,6 +62,16 @@ class TelegramInfo:
             response.raise_for_status()
 
     @classmethod
+    async def send_update_summary(
+            cls, summary_count, len_files):
+        message = f"Успешно обновилось {summary_count} из {len_files} скважин"
+
+        payload = {"chat_id": settings.CHAT_ID, "text": message}
+        async with httpx.AsyncClient() as client:
+            response = await client.post(TelegramInfo.URL, json=payload)
+            response.raise_for_status()
+
+    @classmethod
     async def send_message_create_plan_gnkt(
         cls, username: str, well_number: str, well_area: str
     ):
