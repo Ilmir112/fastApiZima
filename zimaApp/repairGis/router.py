@@ -1,6 +1,5 @@
-from dns.asyncquery import https
-from fastapi import APIRouter, Depends, HTTPException
-from datetime import date, timedelta, datetime, timezone
+from fastapi import APIRouter, Depends
+from datetime import timedelta, datetime, timezone
 
 from sqlalchemy.exc import SQLAlchemyError
 
@@ -15,16 +14,11 @@ from zimaApp.repairGis.schemas import (
     RepairGisResponse,
     ColumnEnum,
 )
-from zimaApp.tasks.telegram_bot_template import TelegramInfo
-
 from zimaApp.users.dependencies import get_current_user
 from zimaApp.users.models import Users
-from zimaApp.well_silencing.router import WellsSearchArgs
-from zimaApp.wells_data.dao import WellsDatasDAO
-from zimaApp.wells_data.router import find_wells_data
-from zimaApp.wells_data.schemas import SWellsData
+
 from zimaApp.brigade.dao import BrigadeDAO
-from zimaApp.brigade.schemas import SWellsBrigade, SBrigadeSearch
+from zimaApp.brigade.schemas import SWellsBrigade
 from fastapi_versioning import version
 
 router = APIRouter(
@@ -186,7 +180,7 @@ async def add_wells_data(repair_info: SRepairsGis):
         msg = f"Database Exception Brigade {db_err}"
         logger.error(
             msg,
-            extra={"number_brigade": repair_info.well_id.well_number},
+            extra={"number_brigade": repair_info.well_id},
             exc_info=True,
         )
 
@@ -194,7 +188,7 @@ async def add_wells_data(repair_info: SRepairsGis):
         msg = f"Unexpected error: {str(e)}"
         logger.error(
             msg,
-            extra={"number_brigade": repair_info.well_id.well_number},
+            extra={"number_brigade": repair_info.well_id},
             exc_info=True,
         )
 
@@ -217,7 +211,7 @@ async def update_repair_gis_data(
                 # Проверяем, что длительность положительна
                 if downtime_duration <= timedelta(0):
                     raise DowntimeDurationAlreadyExistsException
-                    return
+
 
                 repair_dict["fields"]["downtime_duration"] = float(
                     downtime_duration.total_seconds() / 3600

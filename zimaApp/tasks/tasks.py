@@ -467,7 +467,7 @@ async def work_with_excel_summary(filename, df):
                             t = datetime.strptime(time_str, "%H:%M").time()
 
                             # заменяем время
-                            date_str = date_str.replace(hour=t.hour, minute=t.minute) + timedelta(hours=5)
+                            date_str = date_str.replace(hour=t.hour, minute=t.minute) #+ timedelta(hours=5)
                             results = await RepairTimeDAO.update_data(summary_info.id, end_time=date_str,
                                                                       status="закрыт")
                     # Проверка наличия записи с таким work_details

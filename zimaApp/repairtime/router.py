@@ -88,7 +88,7 @@ async def open_summary_data(
         brigade: Brigade = Depends(find_brigade_by_id),
         user: Users = Depends(get_current_user)
 ):
-    open_datetime = open_datetime + timedelta(hours=5)
+    open_datetime = open_datetime# + timedelta(hours=5)
     check_wells = await check_well_id_and_end_time(well_data.id)
     if check_wells:
         return WellsAlreadyExistsException
