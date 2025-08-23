@@ -99,12 +99,12 @@ async def start_consumer():
     queue_summary_info = await channel.declare_queue("summary_info", durable=True)
 
     # Запускаем потребителей
-    # task1 = asyncio.create_task(queue_repair_gis.consume(process_message))
+    task1 = asyncio.create_task(queue_repair_gis.consume(process_message))
     task2 = asyncio.create_task(queue_summary_info.consume(process_read_summary))
 
     logger.info("Начинаю слушать очереди 'repair_gis' и 'summary_info'...")
 
-    return  task2
+    return task1, task2
 
 
 if __name__ == "__main__":

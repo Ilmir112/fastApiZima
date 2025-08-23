@@ -159,7 +159,7 @@ async def add_wells_data(repair_info: SRepairsGis):
 
     try:
         if repair_info:
-            result = await RepairsGisDAO.find_one_or_none(repair_info)
+            result = await RepairsGisDAO.find_one_or_none(downtime_start=repair_info.downtime_start)
             if result is None:
                 # await delete_brigade(repair_info)
                 result = await RepairsGisDAO.add_data(
@@ -180,7 +180,7 @@ async def add_wells_data(repair_info: SRepairsGis):
 
                 await bot_user.send_message(chat_id=settings.CHAT_ID, text=result)
 
-                return {"status": "success", "id": result}
+            return {"status": "success", "id": result}
 
     except SQLAlchemyError as db_err:
         msg = f"Database Exception Brigade {db_err}"

@@ -149,7 +149,7 @@ def check_emails():
                     else:
                         subject = ""
                     if subject and "RE:" not in subject.upper():
-                        if dt < now_time - timedelta(minutes=10000):
+                        if dt < now_time - timedelta(minutes=10):
                             continue  # пропускаем это письмо
 
                     # Остальной код обработки тела письма...
