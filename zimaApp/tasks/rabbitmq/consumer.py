@@ -45,6 +45,7 @@ async def process_read_summary(message: aio_pika.IncomingMessage):
             result = await work_with_excel_summary(filename, df)
             if result:
                 summary_count += 1
+
         await TelegramInfo.send_update_summary(summary_count, len(file_data_list))
         await message.ack()
 
