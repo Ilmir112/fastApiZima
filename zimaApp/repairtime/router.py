@@ -82,12 +82,13 @@ async def find_by_id_repair(summary_id: int, user: Users = Depends(get_current_u
 @router.post("/add")
 @version(1)
 async def open_summary_data(
+        open_datetime: datetime,
         summary_info: SUpdateSummary,
         well_data: WellsData = Depends(find_wells_data_by_id),
         brigade: Brigade = Depends(find_brigade_by_id),
         user: Users = Depends(get_current_user)
 ):
-
+    open_datetime = open_datetime + timedelta(hours=5)
     check_wells = await check_well_id_and_end_time(well_data.id)
     if check_wells:
         return WellsAlreadyExistsException
@@ -101,10 +102,10 @@ async def open_summary_data(
             result_date, result_time, result_interval = await RepairTimeDAO.get_date_and_interval(
                 summary_info.date_summary)
             check_start_wells = await RepairTimeDAO.find_one_or_none(well_id=well_data.id, status="закрыт",
-                                                                     start_time=summary_info.date_summary)
+                                                                     start_time=open_datetime)
             if check_start_wells:
                 mes = f"Скважина {well_data.well_number} c началом ремонта уже загружена и закрыта"
-                logger.error(mes)
+                logger.info(mes)
                 return WellsClosedExistsException
 
             summary_data = {
@@ -120,7 +121,7 @@ async def open_summary_data(
 
             repair_data = {
                 'well_id': well_data.id,
-                'start_time': summary_info.date_summary,
+                'start_time': open_datetime,
                 'end_time': None,
                 "brigade_id": brigade.id
             }

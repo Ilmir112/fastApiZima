@@ -1,6 +1,6 @@
 
 import mimetypes
-from datetime import datetime
+from datetime import datetime, timedelta
 import re
 
 from bson import ObjectId
@@ -108,44 +108,45 @@ class ExcelRead:
         for row in self.df.itertuples():
             # Объединение всех ячеек первой строки в одну строку для поиска
             row_text = ' '.join(str(cell) for cell in row)
-            if 'Начало' in row_text:
-                skv_pattern = r'№(\d+).'
+            if '> Начало ремонта' in row_text:
+                row_begin = row_text.split(';')[0]
+                skv_pattern = r'№(\d+)...'
 
                 # Регулярное выражение для даты (день.месяц.год)
                 date_pattern = r'(\d{2}\.\d{2}\.\d{4})'
 
                 # Регулярное выражение для времени начала (первое время в диапазоне)
-                time_pattern = r'(\d+:\d{2}) - (\d{2}:\d{2})'
+                time_pattern = r'(\d+:\d{2}) - (\d+:\d{2})'
 
                 # Поиск даты
-                date_match = re.search(date_pattern, row_text)
+                date_match = re.search(date_pattern, row_begin)
                 date_value = date_match.group(1) if date_match else None
 
                 # Поиск времени начала (первое время в диапазоне)
-                time_match = re.search(time_pattern, row_text)
+                time_match = re.search(time_pattern, row_begin)
                 start_time = time_match.group(1) if time_match else None
 
                 # Поиск номера скважины
-                skv_match = re.search(skv_pattern, row_text)
+                skv_match = re.search(skv_pattern, row_begin)
                 skv_number = skv_match.group(1) if skv_match else None
-                if ' КР)' in row_text:
+                if ' КР)' in row_begin:
                     region = "КГМ"
-                elif ' ТР)' in row_text:
+                elif ' ТР)' in row_begin:
                     region = "ТГМ"
-                elif ' ИР)' in row_text:
+                elif ' ИР)' in row_begin:
                     region = "ИГМ"
-                elif ' АР)' in row_text:
+                elif ' АР)' in row_begin:
                     region = "АГМ"
-                elif ' ЧР)' in row_text:
+                elif ' ЧР)' in row_begin:
                     region = "ЧГМ"
             mesto_matches = re.findall(r'скв\.?\s*№\s*[\w\-]+(?:\s+)([\w\-]+)', row_text, re.IGNORECASE)
-            if 'переезд' in row_text.lower() and len(mesto_matches) != 0:
+            if ('переезд' in row_text.lower() or 'перестанов' in row_text.lower()) and len(mesto_matches) != 0:
                 break
 
         # if skv_number is None or mesto_matches[0] is None:
         #     return
 
-        return skv_number, mesto_matches, region, date_value, start_time
+        return skv_number, mesto_matches, region, date_value + " " + start_time
 
     @staticmethod
     def extract_datetimes(row):

@@ -113,8 +113,6 @@ async def get_open_files(request: Request, files_id: int, status_file: PathEnum)
         result = await BrigadeSummaryDAO.find_one_or_none(id=files_id)
 
         if result:
-
-            adasf = result[f'{status_file.value}']
             return [result[f'{status_file.value}']] \
                 if status_file.value != 'photo_path' else result[f'{status_file.value}']
     except Exception as e:

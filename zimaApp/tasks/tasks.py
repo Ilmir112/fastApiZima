@@ -393,7 +393,8 @@ async def work_with_excel_summary(filename, df):
         mkv_match = re.search(mkv_pattern, filename)
         well_number = mkv_match.group(1)
         brigade_number = brigade_match.group(1)
-        skv_number, mesto_matches, region, date_value, start_time = excel_xlrd.find_pars()
+        skv_number, mesto_matches, region, date_value = excel_xlrd.find_pars()
+        open_datetime = datetime.strptime(date_value, '%d.%m.%Y %H:%M')
         if mesto_matches:
             mesto_matches = mesto_matches[0]
         else:
@@ -413,12 +414,9 @@ async def work_with_excel_summary(filename, df):
                     if data.well_oilfield[:4].lower() == mesto_matches[:4].lower():
                         well_data = data
                         break
-        else:
-            logger.error(f'Скважины {skv_number} {mesto_matches} по бригаде {brigade_number} не в базе')
-            return
 
         if type(well_data) is list:
-            logger.error(f"Добавление сводки не получилось\nНесколько скважин с номером {skv_number} ")
+            logger.error(f"Скважины {skv_number} {mesto_matches}  нет в базе")
             return
 
         if brigade_number:
@@ -437,16 +435,28 @@ async def work_with_excel_summary(filename, df):
                     if summary_info is None:
                         # Обработка открытия сводки
                         open_status = await open_summary_data(
+                            open_datetime=open_datetime,
                             summary_info=work_data,
                             well_data=well_data,
                             brigade=brigade_data
                         )
                         if type(open_status) != dict:
                             if open_status.status_code == 409:
-                                logger.error(open_status.detail)
+                                return open_status.detail
                         summary_info = open_status["data"]
-                        continue
 
+                    if 'сдача с' in work_details.lower() and row_index == 0:
+                        finish_str = [row_str for row_str in work_details.split('.')
+                                              if 'сдача с' in row_str.lower()][-1]
+                        match = re.search(r'\d+:\d{2}', finish_str.lower())
+                        if match:
+                            time_str = match.group()
+                            t = datetime.strptime(time_str, "%H:%M").time()
+
+                            # заменяем время
+                            date_str = date_str.replace(hour=t.hour, minute=t.minute) + timedelta(hours=5)
+                            results = await RepairTimeDAO.update_data(summary_info.id, end_time=date_str,
+                                                                      status="закрыт")
                     # Проверка наличия записи с таким work_details
                     existing_entry = await BrigadeSummaryDAO.find_one_or_none(
                         repair_time_id=summary_info.id,
@@ -463,16 +473,7 @@ async def work_with_excel_summary(filename, df):
                     results = await add_summary(work_data=work_data, work_details=work_details,
                                                 summary_info=summary_info.id)
 
-                    if 'сдача с' in work_details.lower() and row_index == len(df) - 1:
-                        match = re.search(r'\d{2}:\d{2}', work_details.lower())
-                        if match:
-                            time_str = match.group()
-                            t = datetime.strptime(time_str, "%H:%M").time()
 
-                            # заменяем время
-                            date_str = date_str.replace(hour=t.hour, minute=t.minute)
-                            results = await RepairTimeDAO.update_data(summary_info.id, end_time=date_str,
-                                                                      status="закрыт")
                 logger.info(f"сводка по скважине {well_data.well_number} обновлена")
 
             else:
