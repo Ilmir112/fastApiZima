@@ -20,6 +20,7 @@ from zimaApp.files.dao import ExcelRead
 from zimaApp.logger import logger
 from zimaApp.repairGis.schemas import SRepairsGis
 from zimaApp.repairtime.dao import RepairTimeDAO
+from zimaApp.summary.dao import BrigadeSummaryDAO
 
 from zimaApp.summary.schemas import SUpdateSummary
 from zimaApp.tasks.celery_app import celery_app
@@ -447,8 +448,8 @@ async def work_with_excel_summary(filename, df):
                         continue
 
                     # Проверка наличия записи с таким work_details
-                    existing_entry = await RepairTimeDAO.find_one_or_none(
-                        id=summary_info.id,
+                    existing_entry = await BrigadeSummaryDAO.find_one_or_none(
+                        repair_time_id=summary_info.id,
                         work_details=work_details
                     )
 
