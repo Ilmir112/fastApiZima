@@ -150,7 +150,7 @@ def check_emails():
                     else:
                         subject = ""
                     if subject and "RE:" not in subject.upper():
-                        if dt < now_time - timedelta(minutes=5000):
+                        if dt < now_time - timedelta(minutes=10):
                             continue  # пропускаем это письмо
 
                     # Остальной код обработки тела письма...
@@ -226,7 +226,7 @@ async def parse_telephonegram(body_text: str, from_address: email, dt: datetime)
     date_pattern = r"(\d{1,2}\.\d{1,2}\.\d{2,4})"
     time_pattern = r"(\d{1,2}:\d{2})"
     # Регулярное выражение для номера скважины
-    well_number_pattern = r"скв\.?\s*(\d+)"
+    well_number_pattern = r"скв\.?\s*(\d+.)"
     # Регулярное выражение для площади месторождения
     field_pattern = r"скв\.?\s*\d+\s+([^,]+),"
 
@@ -280,7 +280,7 @@ async def parse_telephonegram(body_text: str, from_address: email, dt: datetime)
             "wells_id": find_wells.id,
             "contractor_gis": contractor_gis,
             "message_time": dt,
-            "work_goal": "dff",
+            "work_goal": "",
             "downtime_start": dt_object,
             "downtime_reason": body_text,
             # добавьте другие поля по необходимости
@@ -293,27 +293,26 @@ required_columns = ['Дата', 'Работы', 'Примечание']
 
 async def add_telephonegram_to_db(parsed_data: dict):
     from zimaApp.repairGis.router import add_wells_data
+    try:
+        repair_info = SRepairsGis(
+            contractor_gis=parsed_data["contractor_gis"],
+            message_time=datetime.strptime(parsed_data["message_time"], '%d.%m.%Y %H:%M'),
+            work_goal=parsed_data["work_goal"],
+            downtime_start=parsed_data["downtime_start"],
+            downtime_end=None,
+            downtime_duration=None,
+            downtime_reason=parsed_data["downtime_reason"],
+            contractor_opinion=None,
+            downtime_duration_meeting_result=None,
+            meeting_result=None,
+            image_pdf=None,
+            well_id=parsed_data["wells_id"],
+        )
 
-    # Предполагается, что у вас есть экземпляр router или вы можете вызвать функцию напрямую.
-    # Ниже пример вызова через API роутер (можно заменить на прямой вызов функции DAO)
-
-    repair_info = SRepairsGis(
-        contractor_gis=parsed_data["contractor_gis"],
-        message_time=parsed_data["message_time"],
-        work_goal=parsed_data["work_goal"],
-        downtime_start=parsed_data["downtime_start"],
-        downtime_end=None,
-        downtime_duration=None,
-        downtime_reason=parsed_data["downtime_reason"],
-        contractor_opinion=None,
-        downtime_duration_meeting_result=None,
-        meeting_result=None,
-        image_pdf=None,
-        well_id=parsed_data["wells_id"],
-    )
-
-    # Вызов вашего роутера или функции добавления данных
-    return await add_wells_data(repair_info)
+        # Вызов вашего роутера или функции добавления данных
+        return await add_wells_data(repair_info)
+    except Exception as e:
+        logger.error(e)
 
 
 def decode_mime_words(s):

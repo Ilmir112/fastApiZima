@@ -64,19 +64,21 @@ async def process_message(message: aio_pika.IncomingMessage):
         async with (
             message.process()
         ):  # автоматически подтверждает сообщение после блока
+
             body = message.body.decode()
+
             if not body.strip():
                 logger.warning("Received empty message body")
                 return
-            print(body)
-            for from_address, subject, body_text, dt in json.loads(body):
-                parsed_data = await parse_telephonegram(body_text, from_address, dt)
-                if parsed_data:
-                    return await add_telephonegram_to_db(parsed_data)
-                else:
-                    await bot_user.send_message(
-                        chat_id=settings.CHAT_ID, text=body_text[:600]
-                    )
+            from_address, subject, body_text, dt = json.loads(body)
+
+            parsed_data = await parse_telephonegram(body_text, from_address, dt)
+            if parsed_data:
+                return await add_telephonegram_to_db(parsed_data)
+            else:
+                await bot_user.send_message(
+                    chat_id=settings.CHAT_ID, text=body_text[:600]
+                )
     except json.JSONDecodeError as e:
         print(f"Ошибка при парсинге JSON: {e}")
         print(f"Данные для парсинга: {body}")
@@ -97,12 +99,12 @@ async def start_consumer():
     queue_summary_info = await channel.declare_queue("summary_info", durable=True)
 
     # Запускаем потребителей
-    # task1 = asyncio.create_task(queue_repair_gis.consume(process_message))
+    task1 = asyncio.create_task(queue_repair_gis.consume(process_message))
     task2 = asyncio.create_task(queue_summary_info.consume(process_read_summary))
 
     logger.info("Начинаю слушать очереди 'repair_gis' и 'summary_info'...")
 
-    return task2
+    return task1, task2
 
 
 if __name__ == "__main__":

@@ -159,26 +159,28 @@ async def add_wells_data(repair_info: SRepairsGis):
 
     try:
         if repair_info:
-            # await delete_brigade(repair_info)
-            result = await RepairsGisDAO.add_data(
-                status="открыт",
-                well_id=repair_info.well_id,
-                contractor_gis=repair_info.contractor_gis,
-                message_time=repair_info.message_time,
-                downtime_start=repair_info.downtime_start,
-                downtime_end=repair_info.downtime_end,
-                downtime_duration=repair_info.downtime_duration,
-                downtime_reason=repair_info.downtime_reason,
-                work_goal=repair_info.work_goal,
-                contractor_opinion=repair_info.contractor_opinion,
-                downtime_duration_meeting_result=repair_info.downtime_duration_meeting_result,
-                meeting_result=repair_info.meeting_result,
-                image_pdf=None,
-            )
+            result = await RepairsGisDAO.find_one_or_none(repair_info)
+            if result is None:
+                # await delete_brigade(repair_info)
+                result = await RepairsGisDAO.add_data(
+                    status="открыт",
+                    well_id=repair_info.well_id,
+                    contractor_gis=repair_info.contractor_gis,
+                    message_time=repair_info.message_time,
+                    downtime_start=repair_info.downtime_start,
+                    downtime_end=repair_info.downtime_end,
+                    downtime_duration=repair_info.downtime_duration,
+                    downtime_reason=repair_info.downtime_reason,
+                    work_goal=repair_info.work_goal,
+                    contractor_opinion=repair_info.contractor_opinion,
+                    downtime_duration_meeting_result=repair_info.downtime_duration_meeting_result,
+                    meeting_result=repair_info.meeting_result,
+                    image_pdf=None,
+                )
 
-            await bot_user.send_message(chat_id=settings.CHAT_ID, text=result)
+                await bot_user.send_message(chat_id=settings.CHAT_ID, text=result)
 
-            return {"status": "success", "id": result}
+                return {"status": "success", "id": result}
 
     except SQLAlchemyError as db_err:
         msg = f"Database Exception Brigade {db_err}"

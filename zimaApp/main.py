@@ -266,9 +266,9 @@ async def add_process_time_header(request: Request, call_next):
         response = await call_next(request)
         process_time = time.perf_counter() - start_time
         response.headers["X-Process-Time"] = str(process_time)
-        logger.info(
-            "request handling time", extra={"process_time": round(process_time, 4)}
-        )
+        # logger.info(
+        #     "request handling time", extra={"process_time": round(process_time, 4)}
+        # )
 
         return response
     except HTTPException as e:  # Обрабатываем исключения от endpoint
