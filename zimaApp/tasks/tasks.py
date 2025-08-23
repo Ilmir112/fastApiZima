@@ -54,11 +54,26 @@ def check_emails_async():
     try:
         logger.info("Задача check_emails_async запущена")
         msg_bytes = check_emails()
-        result = asyncio.run(send_message_to_queue(msg_bytes, "repair_gis"))
-        return result
+        if msg_bytes:
+            for msg in msg_bytes:
+                # Если body — это кортеж или другой объект, сериализуем его
+                if isinstance(msg, (dict, list, tuple)):
+                    new_msg = []
+                    for m in msg:
+                        if type(m) == datetime:
+                            new_msg.append(m.strftime("%d.%m.%Y %H:%S"))
+                        else:
+                            new_msg.append(m)
+
+
+                    message_body = json.dumps(new_msg).encode('utf-8')
+                else:
+                    message_body = msg.encode('utf-8')
+                result = asyncio.run(send_message_to_queue(message_body, "repair_gis"))
+            return result
     except Exception as e:
         logger.info(f"Ошибка в check_emails_async: {e}")
-        return result
+        return
 
 
 @celery_app.task(name="tasks.check_emails_summary")
@@ -135,7 +150,7 @@ def check_emails():
                     else:
                         subject = ""
                     if subject and "RE:" not in subject.upper():
-                        if dt < now_time - timedelta(minutes=2):
+                        if dt < now_time - timedelta(minutes=5000):
                             continue  # пропускаем это письмо
 
                     # Остальной код обработки тела письма...

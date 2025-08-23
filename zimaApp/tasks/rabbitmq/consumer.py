@@ -61,7 +61,6 @@ async def process_message(message: aio_pika.IncomingMessage):
     from zimaApp.main import bot_user
 
     try:
-        print(f'потребитель repair_gis\n{message}')
         async with (
             message.process()
         ):  # автоматически подтверждает сообщение после блока
@@ -69,7 +68,8 @@ async def process_message(message: aio_pika.IncomingMessage):
             if not body.strip():
                 logger.warning("Received empty message body")
                 return
-            for from_address, subject, body_text, dt in json.loads(body):
+            parsed = json.loads(body)
+            for from_address, subject, body_text, dt in json.loads(parsed):
                 parsed_data = await parse_telephonegram(body_text, from_address, dt)
                 if parsed_data:
                     return await add_telephonegram_to_db(parsed_data)
