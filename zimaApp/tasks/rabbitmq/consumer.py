@@ -68,8 +68,8 @@ async def process_message(message: aio_pika.IncomingMessage):
             if not body.strip():
                 logger.warning("Received empty message body")
                 return
-            parsed = json.loads(body)
-            for from_address, subject, body_text, dt in json.loads(parsed):
+            print(body)
+            for from_address, subject, body_text, dt in json.loads(body):
                 parsed_data = await parse_telephonegram(body_text, from_address, dt)
                 if parsed_data:
                     return await add_telephonegram_to_db(parsed_data)
