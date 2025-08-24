@@ -32,19 +32,19 @@ class BrigadeSummary(Base):
     date_summary = Column(Date, nullable=False)
     time_interval = Column(SqlEnum(TimeWorkEnum), nullable=False)
     work_details = Column(Text, nullable=False)
-    repair_time_id = Column(Integer, ForeignKey('repair_times.id'), nullable=False)
+    repair_time_id = Column(Integer, ForeignKey('repair_times.id', ondelete='CASCADE'), nullable=False)
     notes = Column(Text, nullable=True)
     act_path = Column(ARRAY(String), default=None, nullable=True)
     status_act = Column(status_enum, default=StatusWorkPlan.NOT_SIGNED.value, nullable=True)
     photo_path = Column(ARRAY(String), default=None, nullable=True)
     video_path = Column(ARRAY(String), default=None, nullable=True)
 
-    repair_times = relationship(
+    # Добавьте это свойство
+    repair_time = relationship(
         "RepairTime",
-        back_populates="brigade_summary",
-        cascade="all, delete-orphan",
-        single_parent=True
+        back_populates="brigade_summary"
     )
+
 
     __table_args__ = (
         UniqueConstraint('date_summary', 'time_interval', 'repair_time_id', name='uix_date_time'),

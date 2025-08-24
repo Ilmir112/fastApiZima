@@ -23,7 +23,7 @@ celery_app.conf.beat_schedule = {
     },
     "check-emails-for-excel-every-hour": {
         "task": "tasks.check_emails_summary",
-        "schedule": crontab(hour='11,23', minute=0)
+        "schedule": crontab(hour='11,23,16', minute=0)
         # "schedule": 300
     },
 }

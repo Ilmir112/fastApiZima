@@ -30,6 +30,7 @@ from telegram import Bot
 from zimaApp.tasks.rabbitmq.producer import send_message_to_queue
 from zimaApp.well_classifier.dao import WellClassifierDAO
 from zimaApp.wells_data.dao import WellsDatasDAO
+from zimaApp.wells_repair_data.dao import WellsRepairsDAO
 
 
 @celery_app.task
@@ -432,6 +433,19 @@ async def work_with_excel_summary(filename, df):
             logger.error(f"Скважины {skv_number} {mesto_matches}  нет в базе")
             return
 
+        wells_repair = await WellsRepairsDAO.find_all(wells_id=well_data.id)
+
+        if wells_repair is None:
+            logger.error(f"Нужно добавить отношение плана работ к скважине "
+                         f"{well_data.well_number} {well_data.well_area}")
+        else:
+            wells_repair = sorted([wells_r for wells_r in wells_repair if wells_r.work_plan in ["ПР", "ПРС"]],
+                                  key=lambda x: x.date_create)
+            if wells_repair:
+                wells_repair = wells_repair[-1]
+
+
+
         if brigade_number:
             brigade_data = await BrigadeDAO.find_one_or_none(number_brigade=brigade_number, contractor=contractor)
 
@@ -449,6 +463,7 @@ async def work_with_excel_summary(filename, df):
                         # Обработка открытия сводки
                         open_status = await open_summary_data(
                             open_datetime=open_datetime,
+                            wells_repair=wells_repair,
                             summary_info=work_data,
                             well_data=well_data,
                             brigade=brigade_data

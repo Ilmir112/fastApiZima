@@ -1,7 +1,7 @@
 from typing import Optional, Union, List
 
 from sqlalchemy import select, join
-from sqlalchemy.orm import selectinload
+from sqlalchemy.orm import selectinload, joinedload
 
 from zimaApp.brigade.models import Brigade
 from zimaApp.dao.base import BaseDAO
@@ -14,6 +14,22 @@ from zimaApp.wells_data.models import WellsData
 
 class RepairTimeDAO(BaseDAO):
     model = RepairTime
+
+    @classmethod
+    async def find_by_well_number(cls, well_number: str):
+        async with async_session_maker() as session:
+            query = (
+                select(RepairTime)
+                .join(RepairTime.well)
+                .filter(WellsData.well_number == well_number)
+                .options(
+                    joinedload(RepairTime.well),
+                    joinedload(RepairTime.brigade),
+                    joinedload(RepairTime.brigade_summary)
+                )
+            )
+            result = await session.execute(query)
+            return result.scalars().unique().all()
 
     @classmethod
     async def get_all(
@@ -66,7 +82,8 @@ class RepairTimeDAO(BaseDAO):
                         act_path=brigade_data.get("act_path"),
                         status_act=brigade_data.get("status_act"),
                         photo_path=brigade_data.get("photo_path"),
-                        video_path=brigade_data.get("video_path")
+                        video_path=brigade_data.get("video_path"),
+
                     )
                     session.add(summary_data)
 

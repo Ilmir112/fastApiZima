@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+from typing import List
 
 from fastapi import APIRouter, Depends
 
@@ -12,7 +13,7 @@ from zimaApp.exceptions import ExceptionError, WellsAlreadyExistsException, Brig
 from zimaApp.logger import logger
 from zimaApp.prometheus.router import time_consumer
 from zimaApp.repairtime.dao import RepairTimeDAO
-from zimaApp.repairtime.models import StatusSummary
+from zimaApp.repairtime.models import StatusSummary, RepairTime
 from zimaApp.repairtime.schemas import SRepairTime, SRepairTimeClose
 from zimaApp.summary.schemas import SUpdateSummary
 
@@ -22,7 +23,8 @@ from fastapi_versioning import version
 
 from zimaApp.wells_data.models import WellsData
 from zimaApp.wells_data.router import find_wells_data_by_id
-from zimaApp.wells_repair_data.models import StatusWorkPlan
+from zimaApp.wells_repair_data.models import StatusWorkPlan, WellsRepair
+from zimaApp.wells_repair_data.router import find_repair_id
 
 router = APIRouter(
     prefix="/repair_time",
@@ -84,8 +86,10 @@ async def find_by_id_repair(summary_id: int, user: Users = Depends(get_current_u
 async def open_summary_data(
         open_datetime: datetime,
         summary_info: SUpdateSummary,
+        wells_repair: WellsRepair = Depends(),
         well_data: WellsData = Depends(find_wells_data_by_id),
         brigade: Brigade = Depends(find_brigade_by_id),
+
         user: Users = Depends(get_current_user)
 ):
     open_datetime = open_datetime# + timedelta(hours=5)
@@ -118,12 +122,16 @@ async def open_summary_data(
                 "photo_path": None,
                 "video_path": None
             }
+            if not wells_repair is None:
+                wells_repair = wells_repair.id
 
             repair_data = {
                 'well_id': well_data.id,
                 'start_time': open_datetime,
                 'end_time': None,
-                "brigade_id": brigade.id
+                "brigade_id": brigade.id,
+                "wells_repair_id": wells_repair
+
             }
 
             result = await RepairTimeDAO.add_brigade_with_repairs(summary_data, repair_data)
@@ -154,6 +162,25 @@ async def open_summary_data(
         )
         raise ExceptionError(msg)
 
+@router.get("/get_repair_time_by_well_number")
+@version(1)
+async def get_repair_time_by_well_number(well_number: str, user: Users =Depends(get_current_user))-> List:
+    try:
+        repairs = await RepairTimeDAO.find_by_well_number(well_number=well_number)
+        new_repair = []
+        for row in repairs:
+            new_repair.append(
+                f"{row.well.well_number} {row.well.well_area} от {row.start_time.strftime('%d.%m.%Y')} Бр=№{row.brigade.number_brigade} well_id=№{row.well_id} id=№{row.id} "
+            )
+        return new_repair
+
+    except SQLAlchemyError as db_err:
+        msg = f"Database Exception filter {db_err}"
+        logger.error(msg)
+    except Exception as e:
+        msg = f"Unexpected error: {str(e)}"
+        logger.error(msg, exc_info=True)
+        raise ExceptionError(msg)
 
 @router.get("/find_all_by_filter_status")
 @version(1)

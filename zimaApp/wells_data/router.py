@@ -113,7 +113,6 @@ async def add_wells_data(
 async def find_all_by_number(
         well_number: str,
         contractor: str
-
 ):
     try:
         result = await  WellsDatasDAO.find_all(well_number=well_number, contractor=contractor)

@@ -1,7 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from datetime import date
 
-from sqlalchemy import values
 from sqlalchemy.exc import SQLAlchemyError
 
 from zimaApp.logger import logger

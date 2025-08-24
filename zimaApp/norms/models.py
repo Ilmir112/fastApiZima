@@ -23,7 +23,7 @@ class NormsWork(Base):
     norms_time = Column(Float, nullable=False)
     date_create = Column(Date, default=date.today)
 
-    well_repair = relationship("WellsRepair", back_populates="norms")
+    # well_repair = relationship("WellsRepair", back_populates="norms")
     users = relationship("Users", back_populates="norms_repairs")
 
     def __repr__(self):
