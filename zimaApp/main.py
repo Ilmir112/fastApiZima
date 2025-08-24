@@ -3,7 +3,7 @@ import time
 
 import telegram
 from contextlib import asynccontextmanager
-from repairtime import events
+import repairtime.events
 from starlette.middleware.base import BaseHTTPMiddleware
 import uvicorn
 from beanie import init_beanie
