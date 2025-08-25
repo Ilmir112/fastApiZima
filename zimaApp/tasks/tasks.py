@@ -18,6 +18,7 @@ import email.utils
 
 from zimaApp.brigade.dao import BrigadeDAO
 from zimaApp.config import settings
+from zimaApp.exceptions import WellsAlreadyExistsException
 from zimaApp.files.dao import ExcelRead
 from zimaApp.logger import logger
 from zimaApp.repairGis.schemas import SRepairsGis
@@ -456,7 +457,6 @@ async def work_with_excel_summary(filename, df):
                 wells_repair = wells_repair[-1]
 
 
-
         if brigade_number:
             brigade_data = await BrigadeDAO.find_one_or_none(number_brigade=brigade_number, contractor=contractor)
 
@@ -470,8 +470,6 @@ async def work_with_excel_summary(filename, df):
                     results = []
                     work_data = SUpdateSummary(date_summary=date_str,
                                                work_details=work_details)
-
-
 
                     if summary_info is None:
                         # Обработка открытия сводки
@@ -487,6 +485,24 @@ async def work_with_excel_summary(filename, df):
                                 return open_status.detail
                         summary_info = open_status["data"]
                     else:
+                        check_b = await RepairTimeDAO.check_brigade_and_well_availability(
+                            brigade_id=brigade_data.id,
+                            well_id=well_data.id,
+                            start_time=open_datetime,
+                            end_time=summary_info.end_time)
+                        if check_b is False:
+                            open_status = await open_summary_data(
+                                open_datetime=open_datetime,
+                                wells_repair=wells_repair,
+                                summary_info=work_data,
+                                well_data=well_data,
+                                brigade=brigade_data
+                            )
+                            if type(open_status) != dict:
+                                if open_status.status_code == 409:
+                                    return open_status.detail
+                            summary_info = open_status["data"]
+
                         # Проверка наличия записи с таким work_details
                         existing_entry = await BrigadeSummaryDAO.find_one_or_none(
                             repair_time_id=summary_info.id,
@@ -495,7 +511,10 @@ async def work_with_excel_summary(filename, df):
 
                         if existing_entry:
                             return
-                    if summary_info.start_time < date_str:
+                    if summary_info.start_time > date_str:
+                        summary_info = None
+                        continue
+                    if summary_info.start_time <= date_str:
                         if ('сдача с' in work_details.lower() or "зр после крс" in work_details.lower()
                             or "зр после трс" in work_details.lower() or "зр после ткрс" in work_details.lower()):
                             finish_str = [row_str for row_str in work_details.split('.')

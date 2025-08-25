@@ -1,5 +1,6 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import List
+from zoneinfo import ZoneInfo
 
 from fastapi import APIRouter, Depends
 
@@ -33,11 +34,12 @@ router = APIRouter(
 
 @router.get("/check_well_id_and_end_time")
 @version(1)
-async def check_well_id_and_end_time(well_id: int, user: Users = Depends(get_current_user)):
+async def check_well_id_and_end_time(well_id: int, open_datetime: datetime, user: Users = Depends(get_current_user)):
     try:
         result = await RepairTimeDAO.find_one_or_none(well_id=well_id, end_time=None)
         if result:
-            return result
+            if open_datetime > result.start_time:
+                return result
     except SQLAlchemyError as db_err:
         msg = f"Database Exception Brigade {db_err}"
         logger.error(msg, exc_info=True)
@@ -49,11 +51,13 @@ async def check_well_id_and_end_time(well_id: int, user: Users = Depends(get_cur
 
 @router.get("/check_brigade_id_and_end_time")
 @version(1)
-async def check_brigade_id_and_end_time(brigade_id: int, user: Users = Depends(get_current_user)):
+async def check_brigade_id_and_end_time(brigade_id: int, open_datetime: datetime, user: Users = Depends(get_current_user)):
     try:
         result = await RepairTimeDAO.find_one_or_none(brigade_id=brigade_id, end_time=None)
         if result:
-            return result
+            if open_datetime > result.start_time:
+                return result
+
     except SQLAlchemyError as db_err:
         msg = f"Database Exception Brigade {db_err}"
         logger.error(msg, exc_info=True)
@@ -93,11 +97,14 @@ async def open_summary_data(
         user: Users = Depends(get_current_user)
 ):
     open_datetime = open_datetime# + timedelta(hours=5)
-    check_wells = await check_well_id_and_end_time(well_data.id)
+
+
+
+    check_wells = await check_well_id_and_end_time(well_data.id, open_datetime)
     if check_wells:
         return WellsAlreadyExistsException
 
-    check_brigade = await check_brigade_id_and_end_time(brigade.id)
+    check_brigade = await check_brigade_id_and_end_time(brigade.id, open_datetime)
     if check_brigade:
         return BrigadeAlreadyExistsException
 
@@ -182,6 +189,9 @@ async def get_repair_time_by_well_number(well_number: str, user: Users =Depends(
         logger.error(msg, exc_info=True)
         raise ExceptionError(msg)
 
+
+
+
 @router.get("/find_all_by_filter_status")
 @version(1)
 async def find_all_by_filter_status(status=None,
@@ -196,8 +206,8 @@ async def find_all_by_filter_status(status=None,
                     "площадь": repair.well.well_area,
                     "Месторождение": repair.well.well_oilfield,
                     "Статус ремонта": repair.status,
-                    "Дата открытия ремонта": repair.start_time.strftime("%Y-%m-%d %H:%M"),
-                    "Дата закрытия ремонта": repair.end_time.strftime("%Y-%m-%d %H:%M") if repair.end_time else repair.end_time,
+                    "Дата открытия ремонта": repair.start_time.astimezone(ZoneInfo("Asia/Yekaterinburg")).strftime("%Y-%m-%d %H:%M"),
+                    "Дата закрытия ремонта": repair.end_time.astimezone(ZoneInfo("Asia/Yekaterinburg")).strftime("%Y-%m-%d %H:%M") if repair.end_time else repair.end_time,
                     # "Продолжительность ремонта": timedelta(datetime.now().timetz() - repair.start_time).hours()
                     "Продолжительность ремонта": None
                     }

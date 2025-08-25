@@ -140,7 +140,7 @@ class ExcelRead:
                     region = "АГМ"
                 elif ' ЧР)' in row_begin:
                     region = "ЧГМ"
-            mesto_matches = re.findall(r'скв\.?\s*№\s*[\w\-]+(?:\s+)([\w\-]+)', row_text, re.IGNORECASE)
+            mesto_matches = re.findall(r'на скв\.?\s*№\s*[\w\-]+(?:\s+)([\w\-]+)', row_text, re.IGNORECASE)
             if ('переезд' in row_text.lower() or 'перестанов' in row_text.lower()) and len(mesto_matches) != 0:
                 break
 

@@ -1,6 +1,8 @@
+from datetime import datetime, timedelta
+
 from typing import Optional, Union, List
 
-from sqlalchemy import select, join
+from sqlalchemy import select, join, or_, and_
 from sqlalchemy.orm import selectinload, joinedload
 
 from zimaApp.brigade.models import Brigade
@@ -14,6 +16,59 @@ from zimaApp.wells_data.models import WellsData
 
 class RepairTimeDAO(BaseDAO):
     model = RepairTime
+
+
+    @classmethod
+    async def check_brigade_and_well_availability(
+            cls,
+            brigade_id: int,
+            well_id: int,
+            start_time: datetime,
+            end_time: datetime = None
+    ):
+        """
+        Проверяет, занята ли бригада или скважина в интервале [start_time, end_time].
+        Если end_time не указано, ищем все ремонты, пересекающиеся с этим интервалом.
+        Возвращает True, если занято (есть пересечения), иначе False.
+        """
+
+        # Если end_time не указано, считаем текущим временем
+        if end_time is None:
+            end_time = datetime.utcnow()
+
+        async with async_session_maker() as session:
+            # Проверка занятости бригады
+            brigade_conflict = await session.execute(
+                select(RepairTime).where(
+                    and_(
+                        RepairTime.brigade_id == brigade_id,
+                        RepairTime.start_time < end_time,
+                        or_(
+                            RepairTime.end_time == None,
+                            RepairTime.end_time > start_time
+                        )
+                    )
+                )
+            )
+            brigade_conflict_exists = brigade_conflict.scalars().first() is not None
+
+            # Проверка занятости скважины другой бригадой
+            well_conflict = await session.execute(
+                select(RepairTime).where(
+                    and_(
+                        RepairTime.well_id == well_id,
+                        RepairTime.brigade_id != brigade_id,
+                        RepairTime.start_time < end_time,
+                        or_(
+                            RepairTime.end_time == None,
+                            RepairTime.end_time > start_time
+                        )
+                    )
+                )
+            )
+            well_conflict_exists = well_conflict.scalars().first() is not None
+
+            return brigade_conflict_exists or well_conflict_exists
 
     @classmethod
     async def find_by_well_number(cls, well_number: str):
