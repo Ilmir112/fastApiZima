@@ -129,7 +129,7 @@ def check_emails():
                     # Парсинг даты и времени получения
                     date_tuple = email.utils.parsedate_tz(date_header)
                     if date_tuple:
-                        dt = datetime.fromtimestamp(email.utils.mktime_tz(date_tuple)) + timedelta(hours=5)
+                        dt = datetime.fromtimestamp(email.utils.mktime_tz(date_tuple))
                         received_date = dt.strftime("%Y-%m-%d %H:%M")
 
                     # Обработка заголовка Subject
@@ -150,8 +150,7 @@ def check_emails():
                     else:
                         subject = ""
                     if subject and "RE:" not in subject.upper():
-                        asde = dt, now_time - timedelta(minutes=10), dt < now_time - timedelta(minutes=10)
-                        if dt < now_time - timedelta(minutes=10):
+                        if timedelta(seconds=600) >= now_time - dt >= timedelta(0):
                             continue  # пропускаем это письмо
 
                     # Остальной код обработки тела письма...

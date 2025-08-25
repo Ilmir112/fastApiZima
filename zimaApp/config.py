@@ -39,6 +39,7 @@ class Settings(BaseSettings):
     TEST_DB_HOST: str
     TEST_DB_PORT: int
     TEST_DB_NAME: str
+    bot_gg: int
 
     @property
     def TEST_DATABASE_URL(self):

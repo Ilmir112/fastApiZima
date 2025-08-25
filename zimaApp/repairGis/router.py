@@ -173,6 +173,7 @@ async def add_wells_data(repair_info: SRepairsGis):
                 )
 
                 await bot_user.send_message(chat_id=settings.CHAT_ID, text=result)
+                await bot_user.send_message(chat_id=settings.bot_gg, text=result)
 
             return {"status": "success", "id": result}
 
