@@ -82,6 +82,7 @@ async def process_message(message: aio_pika.IncomingMessage):
                 await bot_user.send_message(
                     chat_id=settings.bot_gg, text=body_text[:600] + "\nпростой не добавлен в базу"
                 )
+                raise
     except json.JSONDecodeError as e:
         print(f"Ошибка при парсинге JSON: {e}")
         print(f"Данные для парсинга: {body}")
