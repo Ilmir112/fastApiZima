@@ -2,6 +2,7 @@
 import mimetypes
 from datetime import datetime, timedelta
 import re
+from zoneinfo import ZoneInfo
 
 from bson import ObjectId
 from fastapi import UploadFile, Request
@@ -150,7 +151,6 @@ class ExcelRead:
 
     @staticmethod
     def extract_datetimes(row):
-        asde = [str(cell) for cell in row]
         # Обработка строки с датой
         date_str = row[1].split('\n')[0]  # '03.08.2025'
         time_range = row[1].split('\n')[1]  # '18:00-22:00'
@@ -163,8 +163,12 @@ class ExcelRead:
         start_time = datetime.strptime(start_time_str.strip(), '%H:%M').time()
         end_time = datetime.strptime(end_time_str.strip(), '%H:%M').time()
 
-        # Создаем datetime объекты для начала и конца работы
-        start_datetime = datetime.combine(date_obj.date(), start_time)
+
+        # Создайте datetime без временной зоны
+        start_datetime_naive = datetime.combine(date_obj, start_time)
+
+        # Затем установите временную зону
+        start_datetime = start_datetime_naive.replace(tzinfo=ZoneInfo("Asia/Yekaterinburg"))
         end_datetime = datetime.combine(date_obj.date(), end_time)
 
         return (start_datetime, row[2])

@@ -8,9 +8,11 @@ import smtplib
 from datetime import datetime, timedelta
 from io import BytesIO
 from nntplib import decode_header
+from zoneinfo import ZoneInfo
 
 import pandas as pd
 import pytz
+from fastapi import HTTPException
 from pydantic import EmailStr
 import email.utils
 
@@ -113,7 +115,11 @@ def check_emails():
         status, messages = mail.search(None, search_bytes)
         email_ids = messages[0].split()
 
-        now_time = datetime.now()
+        # Указываем временную зону Екатеринбурга
+        ekaterinburg_tz = ZoneInfo("Asia/Yekaterinburg")
+
+        # Получаем текущее время в этой зоне
+        now_time = datetime.now(tz=ekaterinburg_tz)
         message_list = []
         for email_id in email_ids:
             status, msg_data = mail.fetch(email_id, "(RFC822)")
@@ -129,7 +135,8 @@ def check_emails():
                     # Парсинг даты и времени получения
                     date_tuple = email.utils.parsedate_tz(date_header)
                     if date_tuple:
-                        dt = datetime.fromtimestamp(email.utils.mktime_tz(date_tuple))
+                        timestamp = email.utils.mktime_tz(date_tuple)
+                        dt = datetime.fromtimestamp(timestamp, tz=ekaterinburg_tz)
                         received_date = dt.strftime("%Y-%m-%d %H:%M")
 
                     # Обработка заголовка Subject
@@ -150,30 +157,30 @@ def check_emails():
                     else:
                         subject = ""
                     if subject and "RE:" not in subject.upper():
-                        print(now_time - dt, now_time, dt)
-                        if timedelta(seconds=600) >= now_time - dt >= timedelta(0):
-                            continue  # пропускаем это письмо
+                        asddf = now_time - dt, now_time, dt
+                        if now_time - dt > timedelta(minutes=10):
+                            continue
 
-                    # Остальной код обработки тела письма...
-                    body_text = ""
-                    if msg.is_multipart():
-                        for part in msg.walk():
-                            if part.get_content_type() == "text/plain":
-                                body_bytes = part.get_payload(decode=True)
-                                body_text += body_bytes.decode(
-                                    part.get_content_charset() or "utf-8"
-                                )
-                    else:
-                        body_bytes = msg.get_payload(decode=True)
-                        body_text = body_bytes.decode(
-                            msg.get_content_charset() or "utf-8"
-                        )
+                        # Остальной код обработки тела письма...
+                        body_text = ""
+                        if msg.is_multipart():
+                            for part in msg.walk():
+                                if part.get_content_type() == "text/plain":
+                                    body_bytes = part.get_payload(decode=True)
+                                    body_text += body_bytes.decode(
+                                        part.get_content_charset() or "utf-8"
+                                    )
+                        else:
+                            body_bytes = msg.get_payload(decode=True)
+                            body_text = body_bytes.decode(
+                                msg.get_content_charset() or "utf-8"
+                            )
 
-                    if (
-                            from_address in settings.EMAIL_CHECK_LIST
-                            and "просто" in body_text
-                    ):
-                        message_list.append((from_address, subject, body_text, dt))
+                        if (
+                                from_address in settings.EMAIL_CHECK_LIST
+                                and "просто" in body_text
+                        ):
+                            message_list.append((from_address, subject, body_text, dt))
         mail.logout()
         return message_list
         #     try:
@@ -408,7 +415,11 @@ async def work_with_excel_summary(filename, df):
         well_number = mkv_match.group(1)
         brigade_number = brigade_match.group(1)
         skv_number, mesto_matches, region, date_value = excel_xlrd.find_pars()
-        open_datetime = datetime.strptime(date_value, '%d.%m.%Y %H:%M')
+        # Парсим строку в объект datetime (без временной зоны)
+        open_datetime_naive = datetime.strptime(date_value, '%d.%m.%Y %H:%M')
+
+        # Устанавливаем временную зону
+        open_datetime = open_datetime_naive.replace(tzinfo=ZoneInfo("Asia/Yekaterinburg"))
         if mesto_matches:
             mesto_matches = mesto_matches[0]
         else:
@@ -456,9 +467,12 @@ async def work_with_excel_summary(filename, df):
                 for row_index, row in enumerate(df[::-1].itertuples()):
                     original_index = len(df) - 1 - row_index
                     date_str, work_details = ExcelRead.extract_datetimes(row)
-
+                    results = []
                     work_data = SUpdateSummary(date_summary=date_str,
                                                work_details=work_details)
+
+
+
                     if summary_info is None:
                         # Обработка открытия сводки
                         open_status = await open_summary_data(
@@ -472,34 +486,37 @@ async def work_with_excel_summary(filename, df):
                             if open_status.status_code == 409:
                                 return open_status.detail
                         summary_info = open_status["data"]
+                    else:
+                        # Проверка наличия записи с таким work_details
+                        existing_entry = await BrigadeSummaryDAO.find_one_or_none(
+                            repair_time_id=summary_info.id,
+                            work_details=work_details
+                        )
 
-                    if 'сдача с' in work_details.lower() and row_index == 0:
-                        finish_str = [row_str for row_str in work_details.split('.')
-                                              if 'сдача с' in row_str.lower()][-1]
-                        match = re.search(r'\d+:\d{2}', finish_str.lower())
-                        if match:
-                            time_str = match.group()
-                            t = datetime.strptime(time_str, "%H:%M").time()
+                        if existing_entry:
+                            return
+                    if summary_info.start_time < date_str:
+                        if ('сдача с' in work_details.lower() or "зр после крс" in work_details.lower()
+                            or "зр после трс" in work_details.lower() or "зр после ткрс" in work_details.lower()):
+                            finish_str = [row_str for row_str in work_details.split('.')
+                                                  if 'сдача с' in row_str.lower() or "зр после" in row_str.lower()][-1]
+
+                            match = re.search(r'\d+:\d{2}', finish_str.lower())
+                            if match:
+                                time_str = match.group()
+                                t = datetime.strptime(time_str, "%H:%M").time()
+                            else:
+                                t = (date_str + timedelta(hours=4)).time()
 
                             # заменяем время
                             date_str = date_str.replace(hour=t.hour, minute=t.minute) #+ timedelta(hours=5)
                             results = await RepairTimeDAO.update_data(summary_info.id, end_time=date_str,
                                                                       status="закрыт")
-                    # Проверка наличия записи с таким work_details
-                    existing_entry = await BrigadeSummaryDAO.find_one_or_none(
-                        repair_time_id=summary_info.id,
-                        work_details=work_details
-                    )
 
-                    if existing_entry:
-                        if original_index == 0:
-                            return
-                        # Запись с таким work_details уже есть — пропускаем добавление
-                        continue
 
-                    # Добавляем новую запись только если её нет
-                    results = await add_summary(work_data=work_data, work_details=work_details,
-                                                summary_info=summary_info.id)
+                        # Добавляем новую запись только если её нет
+                        results = await add_summary(work_data=work_data, work_details=work_details,
+                                                    summary_info=summary_info.id)
 
 
                 logger.info(f"сводка по скважине {well_data.well_number} обновлена")
@@ -511,4 +528,5 @@ async def work_with_excel_summary(filename, df):
 
     except Exception as e:
         logger.exception(f"Ошибка в work_with_excel_summary: {e}")
-        raise
+        raise HTTPException(status_code=500, detail=e)
+

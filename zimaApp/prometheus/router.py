@@ -123,7 +123,10 @@ async def check_emails_and_process(user: Users = Depends(get_current_user)):
     for file_data in files_data:
         well_data = await work_with_excel_summary(file_data["filename"], file_data["dataframe"])
         if well_data:
-            logger.info(f"сводка по скважине {well_data.well_number} обновлена")
+            try:
+                logger.info(f"сводка по скважине {well_data.well_number} обновлена")
+            except:
+                logger.error(well_data)
     return {
         "found_files": [file['filename'] for file in files_data],
         "count": len(files_data)
