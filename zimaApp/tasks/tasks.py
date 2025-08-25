@@ -129,7 +129,7 @@ def check_emails():
                     # Парсинг даты и времени получения
                     date_tuple = email.utils.parsedate_tz(date_header)
                     if date_tuple:
-                        dt = datetime.fromtimestamp(email.utils.mktime_tz(date_tuple))
+                        dt = datetime.fromtimestamp(email.utils.mktime_tz(date_tuple)) + timedelta(hours=5)
                         received_date = dt.strftime("%Y-%m-%d %H:%M")
 
                     # Обработка заголовка Subject
@@ -150,6 +150,7 @@ def check_emails():
                     else:
                         subject = ""
                     if subject and "RE:" not in subject.upper():
+                        asde = dt, now_time - timedelta(minutes=10), dt < now_time - timedelta(minutes=10)
                         if dt < now_time - timedelta(minutes=10):
                             continue  # пропускаем это письмо
 
@@ -209,7 +210,6 @@ def find_best_match(name: str, text: str):
 
 # Функция для парсинга тела письма и извлечения нужных данных
 async def parse_telephonegram(body_text: str, from_address: email, dt: datetime):
-    from zimaApp.well_classifier.router import get_unique_well_data
 
     # Пример парсинга: ищем дату и описание (подстроить под конкретный формат)
     # Для примера ищем строку с датой и текст сообщения
