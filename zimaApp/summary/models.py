@@ -31,7 +31,7 @@ class BrigadeSummary(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     date_summary = Column(Date, nullable=False)
     time_interval = Column(SqlEnum(TimeWorkEnum), nullable=False)
-    work_details = Column(Text, nullable=False)
+    work_details = Column(Text, nullable=True)
     repair_time_id = Column(Integer, ForeignKey('repair_times.id', ondelete='CASCADE'), nullable=False)
     notes = Column(Text, nullable=True)
     act_path = Column(ARRAY(String), default=None, nullable=True)

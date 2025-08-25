@@ -510,13 +510,15 @@ async def work_with_excel_summary(filename, df):
                         )
 
                         if existing_entry:
-                            return
-                    if summary_info.start_time > date_str:
+                            continue
+
+                    if summary_info.start_time - timedelta(hours=3, minutes=59) > date_str:
                         summary_info = None
                         continue
-                    if summary_info.start_time <= date_str:
-                        if ('сдача с' in work_details.lower() or "зр после крс" in work_details.lower()
-                            or "зр после трс" in work_details.lower() or "зр после ткрс" in work_details.lower()):
+                    if summary_info.start_time - timedelta(hours=3, minutes=59) <= date_str:
+                        if (('сдача с' in work_details.lower() or "зр после крс" in work_details.lower()
+                            or "зр после трс" in work_details.lower() or "зр после ткрс" in work_details.lower())
+                                and row_index == len(df)):
                             finish_str = [row_str for row_str in work_details.split('.')
                                                   if 'сдача с' in row_str.lower() or "зр после" in row_str.lower()][-1]
 
@@ -531,7 +533,9 @@ async def work_with_excel_summary(filename, df):
                             date_str = date_str.replace(hour=t.hour, minute=t.minute) #+ timedelta(hours=5)
                             results = await RepairTimeDAO.update_data(summary_info.id, end_time=date_str,
                                                                       status="закрыт")
-
+                            if row_index != len(df):
+                                logger.error(f"Возможно ошибка открытия и закрытия ремонта "
+                                             f"по скважине {well_data.well_number}")
 
                         # Добавляем новую запись только если её нет
                         results = await add_summary(work_data=work_data, work_details=work_details,

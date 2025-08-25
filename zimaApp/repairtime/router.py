@@ -122,7 +122,6 @@ async def open_summary_data(
             summary_data = {
                 "date_summary": result_date,
                 "time_interval": result_interval,
-                "work_details": summary_info.work_details,
                 "notes": None,
                 "act_path": None,
                 "status_act": StatusWorkPlan.NOT_SIGNED.value,
