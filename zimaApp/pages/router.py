@@ -5,7 +5,6 @@ from fastapi.templating import Jinja2Templates
 
 from zimaApp.files.router import get_open_files
 from zimaApp.logger import logger
-from fastapi_cache.decorator import cache
 from fastapi_versioning import version
 from zimaApp.norms.router import find_norms_one
 from zimaApp.pages.dao import ChangeExcelToHtml
@@ -15,8 +14,7 @@ from zimaApp.repairGis.router import get_repair_gis_all
 from zimaApp.repair_data.router import find_repair_all
 from zimaApp.repairtime.router import find_all_by_filter_status
 from zimaApp.summary.router import find_all_works_by_id_summary
-from zimaApp.users.auth import authenticate_user
-from zimaApp.users.dependencies import get_current_user, get_current_admin_user
+from zimaApp.users.dependencies import get_current_user
 from zimaApp.users.models import Users
 from zimaApp.users.router import login_user
 from zimaApp.wells_data.dao import WellsDatasDAO

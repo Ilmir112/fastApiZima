@@ -32,6 +32,9 @@ router = APIRouter(
     tags=["Сводная времени сводки"],
 )
 
+class NormSearchId:
+    def __init__(self, id: int):
+        self.id = id
 
 @router.get("/check_well_id_and_end_time")
 @version(1)
@@ -318,7 +321,8 @@ async def update_repair_norms_json(
         result = await RepairTimeDAO.update_data(
             id=repair_info.id,
             norms_work=repair_info.norms_work,
-            norms_time=repair_info.norms_time)
+            norms_time=repair_info.norms_time
+        )
 
         if result:
             return {"status": "success", "id": result}
