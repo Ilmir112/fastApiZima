@@ -1,0 +1,59 @@
+{% extends "layout/base.html" %}
+
+{% block title %}Каталог ремонтов ООО «Башнефть-Добыча»{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="/static/css/mytable.css"/>
+<div id="summary-container">
+    <h2>Каталог ремонтов ООО «Башнефть-Добыча»</h2>
+    <div id="loading" style="display:none;">Загрузка...</div>
+    <div id="error-message" style="display:none; color:red;"></div>
+
+    <!-- Таблица -->
+    <table id="summary-list">
+        <thead>
+        <tr>
+            <th>Подрядчик</th>
+            <th>Бригада</th>
+            <th>Площадь</th>
+            <th>№ скв.</th>
+            <th>Фактическое начало</th>
+            <th>Фактическое окончание</th>
+            <th>Категория ремонта</th>
+            <th>Уникальный код ремонта</th>
+            <th>Вид ремонта</th>
+            <th>Продолжительность, час</th>
+            <th>Куст</th>
+        </tr>
+        <!-- Фильтры -->
+        <tr>
+            <th><select class="filter-select" data-column="contractor" title="Фильтр по подрядчику"><option value="">Все</option></select></th>
+            <th><select class="filter-select" data-column="brigade_number" title="Фильтр по бригаде"><option value="">Все</option></select></th>
+            <th><select class="filter-select" data-column="well_area" title="Фильтр по площади"><option value="">Все</option></select></th>
+            <th><select class="filter-select" data-column="well_number" title="Фильтр по № скв."><option value="">Все</option></select></th>
+            <th></th> <!-- Для дат можно использовать input type date или datetime-local -->
+            <th></th>
+            <th><select class="filter-select" data-column="category_repair" title="Фильтр по категории ремонта"><option value="">Все</option></select></th>
+            <th><input type="text" class="filter-input" data-column="repair_code" placeholder="Код ремонта"></th>
+            <th><input type="text" class="filter-input" data-column="type_repair" placeholder="Вид ремонта"></th>
+            <th></th> <!-- Продолжительность - фильтр по диапазону или числовой -->
+            <th><input type="text" class="filter-input" data-column="kust" placeholder="Куст"></th>
+        </tr>
+
+        </thead>
+        <tbody id="tableBody">
+        <!-- Данные вставляются сюда через JS -->
+        </tbody>
+    </table>
+
+    <!-- Передача данных из Python в JS -->
+    {% if repairs %}
+    <script type="application/json" id="initial-data">{{ repairs | tojson }}</script>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<!-- Подключение внешнего JS файла -->
+<script src="/static/js/repair_data.js"></script>
+{% endblock %}

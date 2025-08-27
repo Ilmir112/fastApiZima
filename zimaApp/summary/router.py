@@ -1,3 +1,5 @@
+from typing import List
+
 from celery.bin.result import result
 from fastapi import APIRouter, Depends
 from datetime import date
@@ -27,6 +29,23 @@ router = APIRouter(
     prefix="/summary",
     tags=["Данные по работам бригад"],
 )
+
+@router.get("/get_summary_by_repair_id")
+@version(1)
+async def get_summary_by_repair_id(repair_id: int, user: Users=Depends(get_current_user)) -> List:
+    try:
+        summary_list = await BrigadeSummaryDAO.get_summary_list(repair_time_id=repair_id)
+        return summary_list
+    except SQLAlchemyError as db_err:
+        msg = f"Database Exception Summary {db_err}"
+        logger.error(msg, extra={"summary": repair_id})
+        raise ExceptionError(msg)
+
+    except Exception as e:
+        msg = f"Unexpected error: {str(e)}"
+        logger.error(msg, extra={"summary": repair_id})
+        raise ExceptionError(msg)
+
 
 
 @router.get("/find_all_works_by_id_summary")

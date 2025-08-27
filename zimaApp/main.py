@@ -52,6 +52,7 @@ from zimaApp.gnkt_data.router import router as gnkt_router
 from zimaApp.files.router import router as files_router
 from zimaApp.wells_data.router import router as wells_data_router
 from zimaApp.repairtime.router import router as repair_time_router
+from zimaApp.repair_data.router import router as repair_data_router
 from zimaApp.summary.router import router as summary_router
 from zimaApp.repairGis.router import router as repair_gis_router
 from zimaApp.prometheus.router import router as prometheus_router
@@ -65,8 +66,9 @@ bot_user = telegram.Bot(token=settings.TOKEN_USERS)
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     try:
-        # Запускаем потребителя как фоновую задачу
-        consumer_task = asyncio.gather(start_consumer())
+        if settings.MODE == 'PROD':
+            # Запускаем потребителя как фоновую задачу
+            consumer_task = asyncio.gather(start_consumer())
     except Exception as e:
         logger.exception(f"Ошибка в start_consumer {e}")
 
@@ -184,6 +186,7 @@ app.include_router(wells_data_router)
 
 app.include_router(wells_repair_router)
 app.include_router(repair_time_router)
+app.include_router(repair_data_router)
 app.include_router(summary_router)
 app.include_router(repair_gis_router)
 app.include_router(brigade_router)

@@ -18,3 +18,8 @@ class SRepairTime(BaseModel):
 class SRepairTimeClose(BaseModel):
     brigade_summary_id: int
     end_time: str
+
+class SRepairNorm(BaseModel):
+    id: int
+    norms_work: dict
+    norms_time: float

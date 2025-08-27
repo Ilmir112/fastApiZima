@@ -12,6 +12,7 @@ from zimaApp.pages.dao import ChangeExcelToHtml
 from fastapi.responses import HTMLResponse
 
 from zimaApp.repairGis.router import get_repair_gis_all
+from zimaApp.repair_data.router import find_repair_all
 from zimaApp.repairtime.router import find_all_by_filter_status
 from zimaApp.summary.router import find_all_works_by_id_summary
 from zimaApp.users.auth import authenticate_user
@@ -30,8 +31,8 @@ router = APIRouter(
     tags=["Фронтенд"],
 )
 
-templates = Jinja2Templates(directory="zimaApp/templates")
-# templates = Jinja2Templates(directory="templates")
+# templates = Jinja2Templates(directory="zimaApp/templates")
+templates = Jinja2Templates(directory="templates")
 
 
 
@@ -57,6 +58,18 @@ async def get_repair_gis(request: Request, repairs=Depends(get_repair_gis_all)):
         "repair_gis.html",
         context={"request": request, "repair_url": repair_url, "repairs": repairs},
     )
+
+@router.get("/repair_data", response_class=HTMLResponse)
+@version(1)
+async def get_repair_data(request: Request, repairs=Depends(find_repair_all)):
+    try:
+
+        return templates.TemplateResponse(
+            "repair_data.html",
+            context={"request": request, "repairs": repairs},
+        )
+    except Exception as e:
+        print(e)
 
 
 @router.get("/norms", response_class=HTMLResponse)
@@ -108,6 +121,7 @@ async def get_home_page(request: Request):
 @version(1)
 async def get_repair_list(request: Request, user: Users = Depends(get_current_user)):
     return templates.TemplateResponse("plan.html", context={"request": request})
+
 
 
 @router.get("/find_repair_list")

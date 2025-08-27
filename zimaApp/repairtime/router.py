@@ -15,7 +15,7 @@ from zimaApp.logger import logger
 from zimaApp.prometheus.router import time_consumer
 from zimaApp.repairtime.dao import RepairTimeDAO
 from zimaApp.repairtime.models import StatusSummary, RepairTime
-from zimaApp.repairtime.schemas import SRepairTime, SRepairTimeClose
+from zimaApp.repairtime.schemas import SRepairTime, SRepairTimeClose, SRepairNorm
 from zimaApp.summary.schemas import SUpdateSummary
 
 from zimaApp.users.dependencies import get_current_user
@@ -31,6 +31,7 @@ router = APIRouter(
     prefix="/repair_time",
     tags=["Сводная времени сводки"],
 )
+
 
 @router.get("/check_well_id_and_end_time")
 @version(1)
@@ -48,10 +49,16 @@ async def check_well_id_and_end_time(well_id: int, open_datetime: datetime, user
         logger.error(msg, exc_info=True)
         raise ExceptionError(msg)
 
+@router.get("/get_type_kr_by_id")
+@version(1)
+async def get_type_kr_by_id(repair_id: int, user: Users=Depends(get_current_user)):
+    result = await RepairTimeDAO.get_type_kr(repair_time_id=repair_id)
+    return result
 
 @router.get("/check_brigade_id_and_end_time")
 @version(1)
-async def check_brigade_id_and_end_time(brigade_id: int, open_datetime: datetime, user: Users = Depends(get_current_user)):
+async def check_brigade_id_and_end_time(brigade_id: int, open_datetime: datetime,
+                                        user: Users = Depends(get_current_user)):
     try:
         result = await RepairTimeDAO.find_one_or_none(brigade_id=brigade_id, end_time=None)
         if result:
@@ -85,6 +92,24 @@ async def find_by_id_repair(summary_id: int, user: Users = Depends(get_current_u
         raise ExceptionError(msg)
 
 
+@router.get("/find_repair_params_by_id")
+@version(1)
+async def find_repair_params_by_id(repair_id: int, user: Users = Depends(get_current_user)):
+    try:
+        result = await RepairTimeDAO.find_repair_params_by_id(repair_id=repair_id)
+        if result:
+            return result
+    except SQLAlchemyError as db_err:
+        msg = f"Database Exception Summary {db_err}"
+        logger.error(msg, extra={"id": repair_id})
+        raise ExceptionError(msg)
+
+    except Exception as e:
+        msg = f"Unexpected error: {str(e)}"
+        logger.error(msg, extra={"id": repair_id})
+        raise ExceptionError(msg)
+
+
 @router.post("/add")
 @version(1)
 async def open_summary_data(
@@ -96,9 +121,7 @@ async def open_summary_data(
 
         user: Users = Depends(get_current_user)
 ):
-    open_datetime = open_datetime# + timedelta(hours=5)
-
-
+    open_datetime = open_datetime  # + timedelta(hours=5)
 
     check_wells = await check_well_id_and_end_time(well_data.id, open_datetime)
     if check_wells:
@@ -168,15 +191,19 @@ async def open_summary_data(
         )
         raise ExceptionError(msg)
 
+
 @router.get("/get_repair_time_by_well_number")
 @version(1)
-async def get_repair_time_by_well_number(well_number: str, user: Users =Depends(get_current_user))-> List:
+async def get_repair_time_by_well_number(
+        well_number: str,
+        user: Users = Depends(get_current_user)) -> List:
     try:
         repairs = await RepairTimeDAO.find_by_well_number(well_number=well_number)
         new_repair = []
         for row in repairs:
             new_repair.append(
-                f"{row.well.well_number} {row.well.well_area} от {row.start_time.strftime('%d.%m.%Y')} Бр=№{row.brigade.number_brigade} well_id=№{row.well_id} id=№{row.id} "
+                f"{row.well.well_number} {row.well.well_area} от {row.start_time.strftime('%d.%m.%Y')} "
+                f"Бр№{row.brigade.number_brigade} id№{row.id} "
             )
         return new_repair
 
@@ -189,8 +216,6 @@ async def get_repair_time_by_well_number(well_number: str, user: Users =Depends(
         raise ExceptionError(msg)
 
 
-
-
 @router.get("/find_all_by_filter_status")
 @version(1)
 async def find_all_by_filter_status(status=None,
@@ -200,13 +225,15 @@ async def find_all_by_filter_status(status=None,
         serialized_data = []
         for repair in repairs:
             data = {"id": repair.id,
-                    "Номер Бригады":f"Бр №{repair.brigade.number_brigade}",
+                    "Номер Бригады": f"Бр №{repair.brigade.number_brigade}",
                     "Номер скважины": repair.well.well_number,
                     "площадь": repair.well.well_area,
                     "Месторождение": repair.well.well_oilfield,
                     "Статус ремонта": repair.status,
-                    "Дата открытия ремонта": repair.start_time.astimezone(ZoneInfo("Asia/Yekaterinburg")).strftime("%Y-%m-%d %H:%M"),
-                    "Дата закрытия ремонта": repair.end_time.astimezone(ZoneInfo("Asia/Yekaterinburg")).strftime("%Y-%m-%d %H:%M") if repair.end_time else repair.end_time,
+                    "Дата открытия ремонта": repair.start_time.astimezone(ZoneInfo("Asia/Yekaterinburg")).strftime(
+                        "%Y-%m-%d %H:%M"),
+                    "Дата закрытия ремонта": repair.end_time.astimezone(ZoneInfo("Asia/Yekaterinburg")).strftime(
+                        "%Y-%m-%d %H:%M") if repair.end_time else repair.end_time,
                     # "Продолжительность ремонта": timedelta(datetime.now().timetz() - repair.start_time).hours()
                     "Продолжительность ремонта": None
                     }
@@ -259,7 +286,7 @@ async def find_one_repair(repair_id: int, user: Users = Depends(get_current_user
         raise ExceptionError(msg)
 
 
-@router.put("/update")
+@router.put("/update_repair_time")
 @version(1)
 async def update_repair_time(
         repair_info: SRepairTimeClose = Depends(),
@@ -270,6 +297,29 @@ async def update_repair_time(
         result = await RepairTimeDAO.update_data(
             id=repair_info.id,
             end_time=repair.end_time)
+        if result:
+            return {"status": "success", "id": result}
+    except SQLAlchemyError as db_err:
+        msg = f"Database Exception RepairTima {db_err}"
+        logger.error(msg, extra={" repair_id": repair_info.id})
+        raise ExceptionError(msg)
+    except Exception as e:
+        msg = f"Unexpected error: {str(e)}"
+        logger.error(msg, extra={" repair_id": repair_info.id})
+        raise ExceptionError(msg)
+
+@router.put("/update_repair_time_json")
+@version(1)
+async def update_repair_norms_json(
+        repair_info: SRepairNorm = Depends(),
+        user: Users = Depends(get_current_user)
+):
+    try:
+        result = await RepairTimeDAO.update_data(
+            id=repair_info.id,
+            norms_work=repair_info.norms_work,
+            norms_time=repair_info.norms_time)
+
         if result:
             return {"status": "success", "id": result}
     except SQLAlchemyError as db_err:

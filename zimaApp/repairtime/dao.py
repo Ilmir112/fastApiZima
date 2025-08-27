@@ -12,11 +12,33 @@ from zimaApp.logger import logger
 from zimaApp.repairtime.models import RepairTime, StatusSummary
 from zimaApp.summary.models import BrigadeSummary
 from zimaApp.wells_data.models import WellsData
+from zimaApp.wells_repair_data.models import WellsRepair
 
 
 class RepairTimeDAO(BaseDAO):
     model = RepairTime
 
+    @classmethod
+    async def get_type_kr(cls,
+                          repair_time_id: int
+                          ):
+        try:
+            async with async_session_maker() as session:
+                query = (
+                    select(RepairTime)
+                    .filter(RepairTime.id == repair_time_id).options(
+                    joinedload(RepairTime.wells_repair)
+                )
+                )
+                result = await session.execute(query)
+                # Получаем все значения
+                values = result.scalar_one_or_none()
+                # Возвращаем уникальные значения
+                return values.wells_repair
+        except Exception as e:
+            # Предполагается наличие логгера
+            logger.error(f"Error in get_all: {e}")
+            return
 
     @classmethod
     async def check_brigade_and_well_availability(
@@ -80,11 +102,28 @@ class RepairTimeDAO(BaseDAO):
                 .options(
                     joinedload(RepairTime.well),
                     joinedload(RepairTime.brigade),
-                    joinedload(RepairTime.brigade_summary)
+                    joinedload(RepairTime.brigade_summary),
+                    # joinedload(RepairTime.wells_repair)
                 )
             )
             result = await session.execute(query)
             return result.scalars().unique().all()
+
+    @classmethod
+    async def find_repair_params_by_id(cls, repair_id: int):
+        async with async_session_maker() as session:
+            query = (
+                select(RepairTime)
+                .join(RepairTime.well)
+                .filter(RepairTime.id == repair_id)
+                .options(
+                    joinedload(RepairTime.well),
+                    joinedload(RepairTime.brigade),
+                    joinedload(RepairTime.brigade_summary)
+                )
+            )
+            result = await session.execute(query)
+            return result.scalars().first()
 
     @classmethod
     async def get_all(
@@ -116,7 +155,6 @@ class RepairTimeDAO(BaseDAO):
                 # Предполагается наличие логгера
                 logger.error(f"Error in get_all: {e}")
                 return []
-
 
     @classmethod
     async def add_brigade_with_repairs(cls, brigade_data: dict, rt_data: dict):

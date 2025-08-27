@@ -8,8 +8,12 @@ from bson import ObjectId
 from fastapi import UploadFile, Request
 
 from motor.motor_asyncio import AsyncIOMotorGridFSBucket
+from openpyxl.reader.excel import load_workbook
+
 from zimaApp.database import ImageMongoDB  # предполагаю, что это модель/схема
 from zimaApp.logger import logger
+
+from zimaApp.repair_data.schemas import RepairDataCreate
 
 
 class MongoFile:
@@ -173,7 +177,110 @@ class ExcelRead:
 
         return (start_datetime, row[2])
 
-    # Пример использования:
-    # df = pd.read_excel('ваш_файл.xls', engine='xlrd')
-    # ремонты = проверить_и_найти(df)
-    # если нужны только ремонты с этой фразой — они будут в списке ремонты
+    @staticmethod
+    def parse_datetime(value):
+        if isinstance(value, datetime):
+            return value
+        elif isinstance(value, str):
+            # Попытка распарсить строку
+            try:
+                return datetime.strptime(value, "%d.%m.%Y %H:%M")
+            except ValueError:
+                try:
+                    return datetime.strptime(value, "%d.%m.%Y")
+                except ValueError:
+                    return None
+        return None
+
+    @classmethod
+    async def read_repairs_well_excel(cls, filename):
+        from zimaApp.repair_data.router import add_repair_data
+
+        workbook = load_workbook(filename)
+        sheet = workbook['Каталог_ремонтов']
+        if sheet:
+
+            # Получение данных из Excel и запись их в базу данных
+            for index_row, row in enumerate(sheet.iter_rows(min_row=1, max_row=7, max_col=38, values_only=True)):
+                for col, value in enumerate(row):
+
+                    if not value is None:
+                        if "Каталог ремонтов ООО «Башнефть-Добыча»" in str(value):
+                            date_data_str = value.split(" ")[-1]
+                            date_data = datetime.strptime(date_data_str, "%d.%m.%Y")
+                        # print(value)
+                        if 'подрядчик' == str(value).lower():
+                            row_index = index_row + 5
+                            contractor_index = col
+                        elif 'Бригада' in str(value):
+                            number_brigade_index = col
+                        elif 'Площадь' in str(value):
+                            well_area = col
+                        elif '№ скв.' in str(value):
+                            well_number = col
+                        elif 'Фактические дата и время начала' in str(value):
+                            begin_index = col
+                        elif 'Фактические дата и время окончания' in str(value):
+                            finish_index = col
+                        elif 'Категория ремонта' in str(value):
+                            category_well_index = col
+                        elif 'Уникальный код ремонта' in str(value):
+                            unicum_index = col
+                        elif 'Вид ремонта' in str(value):
+                            type_repair_index = col
+                        elif 'Продолжительность ремонта,  час' in str(value):
+                            duration_index = col
+                        elif 'Куст' in str(value):
+                            bush_index = col
+
+        for index_row, row in enumerate(sheet.iter_rows(min_row=row_index, values_only=True)):
+            if 'Ойл-С' in str(row[contractor_index]):
+                try:
+                    begin_dt = cls.parse_datetime(row[begin_index])
+                    begin_dt = cls.round_to_nearest_30_minutes(begin_dt)
+
+                    if row[finish_index]:
+                        finish_dt = cls.parse_datetime(row[finish_index])
+                        finish_dt = cls.round_to_nearest_30_minutes(finish_dt)
+                    else:
+                        finish_dt = None
+
+                    # Проверка по дате для finish_time (если нужно)
+                    if finish_dt and row[finish_index].date() != date_data.date():
+                        finish_dt = finish_dt  # оставить как есть или дополнительно обработать
+                    else:
+                        finish_dt = None
+                    data = RepairDataCreate(
+                        contractor=row[contractor_index],
+                        brigade_number=row[number_brigade_index],
+                        well_area=row[well_area],
+                        well_number=row[well_number],
+                        begin_time=begin_dt,
+                        finish_time=finish_dt,
+                        category_repair=str(row[category_well_index]) if row[category_well_index] else None,
+                        repair_code=str(row[unicum_index]),
+                        type_repair=str(row[type_repair_index]) if row[type_repair_index] else None,
+                        duration_repair=row[duration_index],
+                        bush=str(row[bush_index])
+                    )
+                    result = await add_repair_data(data)
+                except Exception as e:
+                    print(e)
+
+        return result
+
+    @staticmethod
+    def round_to_nearest_30_minutes(dt):
+        # Получаем количество минут
+        minutes = dt.minute
+        # Определяем, к какой границе ближе: 0 или 30
+        if minutes % 30 >= 15:
+            # Округляем вверх до следующего 30-минутного интервала
+            delta_minutes = 30 - (minutes % 30)
+            dt = dt + timedelta(minutes=delta_minutes)
+        else:
+            # Округляем вниз
+            delta_minutes = minutes % 30
+            dt = dt - timedelta(minutes=delta_minutes)
+        # Обнуляем секунды и микросекунды
+        return dt.replace(second=0, microsecond=0)

@@ -2,6 +2,7 @@
 import mimetypes
 import re
 import urllib
+from io import BytesIO
 from datetime import time, datetime, timedelta
 from enum import Enum
 
@@ -47,6 +48,32 @@ class PathEnum(str, Enum):
     ACT_PATH = "act_path"
     VIDEO_PATH = "video_path"
     PHOTO_PATH = "photo_path"
+
+
+
+@router.post("/upload_repairs_data_excel")
+async def upload_images(
+        request: Request,
+        file: UploadFile = File(...),
+        user: Users = Depends(get_current_user)):
+    try:
+        if not file.filename.endswith('.xlsx') and 'перечень' not in file.filename.lower():
+            return {
+                "error": f"Некорректный тип файла: {file.filename}. Загрузите Excel файл,"
+                         f" где в названии есть слово перечень."
+            }
+
+        # Читаем содержимое файла в байты
+        contents = await file.read()
+
+        # Создаем объект BytesIO из байтов
+        file_stream = BytesIO(contents)
+        results = await ExcelRead.read_repairs_well_excel(file_stream)
+
+        return {"status": f"{file.filename} добавлен"}
+
+    except Exception as e:
+        logger.error(e)
 
 
 @router.post("/upload_images")

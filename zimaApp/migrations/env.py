@@ -21,6 +21,7 @@ from zimaApp.repairGis.models import RepairsGis  # noga
 from zimaApp.repairtime.models import RepairTime # noga
 from zimaApp.summary.models import BrigadeSummary # noga
 from zimaApp.gnkt_data.models import GnktData  # noga
+from zimaApp.repair_data.models import RepairData  # noga
 
 
 # this is the Alembic Config object, which provides
