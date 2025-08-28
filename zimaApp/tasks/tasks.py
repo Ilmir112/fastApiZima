@@ -5,7 +5,7 @@ import imaplib
 import json
 import re
 import smtplib
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, tzinfo
 from io import BytesIO
 from nntplib import decode_header
 from zoneinfo import ZoneInfo
@@ -16,12 +16,16 @@ from fastapi import HTTPException
 from pydantic import EmailStr
 import email.utils
 
+from sqlalchemy.testing.suite.test_reflection import users
+
 from zimaApp.brigade.dao import BrigadeDAO
 from zimaApp.config import settings
 from zimaApp.exceptions import WellsAlreadyExistsException
 from zimaApp.files.dao import ExcelRead
 from zimaApp.logger import logger
 from zimaApp.repairGis.schemas import SRepairsGis
+
+from zimaApp.repair_data.schemas import SRepairGet
 from zimaApp.repairtime.dao import RepairTimeDAO
 from zimaApp.summary.dao import BrigadeSummaryDAO
 
@@ -402,6 +406,7 @@ def check_emails_for_excel():
 async def work_with_excel_summary(filename, df):
     from zimaApp.repairtime.router import open_summary_data
     from zimaApp.summary.router import add_summary
+    from zimaApp.repair_data.router import get_by_well_number_and_well_area_and_start_repair
 
     try:
         excel_xlrd = ExcelRead(df)
@@ -418,7 +423,7 @@ async def work_with_excel_summary(filename, df):
         skv_number, mesto_matches, region, date_value = excel_xlrd.find_pars()
         # Парсим строку в объект datetime (без временной зоны)
         open_datetime_naive = datetime.strptime(date_value, '%d.%m.%Y %H:%M')
-
+        repair_close = False
         # Устанавливаем временную зону
         open_datetime = open_datetime_naive.replace(tzinfo=ZoneInfo("Asia/Yekaterinburg"))
         if mesto_matches:
@@ -461,16 +466,16 @@ async def work_with_excel_summary(filename, df):
             brigade_data = await BrigadeDAO.find_one_or_none(number_brigade=brigade_number, contractor=contractor)
 
             if brigade_data and well_number == well_data.well_number:
-
+                repair_data = None
                 summary_info = await RepairTimeDAO.find_one_or_none(brigade_id=brigade_data.id, status='открыт')
 
                 for row_index, row in enumerate(df[::-1].itertuples()):
+
                     original_index = len(df) - 1 - row_index
                     date_str, work_details = ExcelRead.extract_datetimes(row)
                     results = []
                     work_data = SUpdateSummary(date_summary=date_str,
                                                work_details=work_details)
-
                     if summary_info is None:
                         # Обработка открытия сводки
                         open_status = await open_summary_data(
@@ -512,34 +517,57 @@ async def work_with_excel_summary(filename, df):
                         if existing_entry:
                             continue
 
-                    if summary_info.start_time - timedelta(hours=3, minutes=59) > date_str:
-                        summary_info = None
-                        continue
-                    if summary_info.start_time - timedelta(hours=3, minutes=59) <= date_str:
-                        if (('сдача с' in work_details.lower() or "зр после крс" in work_details.lower()
-                            or "зр после трс" in work_details.lower() or "зр после ткрс" in work_details.lower())
-                                and row_index == len(df)):
-                            finish_str = [row_str for row_str in work_details.split('.')
-                                                  if 'сдача с' in row_str.lower() or "зр после" in row_str.lower()][-1]
+                    if repair_data is None:
+                        repair = SRepairGet(well_area=well_data.well_area,
+                                            well_number=well_data.well_number,
+                                            begin_time=summary_info.start_time)
 
-                            match = re.search(r'\d+:\d{2}', finish_str.lower())
-                            if match:
-                                time_str = match.group()
-                                t = datetime.strptime(time_str, "%H:%M").time()
-                            else:
-                                t = (date_str + timedelta(hours=4)).time()
+                        repair_data = await get_by_well_number_and_well_area_and_start_repair(
+                            repair, users)
 
-                            # заменяем время
-                            date_str = date_str.replace(hour=t.hour, minute=t.minute) #+ timedelta(hours=5)
-                            results = await RepairTimeDAO.update_data(summary_info.id, end_time=date_str,
-                                                                      status="закрыт")
-                            if row_index != len(df):
-                                logger.error(f"Возможно ошибка открытия и закрытия ремонта "
-                                             f"по скважине {well_data.well_number}")
+                    if repair_data.finish_time is None:
+                        finish_time = datetime.now().replace(tzinfo=ZoneInfo("Asia/Yekaterinburg"))
 
-                        # Добавляем новую запись только если её нет
-                        results = await add_summary(work_data=work_data, work_details=work_details,
-                                                    summary_info=summary_info.id)
+                    else:
+                        finish_time = repair_data.finish_time
+                        repair_close = True
+                    if repair_data.begin_time - timedelta(hours=3, minutes=59) <= date_str <= finish_time + timedelta(
+                            hours=3, minutes=59):
+
+
+
+                        if summary_info.start_time - timedelta(hours=3, minutes=59) > date_str:
+                            summary_info = None
+                            continue
+                        # if summary_info.start_time - timedelta(hours=3, minutes=59) <= date_str:
+                            # if (('сдача с' in work_details.lower() or "зр после крс" in work_details.lower()
+                            #     or "зр после трс" in work_details.lower() or "зр после ткрс" in work_details.lower())
+                            #         and row_index == len(df)):
+                                # finish_str = [row_str for row_str in work_details.split('.')
+                                #                       if 'сдача с' in row_str.lower() or "зр после" in row_str.lower()][-1]
+                                #
+                                # match = re.search(r'\d+:\d{2}', finish_str.lower())
+                                # if match:
+                                #     time_str = match.group()
+                                #     t = datetime.strptime(time_str, "%H:%M").time()
+                                # else:
+                                #     t = (date_str + timedelta(hours=4)).time()
+                                #
+                                # # заменяем время
+                                # date_str = date_str.replace(hour=t.hour, minute=t.minute) #+ timedelta(hours=5)
+                                # results = await RepairTimeDAO.update_data(summary_info.id, end_time=date_str,
+                                #                                           status="закрыт")
+                                # if row_index != len(df):
+                                #     logger.error(f"Возможно ошибка открытия и закрытия ремонта "
+                                #                  f"по скважине {well_data.well_number}")
+
+
+
+
+
+                        if repair_data:
+                            results = await add_summary(work_data=work_data, work_details=work_details,
+                                                            summary_info=summary_info.id)
 
 
                 logger.info(f"сводка по скважине {well_data.well_number} обновлена")
@@ -547,6 +575,9 @@ async def work_with_excel_summary(filename, df):
             else:
                 logger.info(f"Бригада {brigade_number} отсутствует")
                 return
+        if repair_close:
+            results = await RepairTimeDAO.update_data(summary_info.id, end_time=finish_time,
+                                                      status="закрыт")
         return results
 
     except Exception as e:
