@@ -25,8 +25,7 @@ class Settings(BaseSettings):
 
     @property
     def DATABASE_URL(self):
-        url = f"postgresql+asyncpg://{self.DB_USER}:{urllib.parse.quote(self.DB_PASSWORD)}@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"
-        return url.replace('%', '%%')
+        return f"postgresql+asyncpg://{self.DB_USER}:{self.DB_PASSWORD}@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"
 
     @property
     def MONGO_DATABASE_URL(self):
