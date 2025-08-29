@@ -107,12 +107,13 @@ async def lifespan(_: FastAPI):
     mongo_client.close()
 
     # При завершении работы отменяем задачу потребителя
-    if consumer_task:
-        consumer_task.cancel()
-        try:
-            await consumer_task
-        except asyncio.CancelledError:
-            print("Потребитель остановлен")
+    if settings.MODE == "PROD":
+        if consumer_task:
+            consumer_task.cancel()
+            try:
+                await consumer_task
+            except asyncio.CancelledError:
+                print("Потребитель остановлен")
     print("Завершение работы приложения")
 
 app = FastAPI(lifespan=lifespan, title="Zima", version="0.1.0", root_path="")
