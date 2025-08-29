@@ -1,33 +1,26 @@
 
 import mimetypes
-import re
 import urllib
 from io import BytesIO
-from datetime import time, datetime, timedelta
 from enum import Enum
 
 from fastapi import APIRouter, Form, Depends,  Request
 from fastapi_versioning import version
 
 from fastapi.responses import StreamingResponse
-
-from zimaApp.brigade.router import find_brigade_by_number
 from zimaApp.files.dao import MongoFile, ExcelRead
 from zimaApp.logger import logger
 
 from zimaApp.repairGis.dao import RepairsGisDAO
 from zimaApp.repairGis.router import update_repair_gis_data
 from zimaApp.repairGis.schemas import RepairGisUpdate
-from zimaApp.repairtime.dao import RepairTimeDAO
-from zimaApp.repairtime.router import open_summary_data
 from zimaApp.summary.dao import BrigadeSummaryDAO
-from zimaApp.summary.router import update_repair_summary, add_summary
-from zimaApp.summary.schemas import DeletePhotoRequest, SUpdateSummary
+from zimaApp.summary.router import update_repair_summary
+from zimaApp.summary.schemas import DeletePhotoRequest
 from zimaApp.tasks.tasks import work_with_excel_summary
 from zimaApp.tasks.telegram_bot_template import TelegramInfo
 from zimaApp.users.dependencies import get_current_user
 from zimaApp.users.models import Users
-from zimaApp.wells_data.dao import WellsDatasDAO
 
 from zimaApp.wells_repair_data.dao import WellsRepairsDAO
 from zimaApp.wells_repair_data.models import StatusWorkPlan
@@ -43,12 +36,10 @@ router = APIRouter(
     tags=["работа с файлами"],
 )
 
-
 class PathEnum(str, Enum):
     ACT_PATH = "act_path"
     VIDEO_PATH = "video_path"
     PHOTO_PATH = "photo_path"
-
 
 
 @router.post("/upload_repairs_data_excel")
@@ -129,7 +120,6 @@ async def upload_multiple_excel(
             return {
                 "error": f"Ошибка при обработке файла {filename}: {str(e)}"
             }
-
     return {"files_processed": results}
 
 
@@ -150,7 +140,7 @@ async def get_open_files(request: Request, files_id: int, status_file: PathEnum)
 async def upload_file_gis_akt(request: Request,
                               itemId: str = Form(...),
                               file: UploadFile = File(...),
-                              user: Users = Depends(get_current_user),
+                              user: Users = Depends(get_current_user)
                               ):
     file_url, file_id, filename = await MongoFile.upload_file(request, itemId, file)
 

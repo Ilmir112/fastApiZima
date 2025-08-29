@@ -15,7 +15,7 @@ class RepairData(Base):
     finish_time = Column(DateTime(timezone=True), nullable=True)
     category_repair = Column(String, nullable=True)
     duration_repair = Column(Float, nullable=True)
-    repair_code = Column(String)
+    repair_code = Column(String, unique=True, nullable=False)
     type_repair = Column(String, nullable=True)
 
     bush = Column(String, nullable=True)

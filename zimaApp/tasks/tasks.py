@@ -446,7 +446,7 @@ async def work_with_excel_summary(filename, df):
                         well_data = data
                         break
 
-        if type(well_data) is list:
+        if not well_data:
             logger.error(f"Скважины {skv_number} {mesto_matches}  нет в базе")
             return
 
@@ -460,23 +460,43 @@ async def work_with_excel_summary(filename, df):
                                   key=lambda x: x.date_create)
             if wells_repair:
                 wells_repair = wells_repair[-1]
-
-
         if brigade_number:
             brigade_data = await BrigadeDAO.find_one_or_none(number_brigade=brigade_number, contractor=contractor)
 
             if brigade_data and well_number == well_data.well_number:
                 repair_data = None
-                summary_info = await RepairTimeDAO.find_one_or_none(brigade_id=brigade_data.id, status='открыт')
+                summary_info = await RepairTimeDAO.find_one_or_none(brigade_id=brigade_data.id, well_id=well_data.id)
 
-                for row_index, row in enumerate(df[::-1].itertuples()):
+                if repair_data is None:
+                    finish_time = datetime.now().replace(tzinfo=ZoneInfo("Asia/Yekaterinburg"))
+                    repair = SRepairGet(well_area=well_data.well_area,
+                                        well_number=well_data.well_number,
+                                        begin_time=open_datetime)
 
-                    original_index = len(df) - 1 - row_index
+                    repair_data = await get_by_well_number_and_well_area_and_start_repair(
+                        repair, users)
+
+                if repair_data.finish_time:
+                    finish_time = repair_data.finish_time
+                    repair_close = True
+
+                for row_index, row in enumerate(df.itertuples()):
                     date_str, work_details = ExcelRead.extract_datetimes(row)
                     results = []
                     work_data = SUpdateSummary(date_summary=date_str,
                                                work_details=work_details)
+
                     if summary_info is None:
+                        status_brigade_and_well = await RepairTimeDAO.check_brigade_and_well_availability(
+                            brigade_id=brigade_data.id,
+                            well_id=well_data.id,
+                            start_time=open_datetime,
+                            end_time=finish_time)
+
+                        if not isinstance(status_brigade_and_well, dict):
+                            if hasattr(status_brigade_and_well, "status_code") and status_brigade_and_well.status_code == 409:
+                                return status_brigade_and_well.status_code
+
                         # Обработка открытия сводки
                         open_status = await open_summary_data(
                             open_datetime=open_datetime,
@@ -485,100 +505,44 @@ async def work_with_excel_summary(filename, df):
                             well_data=well_data,
                             brigade=brigade_data
                         )
-                        if type(open_status) != dict:
-                            if open_status.status_code == 409:
+                        if not isinstance(open_status, dict):
+                            if hasattr(open_status, 'status_code') and open_status.status_code == 409:
                                 return open_status.detail
                         summary_info = open_status["data"]
-                    else:
-                        check_b = await RepairTimeDAO.check_brigade_and_well_availability(
-                            brigade_id=brigade_data.id,
-                            well_id=well_data.id,
-                            start_time=open_datetime,
-                            end_time=summary_info.end_time)
-                        if check_b is False:
-                            open_status = await open_summary_data(
-                                open_datetime=open_datetime,
-                                wells_repair=wells_repair,
-                                summary_info=work_data,
-                                well_data=well_data,
-                                brigade=brigade_data
-                            )
-                            if type(open_status) != dict:
-                                if open_status.status_code == 409:
-                                    return open_status.detail
-                            summary_info = open_status["data"]
 
-                        # Проверка наличия записи с таким work_details
-                        existing_entry = await BrigadeSummaryDAO.find_one_or_none(
-                            repair_time_id=summary_info.id,
-                            work_details=work_details
-                        )
+                    # Проверка наличия записи с таким work_details
+                    existing_entry = await BrigadeSummaryDAO.find_one_or_none(
+                        repair_time_id=summary_info.id,
+                        work_details=work_details
+                    )
 
-                        if existing_entry:
-                            continue
+                    if existing_entry:
+                        continue
 
-                    if repair_data is None:
-                        repair = SRepairGet(well_area=well_data.well_area,
-                                            well_number=well_data.well_number,
-                                            begin_time=summary_info.start_time)
 
-                        repair_data = await get_by_well_number_and_well_area_and_start_repair(
-                            repair, users)
 
-                    if repair_data.finish_time is None:
-                        finish_time = datetime.now().replace(tzinfo=ZoneInfo("Asia/Yekaterinburg"))
-
-                    else:
-                        finish_time = repair_data.finish_time
-                        repair_close = True
                     if repair_data.begin_time - timedelta(hours=3, minutes=59) <= date_str <= finish_time + timedelta(
                             hours=3, minutes=59):
-
-
-
-                        if summary_info.start_time - timedelta(hours=3, minutes=59) > date_str:
-                            summary_info = None
-                            continue
-                        # if summary_info.start_time - timedelta(hours=3, minutes=59) <= date_str:
-                            # if (('сдача с' in work_details.lower() or "зр после крс" in work_details.lower()
-                            #     or "зр после трс" in work_details.lower() or "зр после ткрс" in work_details.lower())
-                            #         and row_index == len(df)):
-                                # finish_str = [row_str for row_str in work_details.split('.')
-                                #                       if 'сдача с' in row_str.lower() or "зр после" in row_str.lower()][-1]
-                                #
-                                # match = re.search(r'\d+:\d{2}', finish_str.lower())
-                                # if match:
-                                #     time_str = match.group()
-                                #     t = datetime.strptime(time_str, "%H:%M").time()
-                                # else:
-                                #     t = (date_str + timedelta(hours=4)).time()
-                                #
-                                # # заменяем время
-                                # date_str = date_str.replace(hour=t.hour, minute=t.minute) #+ timedelta(hours=5)
-                                # results = await RepairTimeDAO.update_data(summary_info.id, end_time=date_str,
-                                #                                           status="закрыт")
-                                # if row_index != len(df):
-                                #     logger.error(f"Возможно ошибка открытия и закрытия ремонта "
-                                #                  f"по скважине {well_data.well_number}")
-
-
-
-
 
                         if repair_data:
                             results = await add_summary(work_data=work_data, work_details=work_details,
                                                             summary_info=summary_info.id)
+                            logger.info(f"сводка по скважине {well_data.well_number} обновлена")
 
+                            return results
 
-                logger.info(f"сводка по скважине {well_data.well_number} обновлена")
+                if repair_close :
+                    results = await RepairTimeDAO.update_data(summary_info.id, end_time=finish_time,
+                                                              status="закрыт")
+                    logger.info(f"сводка по скважине {well_data.well_number} закрыта в {finish_time}")
+                    return results
+                logger.info(f"Обновление не требуется по скважине {well_data.well_number}")
 
+                return results
             else:
-                logger.info(f"Бригада {brigade_number} отсутствует")
+                logger.error(f"Бригада {brigade_number} отсутствует в базе")
                 return
-        if repair_close:
-            results = await RepairTimeDAO.update_data(summary_info.id, end_time=finish_time,
-                                                      status="закрыт")
-        return results
+
 
     except Exception as e:
         logger.exception(f"Ошибка в work_with_excel_summary: {e}")

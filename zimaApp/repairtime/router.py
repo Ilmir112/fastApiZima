@@ -97,7 +97,8 @@ async def find_by_id_repair(summary_id: int, user: Users = Depends(get_current_u
 
 @router.get("/find_repair_params_by_id")
 @version(1)
-async def find_repair_params_by_id(repair_id: int, user: Users = Depends(get_current_user)):
+async def find_repair_params_by_id(repair_id: int,
+                                   user: Users = Depends(get_current_user)):
     try:
         result = await RepairTimeDAO.find_repair_params_by_id(repair_id=repair_id)
         if result:
@@ -121,18 +122,17 @@ async def open_summary_data(
         wells_repair: WellsRepair = Depends(),
         well_data: WellsData = Depends(find_wells_data_by_id),
         brigade: Brigade = Depends(find_brigade_by_id),
-
         user: Users = Depends(get_current_user)
 ):
     open_datetime = open_datetime  # + timedelta(hours=5)
 
-    check_wells = await check_well_id_and_end_time(well_data.id, open_datetime)
-    if check_wells:
-        return WellsAlreadyExistsException
-
-    check_brigade = await check_brigade_id_and_end_time(brigade.id, open_datetime)
-    if check_brigade:
-        return BrigadeAlreadyExistsException
+    # check_wells = await check_well_id_and_end_time(well_data.id, open_datetime)
+    # if check_wells:
+    #     return WellsAlreadyExistsException
+    #
+    # check_brigade = await check_brigade_id_and_end_time(brigade.id, open_datetime)
+    # if check_brigade:
+    #     return BrigadeAlreadyExistsException
 
     try:
         if summary_info:
@@ -164,7 +164,6 @@ async def open_summary_data(
                 'end_time': None,
                 "brigade_id": brigade.id,
                 "wells_repair_id": wells_repair
-
             }
 
             result = await RepairTimeDAO.add_brigade_with_repairs(summary_data, repair_data)

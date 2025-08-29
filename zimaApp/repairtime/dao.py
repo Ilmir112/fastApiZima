@@ -8,6 +8,7 @@ from sqlalchemy.orm import selectinload, joinedload
 from zimaApp.brigade.models import Brigade
 from zimaApp.dao.base import BaseDAO
 from zimaApp.database import async_session_maker
+from zimaApp.exceptions import BrigadeAlreadyExistsException, WellsAlreadyExistsException
 from zimaApp.logger import logger
 from zimaApp.repairtime.models import RepairTime, StatusSummary
 from zimaApp.summary.models import BrigadeSummary
@@ -54,9 +55,7 @@ class RepairTimeDAO(BaseDAO):
         Возвращает True, если занято (есть пересечения), иначе False.
         """
 
-        # Если end_time не указано, считаем текущим временем
-        if end_time is None:
-            end_time = datetime.utcnow()
+
 
         async with async_session_maker() as session:
             # Проверка занятости бригады
@@ -65,32 +64,30 @@ class RepairTimeDAO(BaseDAO):
                     and_(
                         RepairTime.brigade_id == brigade_id,
                         RepairTime.start_time < end_time,
-                        or_(
-                            RepairTime.end_time == None,
-                            RepairTime.end_time > start_time
-                        )
+                        RepairTime.start_time >= start_time
                     )
                 )
             )
             brigade_conflict_exists = brigade_conflict.scalars().first() is not None
+            if brigade_conflict_exists:
+                return BrigadeAlreadyExistsException
 
-            # Проверка занятости скважины другой бригадой
-            well_conflict = await session.execute(
+            # Проверка, есть ли другие бригады, занявшие эту скважину в интервале [start_time, end_time], кроме текущей
+            other_brigades_on_well = await session.execute(
                 select(RepairTime).where(
                     and_(
                         RepairTime.well_id == well_id,
                         RepairTime.brigade_id != brigade_id,
-                        RepairTime.start_time < end_time,
-                        or_(
-                            RepairTime.end_time == None,
-                            RepairTime.end_time > start_time
-                        )
+                        RepairTime.start_time >= start_time,
+                        RepairTime.start_time < end_time
                     )
                 )
             )
-            well_conflict_exists = well_conflict.scalars().first() is not None
+            other_brigades_conflict = other_brigades_on_well.scalars().first() is not None
+            if other_brigades_conflict:
+                return WellsAlreadyExistsException
+            return
 
-            return brigade_conflict_exists or well_conflict_exists
 
     @classmethod
     async def find_by_well_number(cls, well_number: str):

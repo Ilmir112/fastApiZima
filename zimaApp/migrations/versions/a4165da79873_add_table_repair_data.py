@@ -31,7 +31,7 @@ def upgrade() -> None:
     sa.Column('finish_time', sa.DateTime(timezone=True), nullable=True),
     sa.Column('category_repair', sa.String(), nullable=True),
     sa.Column('duration_repair', sa.Float(), nullable=True),
-    sa.Column('repair_code', sa.String(), nullable=True),
+    sa.Column('repair_code', sa.String(), nullable=True, unique=True),
     sa.Column('type_repair', sa.String(), nullable=True),
     sa.Column('bush', sa.String(), nullable=True),
     sa.PrimaryKeyConstraint('id')

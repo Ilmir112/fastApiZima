@@ -3,9 +3,9 @@ from fastapi import HTTPException, status
 
 class ZimaException(HTTPException):
     status_code = 500
-    detail = ""
+    detail = "Ошибка обработки запроса"
 
-    def __init__(self):
+    def __init__(self, information=None):
         super().__init__(status_code=self.status_code, detail=self.detail)
 
 

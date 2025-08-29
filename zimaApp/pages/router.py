@@ -26,13 +26,11 @@ from zimaApp.wells_repair_data.router import (
 
 router = APIRouter(
     prefix="/pages",
-    tags=["Фронтенд"],
+    tags=["Фронтенд"]
 )
 
 templates = Jinja2Templates(directory="zimaApp/templates")
 # templates = Jinja2Templates(directory="templates")
-
-
 
 @router.get("/register")
 @version(1)

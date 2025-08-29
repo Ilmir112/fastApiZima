@@ -79,10 +79,10 @@ async def add_repair_data(repair_data: RepairDataCreate, user: Users =Depends(ge
 @version(1)
 async def find_repair_all(user: Users = Depends(get_current_user)):
     try:
-
+        serialized_data = []
         repair = await RepairDataDAO.find_all()
         if repair:
-            serialized_data = []
+
             for data in sorted(repair, key=lambda x: x.begin_time, reverse=True):
                 serialized_data.append(
                     {   "id": data.id,
