@@ -3,19 +3,19 @@
 
 
 services:
-  db:
-    image: postgres:15
-    container_name: zima_data
-    environment:
-      POSTGRES_PASSWORD: 195375AsD+
-    volumes:
-      - postgresdata:/var/lib/postgresql/data
-    env_file: # Файл с переменными окружения (Вместо environment)
-      - .env-non-dev
-    ports:
-      - 5433:5432 # Порт нужен, только если нам нужен доступ к контейнеру напрямую
-    networks:
-      - my_network
+#  db:
+#    image: postgres:15
+#    container_name: zima_data
+#    environment:
+#      POSTGRES_PASSWORD: 195375AsD+
+#    volumes:
+#      - postgresdata:/var/lib/postgresql/data
+#    env_file: # Файл с переменными окружения (Вместо environment)
+#      - .env-non-dev
+#    ports:
+#      - 5433:5432 # Порт нужен, только если нам нужен доступ к контейнеру напрямую
+#    networks:
+#      - my_network
   redis:
     image: redis:7
     container_name: zima_redis
@@ -32,7 +32,7 @@ services:
     env_file:
       - .env-non-dev
     depends_on: # Запускаем только после запуска БД и Redis (depends on = зависит от)
-      - db
+#      - db
       - redis
     # Если не работает эта команда, используйте закомментированную
     # command: ["/zimaApp/docker/zimaApp.sh"]
