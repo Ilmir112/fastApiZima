@@ -98,8 +98,6 @@ try:
     # Создайте экземпляр класса Settings
     settings = Settings()
 
-    print(settings.DATABASE_URL)
-
     # Создание брокера сообщений RabbitMQ
     router_broker = RabbitBroker(url=settings.rabbitmq_url)
 
