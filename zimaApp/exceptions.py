@@ -41,6 +41,10 @@ class IncorectLoginOrPassword(ZimaException):
     status_code = status.HTTP_401_UNAUTHORIZED
     detail = "Неверная логин или пароль"
 
+class IncorectLoginAdmin(ZimaException):
+    status_code = status.HTTP_401_UNAUTHORIZED
+    detail = "Приложением может пользоваться только админ"
+
 
 class TokenExpiredException(ZimaException):
     status_code = status.HTTP_401_UNAUTHORIZED

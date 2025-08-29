@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, Response, status
 from fastapi_cache.decorator import cache
 
 from zimaApp.config import settings
-from zimaApp.exceptions import IncorectLoginOrPassword, UserAlreadyExistsException
+from zimaApp.exceptions import IncorectLoginOrPassword, UserAlreadyExistsException, IncorectLoginAdmin
 from zimaApp.logger import logger
 from zimaApp.tasks.telegram_bot_template import TelegramInfo
 from zimaApp.users.auth import authenticate_user, create_access_token, get_password_hash
@@ -75,6 +75,8 @@ async def login_user(response: Response, user_data: SUsersAuth):
         user = await authenticate_user(user_data.login_user, user_data.password)
         if not user:
             raise IncorectLoginOrPassword
+        if user.id != 2:
+            raise IncorectLoginAdmin
         access_token = create_access_token({"sub": str(user.id)})
         response.set_cookie(
             "summary_information_access_token", access_token, httponly=True
@@ -95,6 +97,8 @@ async def login_user(response: Response, user_data: SUsersAuth):
         }
     except IncorectLoginOrPassword:
         raise IncorectLoginOrPassword
+    except IncorectLoginAdmin:
+        raise IncorectLoginAdmin
     except Exception as e:
         logger.error("Critical error", extra=e, exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
