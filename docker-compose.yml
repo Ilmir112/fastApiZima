@@ -7,7 +7,7 @@ services:
     image: postgres:15
     container_name: zima_data
     environment:
-      POSTGRES_PASSWORD: 195375AsD
+      POSTGRES_PASSWORD: 195375AsD+
     volumes:
       - postgresdata:/var/lib/postgresql/data
     env_file: # Файл с переменными окружения (Вместо environment)
@@ -32,7 +32,7 @@ services:
     env_file:
       - .env-non-dev
     depends_on: # Запускаем только после запуска БД и Redis (depends on = зависит от)
-#      - db
+      - db
       - redis
     # Если не работает эта команда, используйте закомментированную
     # command: ["/zimaApp/docker/zimaApp.sh"]
