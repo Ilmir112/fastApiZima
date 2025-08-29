@@ -7,7 +7,7 @@ services:
     image: postgres:15
     container_name: zima_data
     environment:
-      POSTGRES_PASSWORD: 195375AsD+
+      POSTGRES_PASSWORD: 195375AsD
     volumes:
       - postgresdata:/var/lib/postgresql/data
     env_file: # Файл с переменными окружения (Вместо environment)
