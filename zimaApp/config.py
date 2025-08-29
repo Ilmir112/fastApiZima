@@ -25,7 +25,7 @@ class Settings(BaseSettings):
 
     @property
     def DATABASE_URL(self):
-        return (f"postgresql+asyncpg://{self.DB_USER}:{urllib.parse.quote(self.DB_PASSWORD)}"
+        return (f"postgresql+asyncpg://{self.DB_USER}:195375AsD%%2B@"
                 f"@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}")
 
     @property
