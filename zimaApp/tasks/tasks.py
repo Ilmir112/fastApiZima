@@ -475,7 +475,8 @@ async def work_with_excel_summary(filename, df):
 
                     repair_data = await get_by_well_number_and_well_area_and_start_repair(
                         repair, users)
-
+                if repair_data is None:
+                    return
                 if hasattr(repair_data, "finish_time"):
                     finish_time = repair_data.finish_time
                     repair_close = True
