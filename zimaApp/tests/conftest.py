@@ -12,7 +12,7 @@ from zimaApp.database import Base, async_session_maker, engine
 from zimaApp.well_classifier.models import WellClassifier
 from zimaApp.wells_repair_data.models import WellsRepair
 from zimaApp.wells_data.models import WellsData
-from zimaApp.main import base_app as fastapi_app
+from zimaApp.main import app as fastapi_app
 from zimaApp.users.models import Users
 
 

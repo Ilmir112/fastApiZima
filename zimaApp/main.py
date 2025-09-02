@@ -66,7 +66,7 @@ bot_user = telegram.Bot(token=settings.TOKEN_USERS)
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     try:
-        if settings.MODE == 'PROD':
+        if settings.MODE == 'DEV':
             # Запускаем потребителя как фоновую задачу
             consumer_task = asyncio.gather(start_consumer())
     except Exception as e:
@@ -206,11 +206,6 @@ origins = [
     "http://176.109.106.199:8000",
     "http://176.109.106.199:7777",
     "http://176.109.106.199:80",
-    "http://127.0.0.1:8000",
-    "http://83.174.202.38:8000",
-    "http://83.174.202.38:7777",
-    "http://83.174.202.38:80",
-    "http://83.174.202.38:5555",
 ]
 #
 app.add_middleware(
@@ -270,11 +265,11 @@ async def add_process_time_header(request: Request, call_next):
         response = await call_next(request)
         process_time = time.perf_counter() - start_time
         response.headers["X-Process-Time"] = str(process_time)
-        # logger.info(
-        #     "request handling time", extra={"process_time": round(process_time, 4)}
-        # )
-
+        logger.info(
+            "request handling time", extra={"process_time": round(process_time, 4)}
+        )
         return response
+
     except HTTPException as e:  # Обрабатываем исключения от endpoint
         process_time = time.time() - start_time
         response = e  # Или создайте новый Response
@@ -284,13 +279,12 @@ async def add_process_time_header(request: Request, call_next):
         return response
 
     except Exception as e:
-        # Логируйте ошибку! Используйте модуль logging
         print(f"Unexpected error in middleware: {e}")
         process_time = time.time() - start_time
         response = Response(status_code=500, content=f"Internal Server Error: {e}")
         response.headers["X-Process-Time"] = str(
             process_time
-        )  # Важно: добавляем заголовок даже при ошибке
+        )
         return response
 
 
