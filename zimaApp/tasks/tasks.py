@@ -467,16 +467,15 @@ async def work_with_excel_summary(filename, df):
                 repair_data = None
                 summary_info = await RepairTimeDAO.find_one_or_none(brigade_id=brigade_data.id, well_id=well_data.id)
 
-                if repair_data is None:
-                    finish_time = datetime.now().replace(tzinfo=ZoneInfo("Asia/Yekaterinburg"))
-                    repair = SRepairGet(well_area=well_data.well_area,
-                                        well_number=well_data.well_number,
-                                        begin_time=open_datetime)
 
-                    repair_data = await get_by_well_number_and_well_area_and_start_repair(
-                        repair, users)
-                if repair_data is None:
-                    return
+                finish_time = datetime.now().replace(tzinfo=ZoneInfo("Asia/Yekaterinburg"))
+                repair = SRepairGet(well_area=well_data.well_area,
+                                    well_number=well_data.well_number,
+                                    begin_time=open_datetime)
+
+                repair_data = await get_by_well_number_and_well_area_and_start_repair(
+                    repair, users)
+
                 if hasattr(repair_data, "finish_time"):
                     finish_time = repair_data.finish_time
                     repair_close = True
