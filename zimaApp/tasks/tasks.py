@@ -520,12 +520,10 @@ async def work_with_excel_summary(filename, df):
                     if existing_entry:
                         continue
 
+                    if repair_data:
+                        if repair_data.begin_time - timedelta(hours=3, minutes=59) <= date_str <= finish_time + timedelta(
+                                hours=3, minutes=59):
 
-
-                    if repair_data.begin_time - timedelta(hours=3, minutes=59) <= date_str <= finish_time + timedelta(
-                            hours=3, minutes=59):
-
-                        if repair_data:
                             results = await add_summary(work_data=work_data, work_details=work_details,
                                                             summary_info=summary_info.id)
                             logger.info(f"сводка по скважине {well_data.well_number} обновлена")
