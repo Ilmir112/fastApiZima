@@ -403,6 +403,7 @@ def check_emails_for_excel():
         return []
 
 
+@celery_app.task(acks_late=True)
 async def work_with_excel_summary(filename, df):
     from zimaApp.repairtime.router import open_summary_data
     from zimaApp.summary.router import add_summary
@@ -474,7 +475,7 @@ async def work_with_excel_summary(filename, df):
                                     begin_time=open_datetime)
 
                 repair_data = await get_by_well_number_and_well_area_and_start_repair(
-                    repair, users)
+                    repair)
 
                 if hasattr(repair_data, "finish_time"):
                     finish_time = repair_data.finish_time
@@ -482,7 +483,7 @@ async def work_with_excel_summary(filename, df):
 
                 for row_index, row in enumerate(df.itertuples()):
                     date_str, work_details = ExcelRead.extract_datetimes(row)
-                    results = []
+                    results = None # Initialize results
                     work_data = SUpdateSummary(date_summary=date_str,
                                                work_details=work_details)
 
@@ -527,8 +528,6 @@ async def work_with_excel_summary(filename, df):
                                                             summary_info=summary_info.id)
                             logger.info(f"сводка по скважине {well_data.well_number} обновлена")
 
-                            return results
-
                 if repair_close :
                     results = await RepairTimeDAO.update_data(summary_info.id, end_time=finish_time,
                                                               status="закрыт")
@@ -539,10 +538,10 @@ async def work_with_excel_summary(filename, df):
                 return results
             else:
                 logger.error(f"Бригада {brigade_number} отсутствует в базе")
-                return
+                return {"detail": f"Бригада {brigade_number} отсутствует в базе"}
 
-
+            return results
     except Exception as e:
-        logger.exception(f"Ошибка в work_with_excel_summary: {e}")
-        raise HTTPException(status_code=500, detail=e)
+        logger.error(f"Ошибка при работе с Excel файлом: {e}")
+        return {"detail": f"Ошибка при работе с Excel файлом: {e}"}
 
