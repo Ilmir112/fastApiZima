@@ -478,8 +478,9 @@ async def work_with_excel_summary(filename, df):
                     repair)
 
                 if hasattr(repair_data, "finish_time"):
-                    finish_time = repair_data.finish_time
-                    repair_close = True
+                    if repair_data.finish_time:
+                        finish_time = repair_data.finish_time
+                        repair_close = True
 
                 for row_index, row in enumerate(df.itertuples()):
                     date_str, work_details = ExcelRead.extract_datetimes(row)
