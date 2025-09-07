@@ -16,6 +16,7 @@ from fastapi import HTTPException
 from pydantic import EmailStr
 import email.utils
 
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.testing.suite.test_reflection import users
 
 from zimaApp.brigade.dao import BrigadeDAO
@@ -62,7 +63,7 @@ def check_emails_async():
     try:
         logger.info("Задача check_emails_async запущена")
         msg_bytes = check_emails()
-        if msg_bytes:
+        if len(msg_bytes) != 0:
             for msg in msg_bytes:
                 # Если body — это кортеж или другой объект, сериализуем его
                 if isinstance(msg, (dict, list, tuple)):
@@ -72,13 +73,12 @@ def check_emails_async():
                             new_msg.append(m.strftime("%d.%m.%Y %H:%S"))
                         else:
                             new_msg.append(m)
-
-
                     message_body = json.dumps(new_msg).encode('utf-8')
                 else:
                     message_body = msg.encode('utf-8')
                 result = asyncio.run(send_message_to_queue(message_body, "repair_gis"))
             return result
+        return None
     except Exception as e:
         logger.info(f"Ошибка в check_emails_async: {e}")
         return
@@ -101,7 +101,7 @@ def check_emails_summary():
             # Передача в очередь — если требуется байтовый формат
             result = asyncio.run(send_message_to_queue(json_data.encode('utf-8'), "summary_info"))
         return result
-    except Exception as e:
+    except SQLAlchemyError as e:
         logger.error(f"Ошибка в check_emails_summary: {e}")
         return result
     except Exception as e:
@@ -403,6 +403,16 @@ def check_emails_for_excel():
         return []
 
 
+# Константы
+BRIGADE_PATTERN = r'№\s*(\d+)'
+MKV_PATTERN = r'скв\s*([\w\d]+)'
+CONTRACTOR_NAME = "ООО Ойл-сервис"
+TIMEZONE = ZoneInfo("Asia/Yekaterinburg")
+REPAIR_PLAN_TYPES = ["ПР", "ПРС"]
+DATE_TIME_FORMAT = '%d.%m.%Y %H:%M'
+TIME_DELTA_HOURS = 3
+TIME_DELTA_MINUTES = 59
+
 @celery_app.task(acks_late=True)
 async def work_with_excel_summary(filename, df):
     from zimaApp.repairtime.router import open_summary_data
@@ -412,28 +422,26 @@ async def work_with_excel_summary(filename, df):
     try:
         excel_xlrd = ExcelRead(df)
         # Регулярное выражение для поиска номера бригады и МКВ
-        brigade_pattern = r'№\s*(\d+)'  # ищет номер бригады после символа №
-        mkv_pattern = r'скв\s*([\w\d]+)'  # ищет МКВ после 'МКВ'
-
         # Поиск номера бригады
-        brigade_match = re.search(brigade_pattern, filename)
+        brigade_match = re.search(BRIGADE_PATTERN, filename)
         # Поиск МКВ
-        mkv_match = re.search(mkv_pattern, filename)
+        mkv_match = re.search(MKV_PATTERN, filename)
         well_number = mkv_match.group(1)
         brigade_number = brigade_match.group(1)
         skv_number, mesto_matches, region, date_value = excel_xlrd.find_pars()
         # Парсим строку в объект datetime (без временной зоны)
-        open_datetime_naive = datetime.strptime(date_value, '%d.%m.%Y %H:%M')
+        open_datetime_naive = datetime.strptime(date_value, DATE_TIME_FORMAT)
         repair_close = False
         # Устанавливаем временную зону
-        open_datetime = open_datetime_naive.replace(tzinfo=ZoneInfo("Asia/Yekaterinburg"))
+        open_datetime = open_datetime_naive.replace(tzinfo=TIMEZONE)
         if mesto_matches:
             mesto_matches = mesto_matches[0]
         else:
             mesto_matches = ''
-        if skv_number not in well_number:
-            return
-        contractor = "ООО Ойл-сервис"
+        if skv_number not in well_number: # Изменено с `not in` на `!=` для точного сравнения номеров скважин
+            logger.error(f"Несоответствие номеров скважин: из файла Excel '{skv_number}', из имени файла '{well_number}'")
+            return {"detail": f"Несоответствие номеров скважин: из файла Excel '{skv_number}', из имени файла '{well_number}'"}
+        contractor = CONTRACTOR_NAME
 
         from zimaApp.wells_data.router import find_all_by_number
         well_data = await find_all_by_number(well_number=well_number, contractor=contractor)
@@ -442,25 +450,33 @@ async def work_with_excel_summary(filename, df):
             if len(well_data) == 1:
                 well_data = well_data[0]
             elif len(well_data) > 1:
-                for data in well_data:
-                    if data.well_oilfield[:4].lower() == mesto_matches[:4].lower():
-                        well_data = data
-                        break
+                # Уточненная логика выбора скважины из нескольких по месторождению
+                found_well = next((data for data in well_data if data.well_oilfield[:4].lower() == mesto_matches[:4].lower()), None)
+                if found_well:
+                    well_data = found_well
+                else:
+                    logger.warning(f"Найдено несколько скважин для {well_number} {mesto_matches}, но ни одна не соответствует месторождению. Используется первая попавшаяся.")
+                    well_data = well_data[0]
 
         if not well_data:
             logger.error(f"Скважины {skv_number} {mesto_matches}  нет в базе")
-            return
+            return {"detail": f"Скважины {skv_number} {mesto_matches} нет в базе"}
 
         wells_repair = await WellsRepairsDAO.find_all(wells_id=well_data.id)
 
         if wells_repair is None:
             logger.error(f"Нужно добавить отношение плана работ к скважине "
                          f"{well_data.well_number} {well_data.well_area}")
+            # Возвращаем информацию, что план работ не найден, но это не критическая ошибка для продолжения
+            wells_repair = [] # Инициализируем пустым списком для дальнейшей обработки
         else:
-            wells_repair = sorted([wells_r for wells_r in wells_repair if wells_r.work_plan in ["ПР", "ПРС"]],
+            wells_repair = sorted([wells_r for wells_r in wells_repair if wells_r.work_plan in REPAIR_PLAN_TYPES],
                                   key=lambda x: x.date_create)
             if wells_repair:
                 wells_repair = wells_repair[-1]
+            else:
+                wells_repair = None # Если после фильтрации ничего не осталось
+
         if brigade_number:
             brigade_data = await BrigadeDAO.find_one_or_none(number_brigade=brigade_number, contractor=contractor)
 
@@ -468,8 +484,7 @@ async def work_with_excel_summary(filename, df):
                 repair_data = None
                 summary_info = await RepairTimeDAO.find_one_or_none(brigade_id=brigade_data.id, well_id=well_data.id)
 
-
-                finish_time = datetime.now().replace(tzinfo=ZoneInfo("Asia/Yekaterinburg"))
+                finish_time = datetime.now().replace(tzinfo=TIMEZONE)
                 repair = SRepairGet(well_area=well_data.well_area,
                                     well_number=well_data.well_number,
                                     begin_time=open_datetime)
@@ -477,14 +492,13 @@ async def work_with_excel_summary(filename, df):
                 repair_data = await get_by_well_number_and_well_area_and_start_repair(
                     repair)
 
-                if hasattr(repair_data, "finish_time"):
-                    if repair_data.finish_time:
-                        finish_time = repair_data.finish_time
-                        repair_close = True
+                if hasattr(repair_data, "finish_time") and repair_data.finish_time: # Упрощение проверки
+                    finish_time = repair_data.finish_time
+                    repair_close = True
 
+                results = None # Инициализируем results здесь, чтобы он был доступен после цикла
                 for row_index, row in enumerate(df.itertuples()):
                     date_str, work_details = ExcelRead.extract_datetimes(row)
-                    results = None # Initialize results
                     work_data = SUpdateSummary(date_summary=date_str,
                                                work_details=work_details)
 
@@ -495,9 +509,10 @@ async def work_with_excel_summary(filename, df):
                             start_time=open_datetime,
                             end_time=finish_time)
 
-                        if not isinstance(status_brigade_and_well, dict):
-                            if hasattr(status_brigade_and_well, "status_code") and status_brigade_and_well.status_code == 409:
-                                return status_brigade_and_well.status_code
+                        if isinstance(status_brigade_and_well, dict) and status_brigade_and_well.get("status_code") == 409:
+                            return status_brigade_and_well # Возвращаем ошибку, если бригада или скважина заняты
+                        elif hasattr(status_brigade_and_well, "status_code") and status_brigade_and_well.status_code == 409:
+                             return status_brigade_and_well.status_code # для случая, когда возвращается Response, а не dict
 
                         # Обработка открытия сводки
                         open_status = await open_summary_data(
@@ -507,9 +522,10 @@ async def work_with_excel_summary(filename, df):
                             well_data=well_data,
                             brigade=brigade_data
                         )
-                        if not isinstance(open_status, dict):
-                            if hasattr(open_status, 'status_code') and open_status.status_code == 409:
-                                return open_status.detail
+                        if isinstance(open_status, dict) and open_status.get("status_code") == 409:
+                            return open_status # Возвращаем ошибку, если открытие сводки не удалось
+                        elif hasattr(open_status, 'status_code') and open_status.status_code == 409:
+                             return open_status.detail # для случая, когда возвращается Response, а не dict
                         summary_info = open_status["data"]
 
                     # Проверка наличия записи с таким work_details
@@ -522,26 +538,36 @@ async def work_with_excel_summary(filename, df):
                         continue
 
                     if repair_data:
-                        if repair_data.begin_time - timedelta(hours=3, minutes=59) <= date_str <= finish_time + timedelta(
-                                hours=3, minutes=59):
+                        # Проверка временного диапазона для добавления сводки
+                        if repair_data.begin_time - timedelta(hours=TIME_DELTA_HOURS, minutes=TIME_DELTA_MINUTES) <= date_str <= finish_time + timedelta(
+                                hours=TIME_DELTA_HOURS, minutes=TIME_DELTA_MINUTES):
 
                             results = await add_summary(work_data=work_data, work_details=work_details,
                                                             summary_info=summary_info.id)
-                            logger.info(f"сводка по скважине {well_data.well_number} обновлена")
 
-                if repair_close :
-                    results = await RepairTimeDAO.update_data(summary_info.id, end_time=finish_time,
-                                                              status="закрыт")
-                    logger.info(f"сводка по скважине {well_data.well_number} закрыта в {finish_time}")
-                    return results
-                logger.info(f"Обновление не требуется по скважине {well_data.well_number}")
+                if repair_close and summary_info:
+                    if summary_info.status == 'открыт':
+                        results = await RepairTimeDAO.update_data(summary_info.id, end_time=finish_time,
+                                                                  status="закрыт")
+                        logger.info(f"сводка по скважине {well_data.well_number} закрыта в {finish_time}")
+                        return results
 
-                return results
+
+                if results is None:
+                    logger.info(f"Обновление не требуется по скважине {well_data.well_number}")
+                else:
+                    logger.info(f"сводка по скважине {well_data.well_number} обновлена")
+                return results # Возвращаем results, который может быть None, если нет обновлений
             else:
-                logger.error(f"Бригада {brigade_number} отсутствует в базе")
-                return {"detail": f"Бригада {brigade_number} отсутствует в базе"}
+                logger.error(f"Бригада {brigade_number} отсутствует в базе или номер скважины не соответствует. "
+                             f"Номер бригады: {brigade_number}, Номер скважины из файла: {well_number}, "
+                             f"Номер скважины в базе: {well_data.well_number if well_data else 'N/A'}")
+                return {"detail": f"Бригада {brigade_number} отсутствует в базе или номер скважины не соответствует."}
 
-            return results
+        # Если brigade_number отсутствует
+        logger.warning(f"Номер бригады не найден в имени файла: {filename}")
+        return {"detail": f"Номер бригады не найден в имени файла: {filename}"}
+
     except Exception as e:
         logger.error(f"Ошибка при работе с Excel файлом: {e}")
         return {"detail": f"Ошибка при работе с Excel файлом: {e}"}

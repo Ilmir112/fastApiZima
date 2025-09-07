@@ -52,8 +52,12 @@ def time_consumer():
 @router.get("/run-check-emails")
 async def run_check_emails():
     # result = await start_consumer()
-    result = await check_emails_async()
-    return result
+    try:
+        result = check_emails_async()
+
+        return result
+    except Exception as e:
+        return  e
 
 @router.get("/memory_consumer")
 def memory_consumer():
