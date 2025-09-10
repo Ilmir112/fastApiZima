@@ -79,7 +79,7 @@ async def lifespan(_: FastAPI):
         try:
             # Инициализация Redis
             redis_client = aioredis.from_url(
-                "redis://localhost:6379",
+                f"redis://{settings.REDIS_HOST}:{settings.REDIS_PORT}",
                 encoding="utf8",
                 decode_responses=True,
                 socket_connect_timeout=5,
