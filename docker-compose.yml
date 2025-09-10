@@ -19,10 +19,13 @@ services:
   redis:
     image: redis:7
     container_name: zima_redis
+    env_file:
+      - .env-non-dev
     networks:
       - my_network
     ports:
       - 6379:6379
+
   zima:
     image: zima_image2
     restart: always
