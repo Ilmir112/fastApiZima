@@ -78,7 +78,7 @@ async def lifespan(_: FastAPI):
         print("Запуск приложения")
         try:
             # Инициализация Redis
-            redis_client = redis.from_url(
+            redis_client = aioredis.from_url(
                 "redis://localhost:6379",
                 encoding="utf8",
                 decode_responses=True,
