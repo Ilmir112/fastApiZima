@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends
 from datetime import timedelta, datetime, timezone
 
+from fastapi_cache.decorator import cache
 from sqlalchemy.exc import SQLAlchemyError
 
 from zimaApp.config import settings
@@ -27,7 +28,7 @@ router = APIRouter(
 )
 
 
-@router.get("")
+@router.get("/")
 @version(1)
 async def repairs_gis():
     return {"status": "ok", "data": "пример данных"}
@@ -35,8 +36,10 @@ async def repairs_gis():
 
 @router.get("/all")
 @version(1)
+@cache(expire=1500)
 async def get_repair_gis_all():
     try:
+        logger.info(f"Processing summary_id:")
         repairs = await RepairsGisDAO.filter_for_filter(
             model=RepairsGis, join_related="well"
         )

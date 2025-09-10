@@ -6,6 +6,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet"
           integrity="sha384-LN+7fdVzj6u52u30Kp6M/trliBMCMKTyK833zpbD+pXdCLuTusPj697FH4R/5mcr" crossorigin="anonymous"/>
     <link rel="stylesheet" href="/static/css/style.css"/>
+    <link rel="stylesheet" href="/static/css/modal.css"/> {# Добавлена ссылка на новый файл стилей #}
     {% block head %}
     {% endblock %}
 </head>
@@ -16,18 +17,7 @@
         <!-- Форма входа -->
         {% block login_form %}
         <!-- Контейнер для формы входа -->
-        <div id="login-container"
-             style="
-                display: none;
-                position: fixed;
-                top: 50%;
-                left: 50%;
-                transform: translate(-50%, -50%);
-                background-color: white;
-                padding: 20px;
-                border-radius: 8px;
-                box-shadow: 0 0 10px rgba(0,0,0,0.5);
-                z-index: 9999;">
+        <div id="login-container" class="login-container" style="display: none;">
 
 
             <form id="loginForm">
@@ -54,7 +44,7 @@
             <span id="closeRegisterModal" class="close">&times;</span>
             <div class="modal-header">
                 <h2>Окно регистрация</h2>
-                <span class="close" id="closeModal">&times;</span>
+                <!-- <span class="close" id="closeModal">&times;</span> -->
             </div>
 
             <form id="registerForm">
@@ -119,109 +109,80 @@
     {% endblock %}
 
     <!-- Оверлей для затемнения фона -->
-    <div id="accountModalOverlay"
-         style="
-             display:none;
-             position:fixed;
-             top:0;
-             left:0;
-             width:100%;
-             height:100%;
-             background-color:rgba(0,0,0,0.5);
-             z-index:999;">
+    <div id="accountModalOverlay" class="account-modal-overlay" style="display:none;">
     </div>
 
     <!-- Модальное окно -->
-    <div id="accountModal"
-         style="
-             display:none;
-             position:fixed;
-             top:50%;
-             left:50%;
-             transform:translate(-50%, -50%);
-             width:500px;
-             max-width:90%;
-             background:#fff;
-             padding:20px;
-             box-shadow:0 4px 8px rgba(0,0,0,0.2);
-             border-radius:8px;
-             z-index:1000;">
+    <div id="accountModal" class="account-modal" style="display:none;">
         <!-- Заголовок модального окна -->
         <h2>Информация об аккаунте</h2>
 
         <!-- Информация о пользователе -->
 
-        <div id="userInfo" style="
-    max-width: 600px;
-    margin: 0 auto;
-    padding: 20px;
-    flex-direction: column;
-    gap: 10px;
-    font-family: Arial, sans-serif;
-">
+        <div id="userInfo" class="user-info-section">
 
             <!-- Каждое поле в виде горизонтальной строки -->
-            <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div class="user-info-row">
                 <strong>Логин:</strong>
-                <div style="display: flex; align-items: center; gap: 10px;">
+                <div class="user-info-field">
                     <span id="userLoginDisplay"></span>
                     <input type="text" id="userLoginInput" style="display:none;">
                 </div>
             </div>
 
-            <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div class="user-info-row">
                 <strong>Фамилия:</strong>
-                <div style="display: flex; align-items: center; gap: 10px;">
+                <div class="user-info-field">
                     <span id="userSurnameDisplay"></span>
                     <input type="text" id="userSurnameInput" style="display:none;">
                 </div>
             </div>
 
-            <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div class="user-info-row">
                 <strong>Имя:</strong>
-                <div style="display: flex; align-items: center; gap: 10px;">
+                <div class="user-info-field">
                     <span id="userNameDisplay"></span>
                     <input type="text" id="userNameInput" style="display:none;">
                 </div>
             </div>
 
-            <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div class="user-info-row">
                 <strong>Отчество:</strong>
-                <div style="display: flex; align-items: center; gap: 10px;">
+                <div class="user-info-field">
                     <span id="userSecondNameDisplay"></span>
                     <input type="text" id="userSecondNameInput" style="display:none;">
                 </div>
             </div>
 
-            <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div class="user-info-row">
                 <strong>Должность:</strong>
-                <div style="display: flex; align-items: center; gap: 10px;">
+                <div class="user-info-field">
                     <span id="userPositionDisplay"></span>
                     <input type="text" id="userPositionInput" style="display:none;">
                 </div>
             </div>
 
-            <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div class="user-info-row">
                 <strong>Заказчик:</strong>
-                <div style='display:flex; align-items:center; gap:10px'>
+                <div class="user-info-field">
                     <span id='userCustomerDisplay'></span>
                     <input type='text' id='userCustomerInput' style='display:none;'/>
                 </div>
             </div>
 
             <!-- Контрагент -->
-            <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div class="user-info-row">
                 <strong>Подрядчик:</strong>
-                <div style='display:flex; align-items:center; gap:10px'>
+                <div class="user-info-field">
                     <span id='userContractorDisplay'></span>
                     <input type='text' id='userContractorInput' style='display:none;'/>
                 </div>
             </div>
 
             <!-- ЦТКРС -->
-            <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div class="user-info-row">
                 <strong>ЦТКРС:</strong>
-                <div style='display:flex; align-items:center; gap:10px'>
+                <div class="user-info-field">
                     <span id='userCtcrsDisplay'></span>
                     <!-- Заменяем input на select -->
                     <select id='userCtcrsSelect' style='display:none;'>
@@ -237,7 +198,7 @@
             <!-- Поле для ввода пароля (по умолчанию скрыто) -->
             <!-- Для режима просмотра -->
 
-            <div id="passwordSection" style="display:none; flex-direction: column; gap:10px; margin-top:10px;">
+            <div id="passwordSection" class="password-section" style="display:none;">
                 <!--                <span id="passwordDisplay"></span>-->
 
                 <!--                &lt;!&ndash; Для режима редактирования &ndash;&gt;-->
@@ -254,13 +215,7 @@
             </div>
 
             <!-- Кнопки -->
-            <div style="
-        display:flex;
-        justify-content:flex-start;
-        gap:10px;
-        margin-top:auto;
-        margin-bottom:auto;
-">
+            <div class="button-group">
                 <button id='editBtn'>Редактировать</button>
                 <button id='saveBtn' style='display:none;'>Сохранить</button>
             </div>
@@ -271,7 +226,6 @@
         <button id='closeAccountModal'>Закрыть</button>
         <!-- Место для уведомлений -->
         <div id="notification" style="color:red; margin-top:10px;"></div>
-        `
     </div>
 </header>
 
@@ -356,17 +310,10 @@
 </div>
 
 <!-- Подвал сайта -->
-<div class='content-container' style='margin-top: 20px;'>
-    `
-    <footer>`
-        `<p>&copy; 2025 Все права защищены. По всем вопросом обращаться к Зуфарову И.М.</p>`
-        `<!-- Можно добавить другую информацию --> `
-        `
-    </footer>
-    `
-    `
-</div>
-`
+<footer style='margin-top: 20px;'>
+    <p>&copy; 2025 Все права защищены. По всем вопросом обращаться к Зуфарову И.М.</p>
+    <!-- Можно добавить другую информацию -->
+</footer>
 
 <!-- Скрипты Bootstrap JS Bundle (включает Popper) -->
 <script src='https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js'

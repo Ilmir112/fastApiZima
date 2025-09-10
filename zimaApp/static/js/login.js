@@ -60,26 +60,43 @@ function showLogoutButton(show) {
 
 // =================== Проверка авторизации ===================
 function getToken() {
-    return localStorage.getItem('access_token');
+    const token = localStorage.getItem('access_token');
+    console.log('getToken: Возвращает:', token);
+    return token;
 }
 
 function removeToken() {
     localStorage.removeItem('access_token');
+    console.log('removeToken: Токен удален.');
 }
 
-async function checkAuth() {
+async function checkAuth(redirectToLogin = true) {
     const token = getToken();
+    console.log('checkAuth: Токен:', token ? 'Присутствует' : 'Отсутствует', ' (redirectToLogin:', redirectToLogin, ')');
+
+    // Если токена нет
     if (!token) {
-        alert('Пожалуйста, войдите в систему.');
-        // window.location.href = '/pages/login';
+        console.warn('checkAuth: Токен отсутствует.');
+        // Если мы уже на странице логина, не перенаправляем, просто возвращаем false
+        if (window.location.pathname === '/pages/login') {
+            return false;
+        }
+        if (redirectToLogin) {
+            window.location.href = '/pages/login';
+        }
         return false;
     }
 
     // Проверка срока действия JWT
     const payloadBase64 = token.split('.')[1];
+    console.log('checkAuth: payloadBase64:', payloadBase64);
+
     if (!payloadBase64) {
+        console.error('checkAuth: Недействительный формат токена: отсутствует payloadBase64');
         removeToken();
-        window.location.href = '/pages/login';
+        if (redirectToLogin) {
+            window.location.href = '/pages/login';
+        }
         return false;
     }
 
@@ -88,106 +105,149 @@ async function checkAuth() {
         const payload = JSON.parse(payloadJson);
         const currentTime = Math.floor(Date.now() / 1000);
 
+        console.log('checkAuth: payload.exp:', payload.exp);
+        console.log('checkAuth: currentTime:', currentTime);
+
         if (payload.exp && payload.exp < currentTime) {
-            alert('Время сессии истекло. Пожалуйста, войдите заново.');
+            console.warn('checkAuth: Токен истек.');
             removeToken();
-            window.location.href = '/pages/login';
+            if (redirectToLogin) {
+                window.location.href = '/pages/login';
+            }
             return false;
         }
     } catch (e) {
+        console.error('checkAuth: Ошибка при декодировании или парсинге токена:', e);
         removeToken();
-        window.location.href = '/pages/login';
+        if (redirectToLogin) {
+            window.location.href = '/pages/login';
+        }
         return false;
     }
 
+    console.log('checkAuth: Токен действителен.');
     return true;
 }
 
 // =================== Навигация по страницам ===================
 async function loadPage(path) {
-    const token = getToken();
-
+    console.log('loadPage: Загрузка страницы:', path);
     // Получаем контейнеры
     const loginContainer = document.getElementById('login-container');
     const contentContainer = document.getElementById('content');
 
-    // Обработка для страницы логина
-    if (path === '/pages/login') {
-        if (await checkAuth()) {
-            // Уже авторизован — редирект на домашнюю
-            window.location.reload();
+    // Если это не страница логина, проверяем авторизацию с перенаправлением
+    if (path !== '/pages/login') {
+        console.log('loadPage: Страница не логина, проверка авторизации...');
+        if (!(await checkAuth(true))) { // Передаем true, чтобы checkAuth перенаправил
+            console.log('loadPage: checkAuth вернул false, остановка загрузки страницы.');
             return;
         }
-        // Нет токена — показываем форму входа
-        if (loginContainer) loginContainer.style.display = 'block';
-        if (contentContainer) contentContainer.style.display = 'none';
+        // Если авторизация успешна, убедимся, что контейнер входа скрыт
+        if (loginContainer) loginContainer.style.display = 'none';
+    }
 
-        showLogoutButton(false);
+    // Обработка для страницы логина
+    if (path === '/pages/login') {
+        console.log('loadPage: Страница логина.');
+        // На странице логина вызываем checkAuth без перенаправления, чтобы избежать циклов
+        if (await checkAuth(false)) { // Передаем false
+            console.log('loadPage: Авторизован на странице логина, редирект на домашнюю.');
+            window.location.reload(); // или window.location.href = '/pages/home';
+            return;
+        }
+        // Логика отображения формы входа перенесена в DOMContentLoaded
+        // if (loginContainer) loginContainer.style.display = 'block';
+        // if (contentContainer) contentContainer.style.display = 'none';
+
+        // showLogoutButton(false);
         return;
     }
 
-    // Для остальных страниц
+    // Для остальных страниц (если мы сюда дошли, значит checkAuth была успешна)
+    console.log('loadPage: Страница авторизована, продолжение...');
     showLogoutButton(true);
+    // loginContainer уже скрыт выше
 
     if (path === '/pages/home') {
-        if (!(await checkAuth())) return;
-
+        console.log('loadPage: Загрузка домашней страницы.');
         try {
-            const response = await fetch('/pages/home', {headers: {'Authorization': `Bearer ${token}`}});
+            const response = await fetch('/pages/home', {headers: {'Authorization': `Bearer ${getToken()}`}});
             if (response.ok) {
                 const htmlContent = await response.text();
                 if (contentContainer) {
                     // contentContainer.innerHTML = htmlContent;
                     contentContainer.style.display = 'block';
                 }
-                if (loginContainer) loginContainer.style.display = 'none';
             } else {
-                alert('Пожалуйста, войдите в систему.');
+                console.warn('loadPage: Ошибка при загрузке домашней страницы, перенаправление на логин.', response.status);
                 localStorage.removeItem('access_token');
                 window.location.href = '/pages/login';
             }
         } catch (e) {
-            alert('Ошибка при загрузке домашней страницы: ' + e);
+            console.error('loadPage: Ошибка сети при загрузке домашней страницы:', e);
+            localStorage.removeItem('access_token');
+            window.location.href = '/pages/login';
         }
 
 // Обработка других страниц с ограниченным доступом
     } else if (
         path === '/pages/profile' ||
         path === '/pages/settings' ||
-        path === '/pages/login'
+        path === '/pages/login' // Эта строка, вероятно, лишняя, так как обрабатывается выше
         // добавьте сюда нужные пути
     ) {
-
-        if (!(await checkAuth())) return;
+        console.log('loadPage: Загрузка страницы с ограниченным доступом:', path);
 
         try {
-            const response = await fetch(path, {headers: {'Authorization': `Bearer ${token}`}});
+            const response = await fetch(path, {headers: {'Authorization': `Bearer ${getToken()}`}});
             if (response.ok) {
                 const htmlContent = await response.text();
-                // Можно вставлять контент или делать дополнительные действия
-                // Например:
-                // contentContainer.innerHTML=htmlContent;
             } else {
-                alert('Пожалуйста, войдите в систему.');
+                console.warn('loadPage: Ошибка при загрузке страницы, перенаправление на логин.', response.status);
                 localStorage.removeItem('access_token');
                 window.location.href = '/pages/login';
             }
         } catch (e) {
-            alert('Ошибка при загрузке страницы: ' + e);
+            console.error('loadPage: Ошибка сети при загрузке страницы:', e);
+            localStorage.removeItem('access_token');
+            window.location.href = '/pages/login';
         }
 
     } else {
+        console.log('loadPage: Обработка других страниц.');
         // Обработка других страниц по необходимости
     }
 }
 
 // =================== Обработка DOMContentLoaded ===================
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
 
+    console.log('DOMContentLoaded: Событие вызвано.');
+    const currentPageIsLogin = window.location.pathname === '/pages/login';
+    console.log('DOMContentLoaded: Текущая страница - логин:', currentPageIsLogin);
+    
+    // Проверяем авторизацию в первую очередь
+    if (!(await checkAuth(!currentPageIsLogin))) { // Если не страница логина, то перенаправляем
+        console.log('DOMContentLoaded: checkAuth вернул false, остановка дальнейшего выполнения.');
+        // Если мы на странице логина и токена нет, показываем форму входа
+        if (currentPageIsLogin) {
+            const loginContainer = document.getElementById('login-container');
+            const contentContainer = document.getElementById('content');
+            if (loginContainer) loginContainer.style.display = 'block';
+            if (contentContainer) contentContainer.style.display = 'none';
+            showLogoutButton(false);
+        }
+        return;
+    }
+
+    console.log('DOMContentLoaded: checkAuth вернул true, продолжение выполнения.');
     // Обработка кнопки выхода/аккаунта
     showLogoutButton(true);
 
     // Загрузка текущей страницы
+    // Если checkAuth() уже перенаправила, эта строка не будет вызвана.
+    // Если checkAuth() вернула true, значит токен действителен.
     loadPage(window.location.pathname);
 
     // Обработчик для кнопки "Редактировать" профиля
@@ -346,7 +406,7 @@ function setViewMode() {
 // Получение элементов
 const modal = document.getElementById('registerModal');
 const openBtn = document.getElementById('openRegisterBtn');
-const closeBtn = document.getElementById('closeModal');
+const closeBtn = document.getElementById('closeRegisterModal'); // Исправлено на правильный ID
 const organizationSelect = document.getElementById('organization');
 const regionLabel = document.getElementById('regionLabel');
 const regionSelect = document.getElementById('regionOrExpedition');

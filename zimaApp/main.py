@@ -76,11 +76,28 @@ async def lifespan(_: FastAPI):
         from motor.motor_asyncio import AsyncIOMotorClient
 
         print("Запуск приложения")
-        redis = aioredis.from_url(
-            f"redis://{settings.REDIS_HOST}:{settings.REDIS_PORT}", encoding="utf8"
-        )
-        FastAPICache.init(RedisBackend(redis), prefix="fastapi-cache")
+        try:
+            # Инициализация Redis
+            redis_client = redis.from_url(
+                "redis://localhost:6379",
+                encoding="utf8",
+                decode_responses=True,
+                socket_connect_timeout=5,
+                socket_timeout=10
+            )
 
+            # Проверяем подключение
+            await redis_client.ping()
+            logger.info("✅ Redis connected successfully!")
+
+            # Инициализируем кэш
+            FastAPICache.init(RedisBackend(redis_client), prefix="fastapi-cache")
+
+        except Exception as e:
+            logger.error(f"❌ Redis connection failed: {e}")
+            # Fallback на in-memory кэш
+            from fastapi_cache.backends.inmemory import InMemoryBackend
+            FastAPICache.init(InMemoryBackend(), prefix="fastapi-cache")
     except Exception as e:
         print(e)
 

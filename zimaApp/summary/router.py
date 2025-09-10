@@ -4,6 +4,7 @@ from celery.bin.result import result
 from fastapi import APIRouter, Depends
 from datetime import date
 
+from fastapi_cache.decorator import cache
 from sqlalchemy.exc import SQLAlchemyError
 
 

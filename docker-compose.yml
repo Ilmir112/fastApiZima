@@ -21,7 +21,8 @@ services:
     container_name: zima_redis
     networks:
       - my_network
-
+    ports:
+      - 6379:6379
   zima:
     image: zima_image2
     restart: always
