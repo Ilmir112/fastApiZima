@@ -21,7 +21,7 @@ router = APIRouter(
 
 @router.get("/find_wells_data")
 @version(1)
-# @cache(expire=60)
+@cache(expire=60)
 async def find_wells_data(wells_data: WellsSearchArgs = Depends()):
     try:
         result = await WellsDatasDAO.find_one_or_none(

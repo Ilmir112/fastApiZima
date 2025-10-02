@@ -1,4 +1,6 @@
-from fastapi import APIRouter, Depends, HTTPException, Response, status
+import base64
+
+from fastapi import APIRouter, Depends, HTTPException, Response, status, Request
 from fastapi_cache.decorator import cache
 
 from zimaApp.config import settings
@@ -150,3 +152,14 @@ async def read_users_me(current_user: Users = Depends(get_current_user)):
 @version(1)
 async def read_users_all():
     return await UsersDAO.find_all()
+
+
+
+@router.get("/encode_telegram_id_to_base64/{telegram_id}")
+async def encode_telegram_id_to_base64(telegram_id: str, request: Request) -> str:
+    try:
+        base64_encoded = base64.b64encode(telegram_id.encode('utf-8')).decode('utf-8')
+        return base64_encoded
+    except Exception as e:
+        logger.error(f"Error encoding telegram ID '{telegram_id}': {e}")
+        raise HTTPException(status_code=500, detail="Error encoding telegram ID")
