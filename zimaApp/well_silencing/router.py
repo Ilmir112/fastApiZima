@@ -52,14 +52,19 @@ async def find_well_silencing_all(
     return data
 
 
-@cache(expire=1500)
-@router.post("/find_well_silencing_all_one/")
+
+@router.post("/find_well_silencing_all_one")
+# @cache(expire=1500)
+@version(1)
 async def find_well_silencing_all_one(wells_data: SWellsSilencingRegion
 ):
-    results = await WellSilencingDAO.find_first(region=wells_data.region)
-    if results:
-        return results
-
+    try:
+        results = await WellSilencingDAO.find_first(region=wells_data.region)
+        if results:
+            return results
+    except Exception as e:
+        logger.error(e)
+        raise HTTPException(status_code=404, detail=str(e))
 
 @router.post("/delete_well_silencing")
 @version(1)
