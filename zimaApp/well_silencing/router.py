@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Query, Request, Response
+from fastapi import APIRouter, Depends, Query, Request, Response, HTTPException
 from starlette.responses import JSONResponse
 
 from zimaApp.config import settings
@@ -33,7 +33,7 @@ router = APIRouter(
 @router.post("/find_well_silencing_all/")
 @version(1)
 async def find_well_silencing_all(
-    request: Request, response: Response, wells_data: SWellsSilencingRegion
+    wells_data: SWellsSilencingRegion
 ):
     results = await WellSilencingDAO.find_all(region=wells_data.region)
     data = []
@@ -54,8 +54,7 @@ async def find_well_silencing_all(
 
 @cache(expire=1500)
 @router.post("/find_well_silencing_all_one/")
-async def find_well_silencing_all_one(
-    request: Request, response: Response, wells_data: SWellsSilencingRegion
+async def find_well_silencing_all_one(wells_data: SWellsSilencingRegion
 ):
     results = await WellSilencingDAO.find_first(region=wells_data.region)
     if results:
@@ -65,10 +64,10 @@ async def find_well_silencing_all_one(
 @router.post("/delete_well_silencing")
 @version(1)
 async def delete_well_silencing_for_region(wells_data: SWellsSilencingRegion):
-    data = await WellSilencingDAO.find_all(region=wells_data.region)
+    data = await WellSilencingDAO.find_all(region=wells_data)
     if data:
         return await WellSilencingDAO.delete_item_all_by_filter(
-            region=wells_data.region
+            region=wells_data
         )
 
 
@@ -84,22 +83,27 @@ async def find_wells_in_silencing_for_region(wells_data: WellsSearchArgs = Depen
 @router.post("/add_data_well_silencing")
 @version(1)
 async def add_data_well_silencing(wells_data: SWellsSilencingBatch):
-    region = wells_data.data[0].region
-    find_result = await find_well_silencing_all(region)
-    if find_result:
-        await delete_well_silencing_for_region(region)
+    try:
+        region = wells_data.data[0].region
+        if region:
+            await delete_well_silencing_for_region(wells_data=region)
 
-    results = []
-    for item in wells_data.data:
-        try:
-            result = await WellSilencingDAO.add_data(
-                well_number=item.well_number,
-                well_area=item.well_area,
-                today=item.today,
-                region=item.region,
-                costumer=item.costumer,
-            )
-            results.append({"status": "success", "data": result})
-        except Exception as e:
-            results.append({"status": "error", "error": str(e), "item": item})
-    return results
+        results = []
+        for item in wells_data.data:
+            try:
+                result = await WellSilencingDAO.add_data(
+                    well_number=item.well_number,
+                    well_area=item.well_area,
+                    today=item.today,
+                    region=item.region,
+                    costumer=item.costumer,
+                )
+                results.append({"status": "success", "data": result})
+            except Exception as e:
+                results.append({"status": "error", "error": str(e), "item": item})
+
+        return results
+    except Exception as e:
+        logger.error(e)
+        raise HTTPException(status_code=500, detail=str(e))
+
